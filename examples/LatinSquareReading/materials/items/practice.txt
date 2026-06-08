@@ -1,0 +1,15 @@
+<<practice>>
+This is a minimal pair stimulus sentence.
+<<question>>
+Question?
+<<options>>
+yes
+no
+
+<<practice>>
+This are a minimal pair stimulus sentence.
+<<question>>
+Question?
+<<options>>
+yes
+no

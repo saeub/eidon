@@ -1,0 +1,2 @@
+-e .
+docstring_parser==0.18.0

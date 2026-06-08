@@ -1,0 +1,31 @@
+<<filler>>
+This is a minimal pair stimulus sentence.
+<<question>>
+Question?
+<<options>>
+yes
+no
+
+<<filler>>
+This are a minimal pair stimulus sentence.
+<<question>>
+Question?
+<<options>>
+yes
+no
+
+<<filler>>
+This is a minimal pairs stimulus sentence.
+<<question>>
+Question?
+<<options>>
+yes
+no
+
+<<filler>>
+This are a minimal pairs stimulus sentence.
+<<question>>
+Question?
+<<options>>
+yes
+no
