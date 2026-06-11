@@ -31,8 +31,9 @@ _eidon_ is **not** the best choice for you if you want to ...
 ```mermaid
 flowchart TD
     A("Stimulus material + configuration file") -->|fa:fa-hammer eidon build| B(Compiled experiment)
-    B -->|fa:fa-play eidon run| C(Conduct experiment)
-    C -->|fa:fa-broom eidon clean| D(Clean, publishable eye-tracking data)
+    B -->|fa:fa-play eidon setup| C(Hardware setup completed)
+    C -->|fa:fa-play eidon run| D(Conduct experiment)
+    D -->|fa:fa-broom eidon clean| E(Clean, publishable eye-tracking data)
 ```
 
 _eidon_ consists of several components:
@@ -45,6 +46,7 @@ _eidon_ consists of several components:
 
 ## Documentation
 
+- [Best practices](best-practices.md)
 - [Core concepts](core-concepts.md)
 - [Command-line interface](cli/index.md)
 - [Experiment types](experiment-types/index.md)

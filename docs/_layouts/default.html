@@ -8,16 +8,121 @@
 {% seo %}
     <link rel="stylesheet" href="{{ "/assets/css/style.css?v=" | append: site.github.build_revision | relative_url }}">
     {% include head-custom.html %}
+    <style>
+      .page-layout {
+        display: flex;
+        align-items: flex-start;
+        gap: 2rem;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 1.25rem 1rem 3rem;
+      }
+
+      .sidebar-toc {
+        flex: 0 0 220px;
+        position: sticky;
+        top: 1.5rem;
+        max-height: calc(100vh - 3rem);
+        overflow-y: auto;
+        font-size: 0.82rem;
+        line-height: 1.5;
+        border-right: 1px solid #e1e4e8;
+        padding-right: 1rem;
+      }
+
+      .sidebar-toc.is-empty {
+        display: none;
+      }
+
+      .sidebar-toc .toc-title {
+        font-weight: 600;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #57606a;
+        margin-bottom: 0.5rem;
+      }
+
+      .sidebar-toc ol {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+
+      .sidebar-toc li {
+        margin: 0;
+      }
+
+      .sidebar-toc a {
+        display: block;
+        padding: 0.18rem 0;
+        color: #57606a;
+        text-decoration: none;
+        border-left: 2px solid transparent;
+        padding-left: 0.5rem;
+        transition: color 0.15s, border-color 0.15s;
+      }
+
+      .sidebar-toc a:hover {
+        color: #0969da;
+        border-left-color: #0969da;
+      }
+
+      .sidebar-toc a.active {
+        color: #0969da;
+        border-left-color: #0969da;
+        font-weight: 500;
+      }
+
+      .sidebar-toc .toc-h3 a {
+        padding-left: 1.25rem;
+        font-size: 0.78rem;
+      }
+
+      .sidebar-toc .toc-h4 a {
+        padding-left: 2rem;
+        font-size: 0.75rem;
+      }
+
+      .main-content {
+        flex: 1;
+        min-width: 0;
+      }
+
+      @media (max-width: 768px) {
+        .page-layout {
+          flex-direction: column;
+        }
+        .sidebar-toc {
+          position: static;
+          flex: none;
+          width: 100%;
+          border-right: none;
+          border-bottom: 1px solid #e1e4e8;
+          padding-right: 0;
+          padding-bottom: 1rem;
+          margin-bottom: 1rem;
+          max-height: none;
+        }
+      }
+    </style>
   </head>
   <body>
-    <div class="container-lg px-3 my-5 markdown-body">
-      {% if site.title and site.title != page.title %}
-      <h1><a href="{{ "/" | absolute_url }}"><img src="{{ "/logo.svg" | relative_url }}" alt="{{ site.title }}" width="200" /></a></h1>
-      {% endif %}
+    <div class="page-layout">
+      <nav class="sidebar-toc is-empty" aria-label="Table of contents">
+        <div class="toc-title">On this page</div>
+        <ol id="toc-list"></ol>
+      </nav>
 
-      {{ content }}
+      <div class="main-content markdown-body">
+        {% if site.title and site.title != page.title %}
+        <h1><a href="{{ "/" | absolute_url }}"><img src="{{ "/logo.svg" | relative_url }}" alt="{{ site.title }}" width="200" /></a></h1>
+        {% endif %}
 
+        {{ content }}
+      </div>
     </div>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/anchor-js/4.1.0/anchor.min.js" integrity="sha256-lZaRhKri35AyJSypXXs4o6OPFTbTmUoltBbDCbdzegg=" crossorigin="anonymous"></script>
     <script>anchors.add();</script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/11.12.0/mermaid.min.js" integrity="sha512-5TKaYvhenABhlGIKSxAWLFJBZCSQw7HTV7aL1dJcBokM/+3PNtfgJFlv8E6Us/B1VMlQ4u8sPzjudL9TEQ06ww==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
@@ -36,6 +141,54 @@
       await mermaid.run({
         querySelector: '.language-mermaid'
       });
+    </script>
+    <script>
+      (function () {
+        var content = document.querySelector('.main-content');
+        var tocList = document.getElementById('toc-list');
+        var sidebar = document.querySelector('.sidebar-toc');
+
+        var headings = content.querySelectorAll('h2, h3, h4');
+        if (headings.length < 2) return;
+
+        sidebar.classList.remove('is-empty');
+
+        headings.forEach(function (h) {
+          var id = h.id || h.querySelector('a[id]')?.id;
+          if (!id) {
+            // anchor.js adds an <a> with aria-hidden inside; extract its id from href instead
+            var anchor = h.querySelector('a.anchorjs-link');
+            if (anchor) {
+              id = anchor.getAttribute('href').replace('#', '');
+            }
+          }
+          if (!id) return;
+
+          var level = h.tagName.toLowerCase();
+          var li = document.createElement('li');
+          li.className = 'toc-' + level;
+          var a = document.createElement('a');
+          a.href = '#' + id;
+          // Strip the anchor.js icon from the label
+          a.textContent = h.textContent.replace(/\s*#\s*$/, '').trim();
+          li.appendChild(a);
+          tocList.appendChild(li);
+        });
+
+        // Highlight active section on scroll
+        var links = tocList.querySelectorAll('a');
+        var observer = new IntersectionObserver(function (entries) {
+          entries.forEach(function (entry) {
+            if (entry.isIntersecting) {
+              links.forEach(function (l) { l.classList.remove('active'); });
+              var active = tocList.querySelector('a[href="#' + entry.target.id + '"]');
+              if (active) active.classList.add('active');
+            }
+          });
+        }, { rootMargin: '0px 0px -80% 0px' });
+
+        headings.forEach(function (h) { if (h.id) observer.observe(h); });
+      })();
     </script>
   </body>
 </html>
