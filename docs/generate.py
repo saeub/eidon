@@ -177,7 +177,7 @@ def main():
             f.write(markdown)
 
     # CLI
-    argument_parser = get_argument_parser()
+    argument_parser = get_argument_parser(color=False)
     markdown = generate_cli_index(argument_parser)
     with open(docs_path / "cli" / "index.md", "w") as f:
         f.write(markdown)
