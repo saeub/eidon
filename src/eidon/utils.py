@@ -14,3 +14,15 @@ def import_custom_code(experiment_path: Path):
 def get_package_version() -> str:
     """Get the installed version of the eidon package."""
     return importlib.metadata.version("eidon")
+
+
+def ask_user_yes_no(question: str) -> bool:
+    """Ask the user a yes/no question and return True for yes and False for no."""
+    while True:
+        answer = input(f"{question} (y/n): ").strip().lower()
+        if answer in ["y", "yes"]:
+            return True
+        elif answer in ["n", "no"]:
+            return False
+        else:
+            print("Please enter 'y' or 'n'.")
