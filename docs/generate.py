@@ -115,6 +115,12 @@ def generate_experimentstage_page(name: str, cls: type[ExperimentStage]) -> str:
         markdown += f"- `{param_name}` ({param_type})"
         if param_description:
             markdown += f"  \n  {param_description}"
+        if param_name.endswith(("_key", "_keys")):
+            markdown += (
+                "  \n  Key names are [pyglet key symbol strings]"
+                "(https://pyglet.readthedocs.io/en/latest/programming_guide/keyboard.html#defined-key-symbols) "
+                "(e.g. `A`, `LEFT`, `SPACE`)."
+            )
         if param_default is not None:
             markdown += f"  \n  Default: `{param_default}`"
         markdown += "\n"
