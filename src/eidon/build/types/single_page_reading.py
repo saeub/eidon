@@ -7,18 +7,18 @@ from pathlib import Path
 from typing import Any
 
 from eidon.build import ExperimentType, stimuli
+from eidon.build.design import build_design
 from eidon.fonts import FONTS
 
 
-@dataclass
-class LatinSquareReading(ExperimentType):
+@dataclass(kw_only=True)
+class SinglePageReading(ExperimentType):
     """
-    Reading experiment with single-page minimal-pair stimuli and a Latin square design.
+    Reading experiment with single-page text stimuli.
 
     Each experimental item consists of a text and optionally one or more multiple-choice questions.
-    Each item appears in multiple conditions, which are assigned to participants in such a way that
-    each participant sees each item in exactly one condition, and each condition is seen equally
-    often across participants. Filler items can also be added.
+    Each item may appear in multiple conditions, which are assigned to participants according to the
+    specified design (e.g., Latin square). Filler items can also be added.
 
     ### Required materials
 
@@ -46,6 +46,25 @@ class LatinSquareReading(ExperimentType):
     placeholders):
 
     ```
+    <<item>>
+    [text for condition 1]
+    <<question>>
+    [question stem]
+    <<options>>
+    [option 1]
+    **[option 2]
+    [option 3]
+    <<question>>
+    [question stem]
+    <<options>>
+    [option 1]
+    [option 2]
+    ```
+
+    If the experiment has **multiple conditions**, each item file contains the text and questions
+    for all conditions, and the name of the condition must be specified like this:
+
+    ```
     <<[condition 1]>>
     [text for condition 1]
     <<question>>
@@ -65,9 +84,8 @@ class LatinSquareReading(ExperimentType):
     ...
     ```
 
-    The conditions must be the same across all items, but the number of questions can vary.
-    Optionally, one answer option per question can be marked with `**` to indicate that it is the
-    correct answer.
+    The number of questions can vary across items. Optionally, one answer option per question can be
+    marked with `**` to indicate that it is the correct answer.
 
     `practice.txt` and `fillers.txt` are optional and can contain any number of practice and filler
     items, which follow a similar format (but without conditions):
@@ -91,10 +109,13 @@ class LatinSquareReading(ExperimentType):
     [text for filler 2]
     ...
     ```
+
     Replace `<<filler>>` with `<<practice>>` for practice items.
 
     :param num_participants: Number of participants in the experiment.
         Should be a multiple of the number of conditions.
+    :param conditions: List of item condition names (if any).
+    :param design: Name of the design to use for assigning items to participants.
     :param option_keys: List of keys to use for selecting multiple-choice options, in order.
         For example, ["Y", "N"] to use the Y key for the first option and N key for the second option.
     :param margin: Margin in pixels around the text on the stimulus pages.
@@ -106,6 +127,8 @@ class LatinSquareReading(ExperimentType):
     """
 
     num_participants: int
+    conditions: list[str] | None = None
+    design: str = "latin_square"
     option_keys: list[str]
     margin: int = 50
     font_monospaced: bool = True
@@ -225,7 +248,10 @@ class LatinSquareReading(ExperimentType):
             + list(filler_items.items())
         ):
             for condition, subitem in item.items():
-                if item_id.startswith(("practice.", "filler.")):
+                if (
+                    item_id.startswith(("practice.", "filler."))
+                    or self.conditions is None
+                ):
                     name = item_id
                 else:
                     name = f"{item_id}.{condition}"
@@ -291,36 +317,29 @@ class LatinSquareReading(ExperimentType):
 
                 stimulus_stages[name] = stages
 
-        # Build latin square lists
-        item_ids = sorted(experimental_items.keys())
-        conditions = sorted(next(iter(experimental_items.values())).keys())
-        item_lists = []
-
-        for list_index in range(len(conditions)):
-            item_list = []
-            for item_index, item_id in enumerate(item_ids):
-                # Rotate condition based on item and list index
-                condition_index = (item_index + list_index) % len(conditions)
-                condition = conditions[condition_index]
-                item_list.append(f"{item_id}.{condition}")
-            item_lists.append(item_list)
-
-        # Assign lists to participants, add fillers, and shuffle
-        if self.num_participants % len(conditions) != 0:
-            warnings.warn(
-                f"Number of participants ({self.num_participants}) is not a multiple "
-                f"of the number of conditions ({len(conditions)}). "
-                f"This will lead to an unbalanced design."
-            )
+        # Build design for item assignment
         participant_ids = [f"P{i}" for i in range(1, self.num_participants + 1)]
+        item_ids = sorted(experimental_items.keys())
+        conditions = self.conditions if self.conditions is not None else ["item"]
+        design = build_design(self.design, participant_ids, item_ids, conditions)
+
+        # Add fillers and shuffle
         assignments = {}
-        for participant_index, participant_id in enumerate(participant_ids):
-            list_index = participant_index % len(item_lists)
-            items = item_lists[list_index].copy()
-            items.extend([f"{item_id}" for item_id in filler_items.keys()])
+        for participant_id in participant_ids:
+            if self.conditions is None:
+                experimental_assignments = [
+                    item_id for item_id, _ in design[participant_id]
+                ]
+            else:
+                experimental_assignments = [
+                    f"{item_id}.{condition}"
+                    for item_id, condition in design[participant_id]
+                ]
+            filler_assignments = [item_id for item_id in filler_items.keys()]
+            participant_assignments = experimental_assignments + filler_assignments
             random.seed(participant_id)
-            random.shuffle(items)
-            assignments[participant_id] = items
+            random.shuffle(participant_assignments)
+            assignments[participant_id] = participant_assignments
 
         # Create sessions
         sessions = {}
@@ -380,9 +399,10 @@ class LatinSquareReading(ExperimentType):
                 ]
                 for i, item_string in enumerate(item_strings):
                     item = self._parse_item(item_string, item_path.name)
-                    if len(item) != 1 or next(iter(item.keys())) != item_type:
+                    if set(item.keys()) != {item_type}:
                         raise ValueError(
-                            f"Each {item_type} item in {item_path.name} must be preceded by a <<{item_type}>> tag."
+                            f"Each {item_type} item in {item_path.name} "
+                            f"must be preceded by a <<{item_type}>> tag."
                         )
                     if item_type == "practice":
                         practice_items[f"{item_type}.{i+1}"] = item
@@ -390,6 +410,18 @@ class LatinSquareReading(ExperimentType):
                         filler_items[f"{item_type}.{i+1}"] = item
             else:
                 item = self._parse_item(file_content, item_path.name)
+                if self.conditions is None and set(item.keys()) != {"item"}:
+                    raise ValueError(
+                        f"When no conditions are defined, the experimental item in {item_path.name} "
+                        "must be preceded by a <<item>> tag."
+                    )
+                elif self.conditions is not None and set(item.keys()) != set(
+                    self.conditions
+                ):
+                    raise ValueError(
+                        f"Item {item_path.name} has conditions {set(item.keys())}, "
+                        f"expected {set(self.conditions)}."
+                    )
                 experimental_items[f"item.{item_path.stem}"] = item
         if len(filler_items) < len(experimental_items):
             percentage = (
@@ -399,13 +431,13 @@ class LatinSquareReading(ExperimentType):
                 f"Fillers make up only {percentage:.1f}% of the items. "
                 f"Consider adding more fillers to reach at least 50%."
             )
-        conditions = set(next(iter(experimental_items.values())).keys())
-        for item_id, item in experimental_items.items():
-            item_conditions = set(item.keys())
-            if set(item_conditions) != set(conditions):
-                raise ValueError(
-                    f"Item {item_id} has conditions {item_conditions}, expected {conditions}."
-                )
+        if self.conditions is not None:
+            for item_id, item in experimental_items.items():
+                item_conditions = set(item.keys())
+                if set(item_conditions) != set(self.conditions):
+                    raise ValueError(
+                        f"Item {item_id} has conditions {item_conditions}, expected {self.conditions}."
+                    )
         return experimental_items, practice_items, filler_items
 
     def _parse_item(self, item_string: str, filename: str) -> dict[str, Any]:

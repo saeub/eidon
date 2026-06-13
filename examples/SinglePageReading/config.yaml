@@ -1,8 +1,11 @@
 # Experiment overview
-name: "latin-square"
-type: LatinSquareReading
+name: "single-page-reading"
+type: SinglePageReading
 
+# Design
 num_participants: 8
+conditions: [condition_A, condition_B, condition_C, condition_D]
+design: latin_square
 
 # Appearance
 display_size: [1100, 900]
