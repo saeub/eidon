@@ -1,7 +1,6 @@
 import csv
 import random
 import re
-import warnings
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -12,13 +11,19 @@ from eidon.fonts import FONTS
 
 
 @dataclass(kw_only=True)
-class SinglePageReading(ExperimentType):
+class MultiPageReading(ExperimentType):
     """
-    Reading experiment with short, single-page text stimuli.
+    Reading experiment with longer, multi-page text stimuli.
 
     Each experimental item consists of a text and optionally one or more multiple-choice questions.
     Each item may appear in multiple conditions, which are assigned to participants according to the
     specified design (e.g., Latin square). Filler items can also be added.
+
+    The main differences to `SinglePageReading` are:
+    - The text for each item can span multiple pages. The text is automatically split into pages
+      when necessary. Explicit page breaks can also be added using `<<pagebreak>>`.
+    - The texts are vertically aligned to the top of the page (instead of centered).
+    - Filler items are not supported.
 
     ### Required materials
 
@@ -36,7 +41,6 @@ class SinglePageReading(ExperimentType):
           ├─ 📄 03.txt
           ├─ 📄 ...
           ├─ 📄 practice.txt (optional)
-          └─ 📄 fillers.txt (optional)
     ```
 
     `instructions.txt`, `wait.txt`, `break.txt`, and `end.txt` contain the text for the
@@ -89,12 +93,12 @@ class SinglePageReading(ExperimentType):
     The number of questions can vary across items. Optionally, one answer option per question can be
     marked with `**` to indicate that it is the correct answer.
 
-    `practice.txt` and `fillers.txt` are optional and can contain any number of practice and filler
-    items, which follow a similar format (but without conditions):
+    `practice.txt` are optional and can contain any number of practice items, which follow a similar
+    format (but without conditions):
 
     ```
-    <<filler>>
-    [text for filler 1]
+    <<practice>>
+    [text for practice item 1]
     <<question>>
     [question stem]
     <<options>>
@@ -107,12 +111,10 @@ class SinglePageReading(ExperimentType):
     [option 1]
     [option 2]
 
-    <<filler>>
-    [text for filler 2]
+    <<practice>>
+    [text for practice item 2]
     ...
     ```
-
-    Replace `<<filler>>` with `<<practice>>` for practice items.
 
     :param num_participants: Number of participants in the experiment.
         Should be a multiple of the number of conditions.
@@ -152,7 +154,7 @@ class SinglePageReading(ExperimentType):
             "font_size": self.font_size,
             "line_spacing": self.line_spacing,
             "background_color": self.background_color,
-            "vertical_align": "center",
+            "vertical_align": "top",
         }
 
         instructions_stage = self._generate_instructions_stage(
@@ -163,18 +165,15 @@ class SinglePageReading(ExperimentType):
         if self.breaks_after is not None:
             break_stage = self._generate_break_stage(experiment_path, text_config)
 
-        experimental_items, practice_items, filler_items = self._parse_items(
-            experiment_path
-        )
+        experimental_items, practice_items = self._parse_items(experiment_path)
         stimulus_stages = self._generate_stimulus_stages(
             experimental_items,
             practice_items,
-            filler_items,
             experiment_path,
             text_config,
         )
 
-        assignments = self._build_item_assignments(experimental_items, filler_items)
+        assignments = self._build_item_assignments(experimental_items)
         # Save assignment table for convenience
         with open(experiment_path / "sessions" / "assignments.csv", "w") as f:
             csv_writer = csv.writer(f)
@@ -216,32 +215,25 @@ class SinglePageReading(ExperimentType):
 
     def _parse_items(
         self, experiment_path: Path
-    ) -> tuple[
-        dict[str, dict[str, Any]], dict[str, dict[str, Any]], dict[str, dict[str, Any]]
-    ]:
+    ) -> tuple[dict[str, dict[str, Any]], dict[str, dict[str, Any]]]:
         experimental_items = {}
         practice_items = {}
-        filler_items = {}
         for item_path in (experiment_path / "materials" / "items").glob("*.txt"):
             file_content = item_path.read_text(encoding="utf8")
-            if item_path.name in {"practice.txt", "fillers.txt"}:
-                item_type = "practice" if item_path.name == "practice.txt" else "filler"
+            if item_path.name == "practice.txt":
                 item_strings = [
-                    f"<<{item_type}>>\n" + s
-                    for s in file_content.split(f"<<{item_type}>>")
+                    f"<<practice>>\n" + s
+                    for s in file_content.split(f"<<practice>>")
                     if s.strip()
                 ]
                 for i, item_string in enumerate(item_strings):
                     item = self._parse_item(item_string, item_path.name)
-                    if set(item.keys()) != {item_type}:
+                    if set(item.keys()) != {"practice"}:
                         raise ValueError(
-                            f"Each {item_type} item in {item_path.name} "
-                            f"must be preceded by a <<{item_type}>> tag."
+                            f"Each practice item in {item_path.name} "
+                            f"must be preceded by a <<practice>> tag."
                         )
-                    if item_type == "practice":
-                        practice_items[f"{item_type}.{i+1}"] = item
-                    else:
-                        filler_items[f"{item_type}.{i+1}"] = item
+                    practice_items[f"practice.{i+1}"] = item
             else:
                 item = self._parse_item(file_content, item_path.name)
                 if self.conditions is None and set(item.keys()) != {"item"}:
@@ -257,14 +249,6 @@ class SinglePageReading(ExperimentType):
                         f"expected {set(self.conditions)}."
                     )
                 experimental_items[f"item.{item_path.stem}"] = item
-        if len(filler_items) < len(experimental_items):
-            percentage = (
-                len(filler_items) / (len(experimental_items) + len(filler_items))
-            ) * 100
-            warnings.warn(
-                f"Fillers make up only {percentage:.1f}% of the items. "
-                f"Consider adding more fillers to reach at least 50%."
-            )
         if self.conditions is not None:
             for item_id, item in experimental_items.items():
                 item_conditions = set(item.keys())
@@ -272,7 +256,7 @@ class SinglePageReading(ExperimentType):
                     raise ValueError(
                         f"Item {item_id} has conditions {item_conditions}, expected {self.conditions}."
                     )
-        return experimental_items, practice_items, filler_items
+        return experimental_items, practice_items
 
     def _parse_item(self, item_string: str, filename: str) -> dict[str, Any]:
         """
@@ -342,11 +326,18 @@ class SinglePageReading(ExperimentType):
                 )
             text = match.group(2).strip()
 
-            # Question stem
-            if tag == "question":
+            # Page break
+            if tag == "pagebreak":
                 if current_subitem is None:
                     raise ValueError(
-                        f"'<<question>>' tag found before any condition tag in {filename}."
+                        f"'<<pagebreak>>' tag found before any item/condition tag in {filename}."
+                    )
+                current_subitem["pages"].append(text)
+            # Question stem
+            elif tag == "question":
+                if current_subitem is None:
+                    raise ValueError(
+                        f"'<<question>>' tag found before any item/condition tag in {filename}."
                     )
                 current_subitem["questions"].append(
                     {"stem": text, "options": None, "correct_option_index": None}
@@ -386,7 +377,7 @@ class SinglePageReading(ExperimentType):
                 if current_condition is not None:
                     item[current_condition] = current_subitem
                 current_condition = tag
-                current_subitem = {"text": text, "questions": []}
+                current_subitem = {"pages": [text], "questions": []}
         # Final condition
         if current_condition is not None:
             item[current_condition] = current_subitem
@@ -505,37 +496,32 @@ class SinglePageReading(ExperimentType):
         self,
         experimental_items: dict[str, dict[str, Any]],
         practice_items: dict[str, dict[str, Any]],
-        filler_items: dict[str, dict[str, Any]],
         experiment_path: Path,
         text_config: dict[str, Any],
     ) -> dict[str, list[dict[str, Any]]]:
         stimulus_stages = {}
-        for item_id, item in (
-            list(experimental_items.items())
-            + list(practice_items.items())
-            + list(filler_items.items())
+        for item_id, item in list(experimental_items.items()) + list(
+            practice_items.items()
         ):
             for condition, subitem in item.items():
-                if (
-                    item_id.startswith(("practice.", "filler."))
-                    or self.conditions is None
-                ):
+                if item_id.startswith("practice.") or self.conditions is None:
                     name = item_id
                 else:
                     name = f"{item_id}.{condition}"
-                text_images = stimuli.generate_text_pages(
-                    subitem["text"],
-                    **text_config,
-                )
-                assert (
-                    len(text_images) == 1
-                ), f"Text for item {name} does not fit on a single page."
-                text_image = text_images[0]
-                text_image.save(experiment_path, f"{name}.text")
+                text_images = []
+                for page in subitem["pages"]:
+                    text_images.extend(
+                        stimuli.generate_text_pages(
+                            page,
+                            **text_config,
+                        )
+                    )
+                for i, image in enumerate(text_images):
+                    image.save(experiment_path, f"{name}.text.{i}")
                 text_start_location = (
-                    int(text_image.areas["page"][0].left - text_config["font_size"]),
+                    int(text_config["margin"] - text_config["font_size"]),
                     int(
-                        text_image.areas["page"][0].top
+                        text_config["margin"]
                         + text_config["font_size"] * text_config["line_spacing"] / 2
                     ),
                 )
@@ -546,14 +532,21 @@ class SinglePageReading(ExperimentType):
                         "$type": "DriftCorrect",
                         "location": text_start_location,
                     },
+                ] + [
                     {
                         "$type": "StimulusPage",
-                        "$name": f"{name}.text",
+                        "$name": f"{name}.text.{i}",
                         "$record_eyes": True,
-                        "imgpath": text_image.imgpath,
+                        "imgpath": image.imgpath,
                         "continue_key": "SPACE",
-                    },
+                        "$after": {
+                            "$type": "FixationCross",
+                            "location": text_start_location,
+                        },
+                    }
+                    for i, image in enumerate(text_images)
                 ]
+                stages[-1].pop("$after")  # Remove fixation cross after last page
 
                 # cursor_locations = []
                 for i, question in enumerate(subitem["questions"]):
@@ -589,7 +582,6 @@ class SinglePageReading(ExperimentType):
     def _build_item_assignments(
         self,
         experimental_items: dict[str, dict[str, Any]],
-        filler_items: dict[str, dict[str, Any]],
     ) -> dict[str, list[str]]:
         """Returns a dict mapping each participant ID to a list of item IDs (with conditions)."""
         # Build design for experimental items
@@ -598,20 +590,18 @@ class SinglePageReading(ExperimentType):
         conditions = self.conditions if self.conditions is not None else ["item"]
         design = build_design(self.design, participant_ids, item_ids, conditions)
 
-        # Add fillers and shuffle
+        # Shuffle
         assignments = {}
         for participant_id in participant_ids:
             if self.conditions is None:
-                experimental_assignments = [
+                participant_assignments = [
                     item_id for item_id, _ in design[participant_id]
                 ]
             else:
-                experimental_assignments = [
+                participant_assignments = [
                     f"{item_id}.{condition}"
                     for item_id, condition in design[participant_id]
                 ]
-            filler_assignments = [item_id for item_id in filler_items.keys()]
-            participant_assignments = experimental_assignments + filler_assignments
             random.seed(participant_id)
             random.shuffle(participant_assignments)
             assignments[participant_id] = participant_assignments

@@ -1,0 +1,7 @@
+<<item>>
+Mauris porttitor arcu elit, eget mattis sem sodales eu. Cras et elit sollicitudin, convallis massa sit amet, mollis nisl. Ut sed interdum mauris, id pharetra leo. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Integer dapibus, felis at molestie bibendum, justo nisl egestas ligula, quis euismod est dolor et libero. In hac habitasse platea dictumst. Nulla facilisi. Nunc ornare sem vitae suscipit pulvinar. Praesent aliquam ante nisl, ut facilisis urna sodales at. In tempus dui dolor, nec sollicitudin lorem convallis euismod. Aliquam scelerisque nulla sed pellentesque viverra. Aliquam condimentum est ut turpis lacinia, sed semper tortor suscipit. Aenean fermentum semper mauris vel tincidunt. Cras vehicula euismod convallis. Aenean ornare posuere magna.
+<<question>>
+Question?
+<<options>>
+**yes
+no

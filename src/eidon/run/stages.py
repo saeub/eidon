@@ -4,12 +4,14 @@ import random
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import pyglet
 
-import eidon
 from eidon.run.events import Event
+
+if TYPE_CHECKING:
+    from eidon.run.runner import ExperimentRunner
 
 
 @dataclass
@@ -23,7 +25,7 @@ class ExperimentStage(ABC):
 
     def __init__(
         self,
-        runner: eidon.ExperimentRunner,
+        runner: ExperimentRunner,
         name: str,
         record_eyes: bool,
         record_audio: bool,
@@ -46,7 +48,7 @@ class ExperimentStage(ABC):
 
     @classmethod
     def from_definition(
-        cls, runner: eidon.ExperimentRunner, definition: dict[str, Any]
+        cls, runner: ExperimentRunner, definition: dict[str, Any]
     ) -> ExperimentStage:
         """Instantiate a stage from a parsed JSON definition."""
         definition = definition.copy()
@@ -280,7 +282,13 @@ class HostControlled(ExperimentStage):
 
     def start(self):
         self.finished = False
-        self.stage.start()
+        if self.runner.dummy and self._backdrop is not None:
+            # In dummy mode, prefer drawing host image
+            self.runner.window.clear()
+            self._backdrop.sprite.draw()
+            self.runner.window.flip()
+        else:
+            self.stage.start()
 
     def on_event(self, event: Event) -> None:
         if self._setup_stage is not None:
@@ -297,7 +305,8 @@ class HostControlled(ExperimentStage):
                 self._setup_stage.start()
 
     def update(self) -> dict[str, Any] | None:
-        self.stage.update()
+        if not self.runner.dummy or self._backdrop is None:
+            self.stage.update()
 
         if self.finished:
             return {}
@@ -306,8 +315,14 @@ class HostControlled(ExperimentStage):
             setup_done = self._setup_stage.update() is not None
             if setup_done:
                 self._setup_stage = None
-                self.stage.start()
-                # TODO: Flush eyetracker events
+                if self.runner.dummy and self._backdrop is not None:
+                    # In dummy mode, prefer drawing host image
+                    self.runner.window.clear()
+                    self._backdrop.sprite.draw()
+                    self.runner.window.flip()
+                else:
+                    self.stage.start()
+                # TODO: Flush eyetracker events?
 
     def get_backdrop(self) -> Backdrop | None:
         if self._backdrop is not None:

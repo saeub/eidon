@@ -2,15 +2,21 @@
 generated: true
 ---
 
-## Experiment type: `SinglePageReading`
+## Experiment type: `MultiPageReading`
 
-Reading experiment with short, single-page text stimuli.
+Reading experiment with longer, multi-page text stimuli.
 
 ### Description
 
 Each experimental item consists of a text and optionally one or more multiple-choice questions.
 Each item may appear in multiple conditions, which are assigned to participants according to the
 specified design (e.g., Latin square). Filler items can also be added.
+
+The main differences to `SinglePageReading` are:
+- The text for each item can span multiple pages. The text is automatically split into pages
+  when necessary. Explicit page breaks can also be added using `<<pagebreak>>`.
+- The texts are vertically aligned to the top of the page (instead of centered).
+- Filler items are not supported.
 
 ### Required materials
 
@@ -28,7 +34,6 @@ specified design (e.g., Latin square). Filler items can also be added.
       ├─ 📄 03.txt
       ├─ 📄 ...
       ├─ 📄 practice.txt (optional)
-      └─ 📄 fillers.txt (optional)
 ```
 
 `instructions.txt`, `wait.txt`, `break.txt`, and `end.txt` contain the text for the
@@ -81,12 +86,12 @@ for all conditions, and the name of the condition must be specified like this:
 The number of questions can vary across items. Optionally, one answer option per question can be
 marked with `**` to indicate that it is the correct answer.
 
-`practice.txt` and `fillers.txt` are optional and can contain any number of practice and filler
-items, which follow a similar format (but without conditions):
+`practice.txt` are optional and can contain any number of practice items, which follow a similar
+format (but without conditions):
 
 ```
-<<filler>>
-[text for filler 1]
+<<practice>>
+[text for practice item 1]
 <<question>>
 [question stem]
 <<options>>
@@ -99,12 +104,10 @@ items, which follow a similar format (but without conditions):
 [option 1]
 [option 2]
 
-<<filler>>
-[text for filler 2]
+<<practice>>
+[text for practice item 2]
 ...
 ```
-
-Replace `<<filler>>` with `<<practice>>` for practice items.
 
 ### Configuration
 
@@ -137,4 +140,4 @@ Replace `<<filler>>` with `<<practice>>` for practice items.
   Insert a break after every N items.  
   Default: `None`
 
-### [Example](https://github.com/saeub/eidon/tree/main/examples/SinglePageReading)
+### [Example](https://github.com/saeub/eidon/tree/main/examples/MultiPageReading)

@@ -174,8 +174,9 @@ class TextImage:
         experiment_path = Path(experiment_path)
 
         # Image
-        self._imgpath = str(experiment_path / "stimuli" / f"{stem}.png")
-        self.image.save(self._imgpath)
+        image_path = experiment_path / "stimuli" / f"{stem}.png"
+        self._imgpath = str(image_path.relative_to(experiment_path))
+        self.image.save(image_path)
 
         # Areas
         fieldnames = [

@@ -1,0 +1,20 @@
+# Experiment overview
+name: "multi-page-reading"
+type: MultiPageReading
+
+# Design
+num_participants: 8
+
+# Appearance
+display_size: [1100, 900]
+font_monospaced: true
+background_color: [204, 204, 204]
+margin: 50
+font_size: 25
+line_spacing: 2.5
+
+# Keys for question answering
+option_keys: [Y, N]
+
+# Breaks between items
+breaks_after: 4
