@@ -1,3 +1,7 @@
+---
+generated: true
+---
+
 ## CLI command: `build`
 
 Build an experiment from a configuration file and materials. Generates stimuli and session definitions that can be run with `eidon run`.

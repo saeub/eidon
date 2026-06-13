@@ -1,3 +1,7 @@
+---
+generated: true
+---
+
 ## Experiment stage: `MultipleChoiceQuestion`
 
 Shows an image stimulus and allows selecting a response option by pressing a key.

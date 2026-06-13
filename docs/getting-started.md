@@ -12,27 +12,27 @@ pip install eidon
 
 ### Building and running an example experiment
 
-Download one of the [example experiments](https://github.com/saeub/eidon/tree/main/examples) and place the folder in your working directory. You can use this link to download a ZIP archive of the `LatinSquareReading` example:
+Download one of the [example experiments](https://github.com/saeub/eidon/tree/main/examples) and place the folder in your working directory. You can use this link to download a ZIP archive of the `SinglePageReading` example:
 
-https://download-directory.github.io/?url=https://github.com/saeub/eidon/tree/main/examples/LatinSquareReading
+https://download-directory.github.io/?url=https://github.com/saeub/eidon/tree/main/examples/SinglePageReading
 
 Build the experiment using this command:
 
 ```bash
-eidon build LatinSquareReading
+eidon build SinglePageReading
 ```
 
 Then run the session for participant `P1` in dummy mode:
 
 ```bash
-eidon run LatinSquareReading P1 --dummy
+eidon run SinglePageReading P1 --dummy
 ```
 
 > Dummy mode means that you won't need an eye tracker to test the experiment.
 
 ### Implementing your first experiment
 
-To implement your own experiment, you first need to find the [experiment type](experiment-types/index.md) that matches your use case. For this tutorial, we'll use the [`LatinSquareReading`](experiment-types/LatinSquareReading.md) experiment type.
+To implement your own experiment, you first need to find the [experiment type](experiment-types/index.md) that matches your use case. For this tutorial, we'll use the [`SinglePageReading`](experiment-types/SinglePageReading.md) experiment type.
 
 #### 1. Creating an experiment folder and a configuration file
 
@@ -46,7 +46,7 @@ First, create a folder and a `config.yaml` file for your experiment:
 ```yaml
 # config.yaml
 name: "my-experiment"
-type: LatinSquareReading
+type: SinglePageReading
 
 display_size: [1100, 900]
 num_participants: 8
@@ -59,11 +59,11 @@ The experiment's `name` will appear, among others, in recordings and metadata fi
 
 `option_keys` are the keys on the keyboard that participants are going to use to respond to multiple-choice questions (in this case, we are going to use yes/no questions).
 
-This example is a very bare-bones configuration file. Check the [documentation page for `LatinSquareReading`](experiment-types/LatinSquareReading.md) for more configuration options.
+This example is a very bare-bones configuration file. Check the [documentation page for `SinglePageReading`](experiment-types/SinglePageReading.md) for more configuration options.
 
 #### 2. Creating stimuli
 
-The [documentation page for `LatinSquareReading`](experiment-types/LatinSquareReading.md) tells you the structure and format you need to use for your stimuli:
+The [documentation page for `SinglePageReading`](experiment-types/SinglePageReading.md) tells you the structure and format you need to use for your stimuli:
 
 ```
 📂 my_experiment
@@ -102,7 +102,7 @@ yes
 
 Here, we have an item in two conditions (`active` and `passive`) with one comprehension question each.
 
-Check the [example experiment](https://github.com/saeub/eidon/tree/main/examples/LatinSquareReading/items) for more examples of item files.
+Check the [example experiment](https://github.com/saeub/eidon/tree/main/examples/SinglePageReading/items) for more examples of item files.
 
 #### 3. Building the experiment
 

@@ -1,3 +1,7 @@
+---
+generated: true
+---
+
 ## Experiment stage: `Blank`
 
 Shows a blank screen.

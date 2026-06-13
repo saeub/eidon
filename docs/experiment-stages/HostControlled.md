@@ -1,3 +1,7 @@
+---
+generated: true
+---
+
 ## Experiment stage: `HostControlled`
 
 Disables interaction on the display PC and waits for commands from the host PC.

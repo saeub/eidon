@@ -1,3 +1,7 @@
+---
+generated: true
+---
+
 ## Experiment stage: `FixationCross`
 
 Shows a fixation cross/trigger.

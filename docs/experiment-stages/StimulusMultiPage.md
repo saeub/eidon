@@ -1,3 +1,7 @@
+---
+generated: true
+---
+
 ## Experiment stage: `StimulusMultiPage`
 
 Shows multiple image stimuli that can be navigated.

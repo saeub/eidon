@@ -1,3 +1,7 @@
+---
+generated: true
+---
+
 ## Experiment stage: `FreeTextQuestion`
 
 Shows an image stimulus and allows entering a free text response.

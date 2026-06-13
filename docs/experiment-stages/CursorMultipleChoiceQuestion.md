@@ -1,3 +1,7 @@
+---
+generated: true
+---
+
 ## Experiment stage: `CursorMultipleChoiceQuestion`
 
 Shows an image stimulus and allows selecting a response option by moving a cursor.

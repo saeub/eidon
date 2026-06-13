@@ -1,3 +1,7 @@
+---
+generated: true
+---
+
 ## Experiment stage: `LabelAnnotation`
 
 Shows an image stimulus and allows selecting a label.

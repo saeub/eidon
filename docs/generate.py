@@ -159,38 +159,44 @@ def main():
     docs_path = Path(__file__).parent
     examples_path = Path(__file__).parent.parent / "examples"
     examples_url = "https://github.com/saeub/eidon/tree/main/examples/{}"
+    generated_prefix = "---\ngenerated: true\n---\n\n"
 
-    # TODO: Remove generated files for classes that no longer exist
+    # Delete old generated files
+    for path in docs_path.glob("**/*.md"):
+        if path.read_text().startswith(generated_prefix):
+            path.unlink()
 
     # Experiment types
     experiment_types = ExperimentType.get_subclasses()
     markdown = generate_experimenttype_index(experiment_types)
-    with open(docs_path / "experiment-types" / "index.md", "w") as f:
-        f.write(markdown)
+    (docs_path / "experiment-types" / "index.md").write_text(
+        generated_prefix + markdown
+    )
     for name, cls in experiment_types.items():
         markdown = generate_experimenttype_page(name, cls, examples_path, examples_url)
-        with open(docs_path / "experiment-types" / f"{name}.md", "w") as f:
-            f.write(markdown)
+        (docs_path / "experiment-types" / f"{name}.md").write_text(
+            generated_prefix + markdown
+        )
 
     # Experiment stages
     experiment_stages = ExperimentStage.get_subclasses()
     markdown = generate_experimentstage_index(experiment_stages)
-    with open(docs_path / "experiment-stages" / "index.md", "w") as f:
-        f.write(markdown)
+    (docs_path / "experiment-stages" / "index.md").write_text(
+        generated_prefix + markdown
+    )
     for name, cls in experiment_stages.items():
         markdown = generate_experimentstage_page(name, cls)
-        with open(docs_path / "experiment-stages" / f"{name}.md", "w") as f:
-            f.write(markdown)
+        (docs_path / "experiment-stages" / f"{name}.md").write_text(
+            generated_prefix + markdown
+        )
 
     # CLI
     argument_parser = get_argument_parser(color=False)
     markdown = generate_cli_index(argument_parser)
-    with open(docs_path / "cli" / "index.md", "w") as f:
-        f.write(markdown)
+    (docs_path / "cli" / "index.md").write_text(generated_prefix + markdown)
     for command, subparser in argument_parser._actions[-1].choices.items():
         markdown = generate_cli_page(command, subparser)
-        with open(docs_path / "cli" / f"{command}.md", "w") as f:
-            f.write(markdown)
+        (docs_path / "cli" / f"{command}.md").write_text(generated_prefix + markdown)
 
 
 if __name__ == "__main__":

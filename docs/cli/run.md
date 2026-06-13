@@ -1,3 +1,7 @@
+---
+generated: true
+---
+
 ## CLI command: `run`
 
 Run a session from a built experiment. Collects eye-tracking data and logs.

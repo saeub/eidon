@@ -1,3 +1,7 @@
+---
+generated: true
+---
+
 ## Experiment stage: `EyeLinkSetup`
 
 Do not use this stage directly. Use Setup instead.

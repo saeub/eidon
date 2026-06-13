@@ -1,3 +1,7 @@
+---
+generated: true
+---
+
 ## Command-line interface
 
 | Command | Description |

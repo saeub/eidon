@@ -1,3 +1,7 @@
+---
+generated: true
+---
+
 ## Experiment stage: `StimulusPage`
 
 Shows a single image stimulus.

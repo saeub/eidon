@@ -1,13 +1,16 @@
-## Experiment type: `LatinSquareReading`
+---
+generated: true
+---
 
-Reading experiment with single-page minimal-pair stimuli and a Latin square design.
+## Experiment type: `SinglePageReading`
+
+Reading experiment with single-page text stimuli.
 
 ### Description
 
 Each experimental item consists of a text and optionally one or more multiple-choice questions.
-Each item appears in multiple conditions, which are assigned to participants in such a way that
-each participant sees each item in exactly one condition, and each condition is seen equally
-often across participants. Filler items can also be added.
+Each item may appear in multiple conditions, which are assigned to participants according to the
+specified design (e.g., Latin square). Filler items can also be added.
 
 ### Required materials
 
@@ -35,6 +38,25 @@ are used as item IDs. Each file must follow the following format (values in [bra
 placeholders):
 
 ```
+<<item>>
+[text for condition 1]
+<<question>>
+[question stem]
+<<options>>
+[option 1]
+**[option 2]
+[option 3]
+<<question>>
+[question stem]
+<<options>>
+[option 1]
+[option 2]
+```
+
+If the experiment has **multiple conditions**, each item file contains the text and questions
+for all conditions, and the name of the condition must be specified like this:
+
+```
 <<[condition 1]>>
 [text for condition 1]
 <<question>>
@@ -54,9 +76,8 @@ placeholders):
 ...
 ```
 
-The conditions must be the same across all items, but the number of questions can vary.
-Optionally, one answer option per question can be marked with `**` to indicate that it is the
-correct answer.
+The number of questions can vary across items. Optionally, one answer option per question can be
+marked with `**` to indicate that it is the correct answer.
 
 `practice.txt` and `fillers.txt` are optional and can contain any number of practice and filler
 items, which follow a similar format (but without conditions):
@@ -80,6 +101,7 @@ items, which follow a similar format (but without conditions):
 [text for filler 2]
 ...
 ```
+
 Replace `<<filler>>` with `<<practice>>` for practice items.
 
 ### Configuration
@@ -89,6 +111,12 @@ Replace `<<filler>>` with `<<practice>>` for practice items.
   Default: `(204, 204, 204)`
 - `num_participants` (int)  
   Number of participants in the experiment. Should be a multiple of the number of conditions.
+- `conditions` (list[str] | None)  
+  List of item condition names (if any).  
+  Default: `None`
+- `design` (str)  
+  Name of the design to use for assigning items to participants.  
+  Default: `latin_square`
 - `option_keys` (list[str])  
   List of keys to use for selecting multiple-choice options, in order. For example, ["Y", "N"] to use the Y key for the first option and N key for the second option.
 - `margin` (int)  
@@ -107,4 +135,4 @@ Replace `<<filler>>` with `<<practice>>` for practice items.
   Insert a break after every N items.  
   Default: `None`
 
-### [Example](https://github.com/saeub/eidon/tree/main/examples/LatinSquareReading)
+### [Example](https://github.com/saeub/eidon/tree/main/examples/SinglePageReading)
