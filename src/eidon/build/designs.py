@@ -20,9 +20,7 @@ def build_design(
 def full_crossing(
     participant_ids: list[str], item_ids: list[str], conditions: list[str]
 ) -> dict[str, list[tuple[str, str]]]:
-    """
-    Every participant sees every item in every condition.
-    """
+    """Every participant sees every item in every condition."""
     design = {}
     for participant_id in participant_ids:
         design[participant_id] = []
@@ -36,10 +34,8 @@ def full_crossing(
 def latin_square(
     participant_ids: list[str], item_ids: list[str], conditions: list[str]
 ) -> dict[str, list[tuple[str, str]]]:
-    """
-    Every participant sees every item in exactly one condition,
-    and every condition is seen equally often across participants and items.
-    """
+    """Every participant sees every item in exactly one condition,
+    and every condition is seen equally often across participants and items."""
     if len(participant_ids) % len(conditions) != 0:
         warnings.warn(
             f"Number of participants ({len(participant_ids)}) is not a multiple "

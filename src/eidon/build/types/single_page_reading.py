@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from eidon.build import ExperimentType, stimuli
-from eidon.build.design import build_design
+from eidon.build.designs import build_design
 from eidon.fonts import FONTS
 
 
@@ -27,6 +27,7 @@ class SinglePageReading(ExperimentType):
     ├─ config.yaml
     └─ 📂 materials
        ├─ 📄 instructions.txt
+       ├─ 📄 wait.txt (optional)
        ├─ 📄 break.txt (optional)
        ├─ 📄 end.txt
        └─ 📂 items
@@ -38,8 +39,9 @@ class SinglePageReading(ExperimentType):
           └─ 📄 fillers.txt (optional)
     ```
 
-    `instructions.txt`, `break.txt`, and `end.txt` contain the text for the instructions, break, and
-    end pages. The instructions are split into multiple pages depending on length.
+    `instructions.txt`, `wait.txt`, `break.txt`, and `end.txt` contain the text for the
+    instructions, wait (after instructions and practice trials), break, and end pages. The
+    instructions are split into multiple pages if necessary.
 
     `01.txt`, `02.txt`, etc. each represent one experimental item. The file names (without `.txt`)
     are used as item IDs. Each file must follow the following format (values in [brackets] are
@@ -153,202 +155,40 @@ class SinglePageReading(ExperimentType):
             "vertical_align": "center",
         }
 
-        # Load texts
-        instructions_text = (
-            (experiment_path / "materials" / "instructions.txt")
-            .read_text(encoding="utf8")
-            .strip()
+        instructions_stage = self._generate_instructions_stage(
+            experiment_path, text_config
         )
-        end_text = (
-            (experiment_path / "materials" / "end.txt")
-            .read_text(encoding="utf8")
-            .strip()
-        )
+        end_stage = self._generate_end_stage(experiment_path, text_config)
+        wait_stage = self._generate_wait_stage(experiment_path, text_config)
         if self.breaks_after is not None:
-            break_text = (
-                (experiment_path / "materials" / "break.txt")
-                .read_text(encoding="utf8")
-                .strip()
-            )
+            break_stage = self._generate_break_stage(experiment_path, text_config)
 
-        # Parse items
         experimental_items, practice_items, filler_items = self._parse_items(
             experiment_path
         )
-
-        # Generate instruction pages
-        instructions_images = stimuli.generate_text_pages(
-            instructions_text,
-            **text_config,
+        stimulus_stages = self._generate_stimulus_stages(
+            experimental_items,
+            practice_items,
+            filler_items,
+            experiment_path,
+            text_config,
         )
-        for i, image in enumerate(instructions_images):
-            image.save(experiment_path / "stimuli", f"instructions.{i}")
-        instructions_stage = {
-            "$type": "StimulusMultiPage",
-            "$name": "instructions",
-            "$record_eyes": True,
-            "imgpaths": [
-                f"stimuli/instructions.{i}.png" for i in range(len(instructions_images))
-            ],
-            "next_page_key": "SPACE",
-        }
 
-        # Generate end page
-        (end_image,) = stimuli.generate_text_pages(
-            end_text,
-            **text_config,
-        )
-        end_image.save(experiment_path / "stimuli", "end")
-        end_stage = {
-            "$type": "StimulusPage",
-            "$name": "end",
-            "imgpath": "stimuli/end.png",
-            "continue_key": "SPACE",
-        }
-
-        # Generate host-controlled page
-        (host_image,) = stimuli.generate_text_pages(
-            "[SPACE] Setup\n[ESC] Continue",
-            **text_config,
-        )
-        host_image.save(experiment_path / "stimuli", "host")
-        host_stage = {
-            "$name": "wait",
-            "$type": "HostControlled",
-            "continue_key": "ESCAPE",
-            "setup_key": "SPACE",
-            "stage": {"$type": "Blank", "continue_key": "SPACE"},
-            "host_imgpath": "stimuli/host.png",
-        }
-
-        # Generate break page
-        if self.breaks_after is not None:
-            (break_image,) = stimuli.generate_text_pages(
-                break_text,
-                **text_config,
-            )
-            break_image.save(experiment_path / "stimuli", "break")
-            break_stage = {
-                "$type": "HostControlled",
-                "continue_key": "ESCAPE",
-                "setup_key": "SPACE",
-                "stage": {
-                    "$type": "StimulusPage",
-                    "imgpath": "stimuli/break.png",
-                    "continue_key": "SPACE",
-                },
-                "host_imgpath": "stimuli/host.png",
-            }
-
-        # Generate stimulus pages
-        stimulus_stages = {}
-        for item_id, item in (
-            list(experimental_items.items())
-            + list(practice_items.items())
-            + list(filler_items.items())
-        ):
-            for condition, subitem in item.items():
-                if (
-                    item_id.startswith(("practice.", "filler."))
-                    or self.conditions is None
-                ):
-                    name = item_id
-                else:
-                    name = f"{item_id}.{condition}"
-                images = stimuli.generate_text_pages(
-                    subitem["text"],
-                    **text_config,
-                )
-                assert (
-                    len(images) == 1
-                ), f"Text for item {name} does not fit on a single page."
-                images[0].save(experiment_path / "stimuli", f"{name}.text")
-                text_start_location = (
-                    int(images[0].areas["page"][0].left - text_config["font_size"]),
-                    int(
-                        images[0].areas["page"][0].top
-                        + text_config["font_size"] * text_config["line_spacing"] / 2
-                    ),
-                )
-
-                stages = [
-                    {
-                        "$name": f"{name}.drift",
-                        "$type": "DriftCorrect",
-                        "location": text_start_location,
-                    },
-                    {
-                        "$type": "StimulusPage",
-                        "$name": f"{name}.text",
-                        "$record_eyes": True,
-                        "imgpath": f"stimuli/{name}.text.png",
-                        "continue_key": "SPACE",
-                    },
-                ]
-
-                # cursor_locations = []
-                for i, question in enumerate(subitem["questions"]):
-                    question_image = (  # , question_cursor_locations = (
-                        stimuli.generate_mcq_page(
-                            question["stem"],
-                            question["options"],
-                            **text_config,
-                        )
-                    )
-                    # cursor_locations.append(question_cursor_locations)
-                    question_image.save(
-                        experiment_path / "stimuli", f"{name}.question.{i+1}"
-                    )
-                    stages.append(
-                        {
-                            "$name": f"{name}.question.{i+1}",
-                            "$type": "MultipleChoiceQuestion",
-                            "$record_eyes": True,
-                            "imgpath": f"stimuli/{name}.question.{i+1}.png",
-                            "option_keys": self.option_keys,
-                            "correct_option_index": question["correct_option_index"],
-                            # "cursor_size": self.font_size - 8,
-                            # "prev_option_key": "UP",
-                            # "next_option_key": "DOWN",
-                            # "confirm_key": "SPACE",
-                            # "cursor_locations": cursor_locations[i],
-                        }
-                    )
-
-                stimulus_stages[name] = stages
-
-        # Build design for item assignment
-        participant_ids = [f"P{i}" for i in range(1, self.num_participants + 1)]
-        item_ids = sorted(experimental_items.keys())
-        conditions = self.conditions if self.conditions is not None else ["item"]
-        design = build_design(self.design, participant_ids, item_ids, conditions)
-
-        # Add fillers and shuffle
-        assignments = {}
-        for participant_id in participant_ids:
-            if self.conditions is None:
-                experimental_assignments = [
-                    item_id for item_id, _ in design[participant_id]
-                ]
-            else:
-                experimental_assignments = [
-                    f"{item_id}.{condition}"
-                    for item_id, condition in design[participant_id]
-                ]
-            filler_assignments = [item_id for item_id in filler_items.keys()]
-            participant_assignments = experimental_assignments + filler_assignments
-            random.seed(participant_id)
-            random.shuffle(participant_assignments)
-            assignments[participant_id] = participant_assignments
+        assignments = self._build_item_assignments(experimental_items, filler_items)
+        # Save assignment table for convenience
+        with open(experiment_path / "sessions" / "assignments.csv", "w") as f:
+            csv_writer = csv.writer(f)
+            for participant_id in assignments:
+                csv_writer.writerow([participant_id] + assignments[participant_id])
 
         # Create sessions
         sessions = {}
         for participant_id, assignment in assignments.items():
             practice_stages = []
             if len(practice_items) > 0:
-                practice_stages.append(host_stage | {"$name": "wait.practice"})
                 for name in practice_items:
                     practice_stages.extend(stimulus_stages[name])
+                practice_stages.append(wait_stage | {"$name": "wait.practice"})
 
             item_stages = []
             for i, name in enumerate(assignment):
@@ -364,19 +204,13 @@ class SinglePageReading(ExperimentType):
                 "stages": [
                     {"$name": "setup", "$type": "Setup"},
                     instructions_stage,
+                    wait_stage,
                     *practice_stages,
-                    host_stage,
                     *item_stages,
                     end_stage,
                 ]
             }
             sessions[participant_id] = session
-
-        # Save assignment table for convenience
-        with open(experiment_path / "sessions" / "assignments.csv", "w") as f:
-            csv_writer = csv.writer(f)
-            for participant_id in assignments:
-                csv_writer.writerow([participant_id] + assignments[participant_id])
 
         return sessions
 
@@ -567,3 +401,220 @@ class SinglePageReading(ExperimentType):
                     )
 
         return item
+
+    def _generate_instructions_stage(
+        self, experiment_path: Path, text_config: dict[str, Any]
+    ) -> dict[str, Any]:
+        text = (
+            (experiment_path / "materials" / "instructions.txt")
+            .read_text(encoding="utf8")
+            .strip()
+        )
+        images = stimuli.generate_text_pages(text, **text_config)
+        for i, image in enumerate(images):
+            image.save(experiment_path, f"instructions.{i}")
+        return {
+            "$type": "StimulusMultiPage",
+            "$name": "instructions",
+            "$record_eyes": True,
+            "imgpaths": [image.imgpath for image in images],
+            "next_page_key": "SPACE",
+        }
+
+    def _generate_end_stage(
+        self, experiment_path: Path, text_config: dict[str, Any]
+    ) -> dict[str, Any]:
+        text = (
+            (experiment_path / "materials" / "end.txt")
+            .read_text(encoding="utf8")
+            .strip()
+        )
+        (image,) = stimuli.generate_text_pages(
+            text,
+            **text_config,
+        )
+        image.save(experiment_path, "end")
+        return {
+            "$type": "StimulusPage",
+            "$name": "end",
+            "imgpath": image.imgpath,
+            "continue_key": "SPACE",
+        }
+
+    def _generate_wait_stage(
+        self,
+        experiment_path: Path,
+        text_config: dict[str, Any],
+    ) -> dict[str, Any]:
+        participant_text = ""
+        if (experiment_path / "materials" / "wait.txt").exists():
+            participant_text = (
+                (experiment_path / "materials" / "wait.txt")
+                .read_text(encoding="utf8")
+                .strip()
+            )
+        (participant_image,) = stimuli.generate_text_pages(
+            participant_text,
+            **text_config,
+        )
+        participant_image.save(experiment_path, "wait.participant")
+        (host_image,) = stimuli.generate_text_pages(
+            "[SPACE] Setup\n[ESC] Continue",
+            **text_config,
+        )
+        host_image.save(experiment_path, "wait.host")
+        return {
+            "$name": "wait",
+            "$type": "HostControlled",
+            "continue_key": "ESCAPE",
+            "setup_key": "SPACE",
+            "stage": {
+                "$type": "StimulusPage",
+                "imgpath": participant_image.imgpath,
+                "continue_key": "SPACE",
+            },
+            "host_imgpath": host_image.imgpath,
+        }
+
+    def _generate_break_stage(
+        self,
+        experiment_path: Path,
+        text_config: dict[str, Any],
+    ) -> dict[str, Any]:
+        text = (
+            (experiment_path / "materials" / "break.txt")
+            .read_text(encoding="utf8")
+            .strip()
+        )
+        (image,) = stimuli.generate_text_pages(
+            text,
+            **text_config,
+        )
+        image.save(experiment_path, "break")
+        return {
+            "$type": "HostControlled",
+            "continue_key": "ESCAPE",
+            "setup_key": "SPACE",
+            "stage": {
+                "$type": "StimulusPage",
+                "imgpath": image.imgpath,
+                "continue_key": "SPACE",
+            },
+            "host_imgpath": "stimuli/wait.host.png",
+        }
+
+    def _generate_stimulus_stages(
+        self,
+        experimental_items: dict[str, dict[str, Any]],
+        practice_items: dict[str, dict[str, Any]],
+        filler_items: dict[str, dict[str, Any]],
+        experiment_path: Path,
+        text_config: dict[str, Any],
+    ) -> dict[str, list[dict[str, Any]]]:
+        stimulus_stages = {}
+        for item_id, item in (
+            list(experimental_items.items())
+            + list(practice_items.items())
+            + list(filler_items.items())
+        ):
+            for condition, subitem in item.items():
+                if (
+                    item_id.startswith(("practice.", "filler."))
+                    or self.conditions is None
+                ):
+                    name = item_id
+                else:
+                    name = f"{item_id}.{condition}"
+                text_images = stimuli.generate_text_pages(
+                    subitem["text"],
+                    **text_config,
+                )
+                assert (
+                    len(text_images) == 1
+                ), f"Text for item {name} does not fit on a single page."
+                text_image = text_images[0]
+                text_image.save(experiment_path, f"{name}.text")
+                text_start_location = (
+                    int(text_image.areas["page"][0].left - text_config["font_size"]),
+                    int(
+                        text_image.areas["page"][0].top
+                        + text_config["font_size"] * text_config["line_spacing"] / 2
+                    ),
+                )
+
+                stages = [
+                    {
+                        "$name": f"{name}.drift",
+                        "$type": "DriftCorrect",
+                        "location": text_start_location,
+                    },
+                    {
+                        "$type": "StimulusPage",
+                        "$name": f"{name}.text",
+                        "$record_eyes": True,
+                        "imgpath": text_image.imgpath,
+                        "continue_key": "SPACE",
+                    },
+                ]
+
+                # cursor_locations = []
+                for i, question in enumerate(subitem["questions"]):
+                    question_image = (  # , question_cursor_locations = (
+                        stimuli.generate_mcq_page(
+                            question["stem"],
+                            question["options"],
+                            **text_config,
+                        )
+                    )
+                    # cursor_locations.append(question_cursor_locations)
+                    question_image.save(experiment_path, f"{name}.question.{i+1}")
+                    stages.append(
+                        {
+                            "$name": f"{name}.question.{i+1}",
+                            "$type": "MultipleChoiceQuestion",
+                            "$record_eyes": True,
+                            "imgpath": question_image.imgpath,
+                            "option_keys": self.option_keys,
+                            "correct_option_index": question["correct_option_index"],
+                            # "cursor_size": self.font_size - 8,
+                            # "prev_option_key": "UP",
+                            # "next_option_key": "DOWN",
+                            # "confirm_key": "SPACE",
+                            # "cursor_locations": cursor_locations[i],
+                        }
+                    )
+
+                stimulus_stages[name] = stages
+
+        return stimulus_stages
+
+    def _build_item_assignments(
+        self,
+        experimental_items: dict[str, dict[str, Any]],
+        filler_items: dict[str, dict[str, Any]],
+    ) -> dict[str, list[str]]:
+        """Returns a dict mapping each participant ID to a list of item IDs (with conditions)."""
+        # Build design for experimental items
+        participant_ids = [f"P{i}" for i in range(1, self.num_participants + 1)]
+        item_ids = sorted(experimental_items.keys())
+        conditions = self.conditions if self.conditions is not None else ["item"]
+        design = build_design(self.design, participant_ids, item_ids, conditions)
+
+        # Add fillers and shuffle
+        assignments = {}
+        for participant_id in participant_ids:
+            if self.conditions is None:
+                experimental_assignments = [
+                    item_id for item_id, _ in design[participant_id]
+                ]
+            else:
+                experimental_assignments = [
+                    f"{item_id}.{condition}"
+                    for item_id, condition in design[participant_id]
+                ]
+            filler_assignments = [item_id for item_id in filler_items.keys()]
+            participant_assignments = experimental_assignments + filler_assignments
+            random.seed(participant_id)
+            random.shuffle(participant_assignments)
+            assignments[participant_id] = participant_assignments
+        return assignments

@@ -152,9 +152,17 @@ class TextImage:
                 # Start area indices at 0 by default
                 self.areas_start_index[area_type] = 0
 
+        self._imgpath = None
+
+    @property
+    def imgpath(self) -> str:
+        if self._imgpath is None:
+            raise ValueError("TextImage has not been saved yet.")
+        return self._imgpath
+
     def save(
         self,
-        path: Path | str,
+        experiment_path: Path | str,
         stem: str,
         area_images: bool | None = None,
     ):
@@ -163,10 +171,11 @@ class TextImage:
         if area_images is None:
             area_images = self.generate_area_images
 
-        path = Path(path)
+        experiment_path = Path(experiment_path)
 
         # Image
-        self.image.save(path / f"{stem}.png")
+        self._imgpath = str(experiment_path / "stimuli" / f"{stem}.png")
+        self.image.save(self._imgpath)
 
         # Areas
         fieldnames = [
@@ -180,7 +189,7 @@ class TextImage:
             "content",
         ]
         for area_type in self.areas:
-            with open(path / f"{stem}.{area_type}.csv", "w") as f:
+            with open(experiment_path / "stimuli" / f"{stem}.{area_type}.csv", "w") as f:
                 writer = csv.DictWriter(f, fieldnames=fieldnames)
                 writer.writeheader()
                 area_index = self.areas_start_index[area_type]
@@ -195,7 +204,7 @@ class TextImage:
                 draw = ImageDraw.Draw(image)
                 for area in self.areas[area_type]:
                     draw.rectangle(area.coords, outline="red", width=1)
-                image.save(path / f"{stem}.{area_type}.png")
+                image.save(experiment_path / "stimuli" / f"{stem}.{area_type}.png")
 
 
 def draw_text(
