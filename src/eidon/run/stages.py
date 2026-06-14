@@ -591,6 +591,7 @@ class CursorMultipleChoiceQuestion(ExperimentStage):
         prev_option_key: str,
         confirm_key: str,
         option_values: list[str] | None = None,
+        correct_option_index: int | None = None,
     ):
         """
         :param imgpath:
@@ -608,6 +609,9 @@ class CursorMultipleChoiceQuestion(ExperimentStage):
         :param option_values:
             The values for each answer option that will be returned and logged.
             By default, the option indices are used as values.
+        :param correct_option_index:
+            The index of the correct answer option.
+            This does not affect the presentation, but is logged for convenience.
         """
         imgpath = (self.runner.experiment_path / imgpath).absolute()
         img = pyglet.image.load(imgpath)
@@ -632,6 +636,11 @@ class CursorMultipleChoiceQuestion(ExperimentStage):
             assert len(self.option_values) == len(
                 self.cursor_locations
             ), "option_values must have the same length as cursor_locations"
+        self.correct_option_index = correct_option_index
+        if self.correct_option_index is not None:
+            assert (
+                0 <= self.correct_option_index < len(self.cursor_locations)
+            ), "correct_option_index must be a valid index in cursor_locations"
 
     def start(self) -> dict[str, Any]:
         self.finished = False

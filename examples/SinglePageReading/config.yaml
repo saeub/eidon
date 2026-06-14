@@ -15,7 +15,8 @@ margin: 50
 font_size: 25
 line_spacing: 2.5
 
-# Keys for question answering
+# Questions
+question_layout: horizontal
 option_keys: [Y, N]
 
 # Breaks between items

@@ -118,27 +118,62 @@ class SinglePageReading(ExperimentType):
         Should be a multiple of the number of conditions.
     :param conditions: List of item condition names (if any).
     :param design: Name of the design to use for assigning items to participants.
-    :param option_keys: List of keys to use for selecting multiple-choice options, in order.
-        For example, ["Y", "N"] to use the Y key for the first option and N key for the second option.
+    :param breaks_after: Insert a break after every N items.
     :param margin: Margin in pixels around the text on the stimulus pages.
     :param font_monospaced: Whether to use a monospaced font for the stimuli.
         This is recommended when controlling for word length effects.
     :param font_size: Font size for all text.
     :param line_spacing: Line spacing multiplier for all text.
-    :param breaks_after: Insert a break after every N items.
+    :param question_layout: Layout for multiple-choice questions.
+        `horizontal` arranges options in a horizontal row, `diamond` arranges them in a diamond
+        shape (requires exactly 4 options that are selected with the UP, LEFT, RIGHT, and DOWN
+        keys), and `cursor` arranges them vertically with a cursor movable with the UP and DOWN
+        keys (requires `confirm_key`).
+    :param option_keys: List of keys to use for selecting multiple-choice options, in order.
+        For example, `["Y", "N"]` to use the Y key for the first option and N key for the second
+        option. Only required when question layout is `horizontal`.
+    :param option_confirm_key: Key to use for confirming the selection of an option.
+        If not specified, options are selected immediately when the corresponding option key is
+        pressed.
     """
 
     num_participants: int
     conditions: list[str] | None = None
     design: str = "latin_square"
-    option_keys: list[str]
+    breaks_after: int | None = None
     margin: int = 50
     font_monospaced: bool = True
     font_size: int = 25
     line_spacing: int = 2.0
-    breaks_after: int | None = None
+    question_layout: str = "horizontal"
+    option_keys: list[str] | None = None
+    confirm_key: str | None = None
 
     def build(self, experiment_path: Path) -> dict[str, dict[str, Any]]:
+        if self.question_layout == "horizontal":
+            if self.option_keys is None:
+                raise ValueError(
+                    "option_keys must be provided for horizontal question layout."
+                )
+        elif self.question_layout == "diamond":
+            if self.option_keys is None:
+                self.option_keys = ["UP", "LEFT", "RIGHT", "DOWN"]
+            if len(self.option_keys) != 4:
+                raise ValueError(
+                    "Exactly 4 option keys must be provided for diamond layout "
+                    "(to select top/left/right/bottom option)."
+                )
+        elif self.question_layout == "cursor":
+            if self.option_keys is None:
+                self.option_keys = ["UP", "DOWN"]
+            if len(self.option_keys) != 2:
+                raise ValueError(
+                    "Exactly 2 option keys must be provided for cursor layout "
+                    "(to move cursor up and down)."
+                )
+            if self.confirm_key is None:
+                raise ValueError("A confirm key must be provided for cursor layout.")
+
         if self.font_monospaced:
             font_path = FONTS["monospace"]
         else:
@@ -533,10 +568,10 @@ class SinglePageReading(ExperimentType):
                 text_image = text_images[0]
                 text_image.save(experiment_path, f"{name}.text")
                 text_start_location = (
-                    int(text_image.areas["page"][0].left - text_config["font_size"]),
+                    int(text_image.areas["page"][0].left - self.font_size),
                     int(
                         text_image.areas["page"][0].top
-                        + text_config["font_size"] * text_config["line_spacing"] / 2
+                        + self.font_size * self.line_spacing / 2
                     ),
                 )
 
@@ -555,32 +590,55 @@ class SinglePageReading(ExperimentType):
                     },
                 ]
 
-                # cursor_locations = []
                 for i, question in enumerate(subitem["questions"]):
-                    question_image = (  # , question_cursor_locations = (
-                        stimuli.generate_mcq_page(
+                    if self.question_layout in {"horizontal", "diamond"}:
+                        question_image, option_boxes = stimuli.generate_mcq_page(
                             question["stem"],
                             question["options"],
+                            option_layout=self.question_layout,
                             **text_config,
                         )
-                    )
-                    # cursor_locations.append(question_cursor_locations)
-                    question_image.save(experiment_path, f"{name}.question.{i+1}")
-                    stages.append(
-                        {
-                            "$name": f"{name}.question.{i+1}",
-                            "$type": "MultipleChoiceQuestion",
-                            "$record_eyes": True,
-                            "imgpath": question_image.imgpath,
-                            "option_keys": self.option_keys,
-                            "correct_option_index": question["correct_option_index"],
-                            # "cursor_size": self.font_size - 8,
-                            # "prev_option_key": "UP",
-                            # "next_option_key": "DOWN",
-                            # "confirm_key": "SPACE",
-                            # "cursor_locations": cursor_locations[i],
-                        }
-                    )
+                        question_image.save(experiment_path, f"{name}.question.{i+1}")
+                        stages.append(
+                            {
+                                "$name": f"{name}.question.{i+1}",
+                                "$type": "MultipleChoiceQuestion",
+                                "$record_eyes": True,
+                                "imgpath": question_image.imgpath,
+                                "option_keys": self.option_keys,
+                                "correct_option_index": question[
+                                    "correct_option_index"
+                                ],
+                                "option_boxes": option_boxes,
+                                "confirm_key": self.confirm_key,
+                            }
+                        )
+
+                    elif self.question_layout == "cursor":
+                        question_image, cursor_locations = (
+                            stimuli.generate_cursor_mcq_page(
+                                question["stem"],
+                                question["options"],
+                                **text_config,
+                            )
+                        )
+                        question_image.save(experiment_path, f"{name}.question.{i+1}")
+                        stages.append(
+                            {
+                                "$name": f"{name}.question.{i+1}",
+                                "$type": "CursorMultipleChoiceQuestion",
+                                "$record_eyes": True,
+                                "imgpath": question_image.imgpath,
+                                "cursor_locations": cursor_locations,
+                                "cursor_size": self.font_size - 8,
+                                "prev_option_key": self.option_keys[0],
+                                "next_option_key": self.option_keys[1],
+                                "confirm_key": self.confirm_key,
+                                "correct_option_index": question[
+                                    "correct_option_index"
+                                ],
+                            }
+                        )
 
                 stimulus_stages[name] = stages
 

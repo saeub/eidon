@@ -4,7 +4,7 @@ import csv
 import re
 import warnings
 from pathlib import Path
-from typing import Any, Generator
+from typing import Any, Generator, Literal
 from collections import defaultdict
 from pprint import pprint
 
@@ -190,7 +190,9 @@ class TextImage:
             "content",
         ]
         for area_type in self.areas:
-            with open(experiment_path / "stimuli" / f"{stem}.{area_type}.csv", "w") as f:
+            with open(
+                experiment_path / "stimuli" / f"{stem}.{area_type}.csv", "w"
+            ) as f:
                 writer = csv.DictWriter(f, fieldnames=fieldnames)
                 writer.writeheader()
                 area_index = self.areas_start_index[area_type]
@@ -215,13 +217,14 @@ def draw_text(
     y: float,
     max_width: float,
     font: ImageFont.FreeTypeFont,
-    align: str = "left",
+    align: Literal["left", "center", "right"] = "left",
     line_spacing: float = 1.0,
     extend_word_areas: bool = True,
     extend_char_areas: bool = True,
     max_height: float = float("inf"),
-    vertical_align: str = "top",
+    vertical_align: Literal["top", "center", "bottom"] = "top",
     color: tuple[int, int, int] = (0, 0, 0),
+    raise_on_overflow: bool = False,
 ) -> tuple[list[Area], list[Area], Area]:
     """Draw text on an image and return character, word, and text areas.
 
@@ -239,6 +242,7 @@ def draw_text(
         max_height: Maximum height of the text (warning if exceeded).
         vertical_align: Vertical alignment within max_height ('top', 'center', 'bottom').
         color: Text color as an RGB tuple.
+        raise_on_overflow: Whether to raise an error if text exceeds max_height.
 
     Returns:
         A tuple containing a list of character areas, a list of word areas, and a text area.
@@ -256,7 +260,10 @@ def draw_text(
 
     total_height = line_height * len(lines)
     if total_height > max_height:
-        warnings.warn("Text exceeds max_height")
+        message = f"Text height {total_height} exceeds max_height {max_height}."
+        if raise_on_overflow:
+            raise ValueError(message)
+        warnings.warn(message)
 
     if vertical_align != "top":
         assert max_height < float(
@@ -359,8 +366,8 @@ def generate_text_pages(
     margin: float,
     font_path: str,
     font_size: float,
-    align: str = "left",
-    vertical_align: str = "top",
+    align: Literal["left", "center", "right"] = "left",
+    vertical_align: Literal["top", "center", "bottom"] = "top",
     line_spacing: float = 1.0,
     background_color: tuple[int, int, int] = (255, 255, 255),
     text_color: tuple[int, int, int] = (0, 0, 0),
@@ -451,12 +458,13 @@ def generate_mcq_page(
     margin: float,
     font_path: str,
     font_size: float,
-    vertical_align: str = "top",
+    vertical_align: Literal["top", "center", "bottom"] = "top",
     line_spacing: float = 1.0,
     background_color: tuple[int, int, int] = (255, 255, 255),
     text_color: tuple[int, int, int] = (0, 0, 0),
     extend_word_areas: bool = True,
-) -> TextImage:
+    option_layout: Literal["horizontal", "vertical", "diamond"] = "horizontal",
+) -> tuple[TextImage, list[tuple[float, float, float, float]]]:
     """Generate stimulus image for a MultipleChoiceQuestion stage listing answer options horizontally.
 
     Args:
@@ -472,9 +480,12 @@ def generate_mcq_page(
         text_color: Text color as an RGB tuple.
         background_color: Background color as an RGB tuple.
         extend_word_areas: Extend word areas to cover whitespace between words.
+        option_layout: Layout of answer options ('horizontal', 'diamond').
+            'diamond' arranges four options in a diamond shape with the first option at the top,
+            the second and third options in the middle row, and the fourth option at the bottom.
 
     Returns:
-        The generated TextImage.
+        A tuple containing the generated TextImage and the option boxes (x, y, width, height).
     """
     text_width = width - 2 * margin
     text_height = height - 2 * margin
@@ -485,11 +496,28 @@ def generate_mcq_page(
 
     num_question_lines = len(list(wrap_text(question, font, text_width)))
 
+    if option_layout == "horizontal":
+        option_width = text_width / len(options)
+    elif option_layout == "diamond":
+        assert len(options) == 4, "Diamond option layout requires exactly 4 options"
+        option_width = text_width / 2
+    else:
+        raise NotImplementedError(f"Option layout {option_layout!r} not supported")
+    num_option_lines = [
+        len(list(wrap_text(option, font, option_width))) for option in options
+    ]
+
     font_ascent, font_descent = font.getmetrics()
     line_height = (font_ascent + font_descent) * line_spacing
-    total_height = line_height * (num_question_lines + 2)
+    if option_layout == "horizontal":
+        option_height = line_height * max(num_option_lines)
+        total_height = num_question_lines * line_height + option_height
+    elif option_layout == "diamond":
+        option_height = line_height * max(num_option_lines)
+        total_height = (num_question_lines + 1) * line_height + 3 * option_height
     question_left = margin
     question_top = margin
+    question_bottom = question_top + num_question_lines * line_height
     question_width = text_width
     if vertical_align == "center":
         question_top += (text_height - total_height) / 2
@@ -500,6 +528,7 @@ def generate_mcq_page(
     word_areas = []
     section_areas = []
 
+    # Draw question
     question_char_areas, question_word_areas, question_area = draw_text(
         draw,
         question,
@@ -522,40 +551,76 @@ def generate_mcq_page(
     section_areas.append(question_area)
 
     # Draw answer options
-    option_left = margin + 2 * font_size
-    option_top = question_area.bottom + line_height
-    option_width = text_width / len(options)
+    option_boxes = []
+    if option_layout == "horizontal":
+        option_left = margin + 2 * font_size
+        option_top = question_area.bottom + line_height
+        for option_index, option in enumerate(options):
+            # Draw option text
+            option_char_areas, option_word_areas, option_area = draw_text(
+                draw,
+                option,
+                option_left,
+                option_top,
+                option_width,
+                font,
+                align="center",
+                line_spacing=line_spacing,
+                extend_word_areas=extend_word_areas,
+                color=text_color,
+            )
+            for char_area in option_char_areas:
+                char_area.section = f"option:{option_index}"
+            for word_area in option_word_areas:
+                word_area.section = f"option:{option_index}"
+            option_area.content = f"option:{option_index}"
+            char_areas.extend(option_char_areas)
+            word_areas.extend(option_word_areas)
+            section_areas.append(option_area)
+            option_boxes.append((option_left, option_top, option_width, option_height))
+            option_left += option_width
 
-    for option_index, option in enumerate(options):
-        # Draw option text
-        option_char_areas, option_word_areas, option_area = draw_text(
-            draw,
-            option,
-            option_left,
-            option_top,
-            option_width,
-            font,
-            align="center",
-            line_spacing=line_spacing,
-            extend_word_areas=extend_word_areas,
-            color=text_color,
-        )
-        for char_area in option_char_areas:
-            char_area.section = f"option:{option_index}"
-        for word_area in option_word_areas:
-            word_area.section = f"option:{option_index}"
-        option_area.content = f"option:{option_index}"
-        char_areas.extend(option_char_areas)
-        word_areas.extend(option_word_areas)
-        section_areas.append(option_area)
+    elif option_layout == "diamond":
+        option_centers = [
+            (width / 2, line_height * 2),
+            (margin + option_width / 2, line_height * 2 + option_height),
+            (width - margin - option_width / 2, line_height * 2 + option_height),
+            (width / 2, line_height * 2 + option_height * 2),
+        ]
+        for option_index, (option, option_center) in enumerate(
+            zip(options, option_centers)
+        ):
+            option_left = option_center[0] - option_width / 2
+            option_top = question_bottom + option_center[1] - option_height / 2
+            option_char_areas, option_word_areas, option_area = draw_text(
+                draw,
+                option,
+                option_left,
+                option_top,
+                option_width,
+                max_height=option_height,
+                font=font,
+                align="center",
+                vertical_align="center",
+                line_spacing=line_spacing,
+                extend_word_areas=extend_word_areas,
+                color=text_color,
+            )
+            for char_area in option_char_areas:
+                char_area.section = f"option:{option_index}"
+            for word_area in option_word_areas:
+                word_area.section = f"option:{option_index}"
+            option_area.content = f"option:{option_index}"
+            char_areas.extend(option_char_areas)
+            word_areas.extend(option_word_areas)
+            option_boxes.append((option_left, option_top, option_width, option_height))
+            section_areas.append(option_area)
 
-        # Draw rectangle around option
-        draw.rectangle(option_area.coords, outline="black", width=3)
-
-        option_left += option_width
-
-    return TextImage(
-        image, {"char": char_areas, "word": word_areas, "section": section_areas}
+    return (
+        TextImage(
+            image, {"char": char_areas, "word": word_areas, "section": section_areas}
+        ),
+        option_boxes,
     )
 
 
@@ -567,7 +632,7 @@ def generate_cursor_mcq_page(
     margin: float,
     font_path: str,
     font_size: float,
-    vertical_align: str = "top",
+    vertical_align: Literal["top", "center", "bottom"] = "top",
     line_spacing: float = 1.0,
     background_color: tuple[int, int, int] = (255, 255, 255),
     text_color: tuple[int, int, int] = (0, 0, 0),

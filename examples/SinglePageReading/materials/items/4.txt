@@ -3,29 +3,29 @@ Sun
 <<question>>
 Question?
 <<options>>
-yes
-**no
+[Y]es
+**[N]o
 
 <<condition_B>>
 Son
 <<question>>
 Question?
 <<options>>
-**yes
-no
+**[Y]es
+[N]o
 
 <<condition_C>>
 Ton
 <<question>>
 Question?
 <<options>>
-yes
-**no
+[Y]es
+**[N]o
 
 <<condition_D>>
 Tun
 <<question>>
 Question?
 <<options>>
-**yes
-no
+**[Y]es
+[N]o

@@ -3,29 +3,29 @@ The sun is warm.
 <<question>>
 Question?
 <<options>>
-**yes
-no
+**[Y]es
+[N]o
 
 <<condition_B>>
 Warm the sun is.
 <<question>>
 Question?
 <<options>>
-yes
-**no
+[Y]es
+**[N]o
 
 <<condition_C>>
 Is the sun warm?
 <<question>>
 Question?
 <<options>>
-**yes
-no
+**[Y]es
+[N]o
 
 <<condition_D>>
 The sun is warm?
 <<question>>
 Question?
 <<options>>
-yes
-**no
+[Y]es
+**[N]o

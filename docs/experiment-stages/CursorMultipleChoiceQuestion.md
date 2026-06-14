@@ -25,3 +25,5 @@ Shows an image stimulus and allows selecting a response option by moving a curso
   Key names are [pyglet key symbol strings](https://pyglet.readthedocs.io/en/latest/programming_guide/keyboard.html#defined-key-symbols) (e.g. `A`, `LEFT`, `SPACE`).
 - `option_values` (list[str] | None)  
   The values for each answer option that will be returned and logged. By default, the option indices are used as values.
+- `correct_option_index` (int | None)  
+  The index of the correct answer option. This does not affect the presentation, but is logged for convenience.

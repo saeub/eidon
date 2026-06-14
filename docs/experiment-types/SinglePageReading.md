@@ -118,11 +118,11 @@ Replace `<<filler>>` with `<<practice>>` for practice items.
   Default: `None`
 - `design` (str)  
   Name of the design to use for assigning items to participants.  
-  Available designs are documented [here](designs.md)  
+  Available designs are documented [here](designs.md).  
   Default: `latin_square`
-- `option_keys` (list[str])  
-  List of keys to use for selecting multiple-choice options, in order. For example, ["Y", "N"] to use the Y key for the first option and N key for the second option.  
-  Key names are [pyglet key symbol strings](https://pyglet.readthedocs.io/en/latest/programming_guide/keyboard.html#defined-key-symbols) (e.g. `A`, `LEFT`, `SPACE`).
+- `breaks_after` (int | None)  
+  Insert a break after every N items.  
+  Default: `None`
 - `margin` (int)  
   Margin in pixels around the text on the stimulus pages.  
   Default: `50`
@@ -135,8 +135,15 @@ Replace `<<filler>>` with `<<practice>>` for practice items.
 - `line_spacing` (int)  
   Line spacing multiplier for all text.  
   Default: `2.0`
-- `breaks_after` (int | None)  
-  Insert a break after every N items.  
+- `question_layout` (str)  
+  Layout for multiple-choice questions. `horizontal` arranges options in a horizontal row, `diamond` arranges them in a diamond shape (requires exactly 4 options that are selected with the UP, LEFT, RIGHT, and DOWN keys), and `cursor` arranges them vertically with a cursor movable with the UP and DOWN keys (requires `confirm_key`).  
+  Default: `horizontal`
+- `option_keys` (list[str] | None)  
+  List of keys to use for selecting multiple-choice options, in order. For example, `["Y", "N"]` to use the Y key for the first option and N key for the second option. Only required when question layout is `horizontal`.  
+  Key names are [pyglet key symbol strings](https://pyglet.readthedocs.io/en/latest/programming_guide/keyboard.html#defined-key-symbols) (e.g. `A`, `LEFT`, `SPACE`).  
+  Default: `None`
+- `confirm_key` (str | None)  
+  Key names are [pyglet key symbol strings](https://pyglet.readthedocs.io/en/latest/programming_guide/keyboard.html#defined-key-symbols) (e.g. `A`, `LEFT`, `SPACE`).  
   Default: `None`
 
 ### [Example](https://github.com/saeub/eidon/tree/main/examples/SinglePageReading)

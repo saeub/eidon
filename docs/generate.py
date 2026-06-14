@@ -64,7 +64,7 @@ def generate_experimenttype_page(
                 "(e.g. `A`, `LEFT`, `SPACE`)."
             )
         elif field_name == "design":
-            markdown += "  \n  Available designs are documented [here](designs.md)"
+            markdown += "  \n  Available designs are documented [here](designs.md)."
         if field_default is not dataclasses.MISSING:
             markdown += f"  \n  Default: `{field_default}`"
         markdown += "\n"

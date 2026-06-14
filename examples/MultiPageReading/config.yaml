@@ -13,8 +13,9 @@ margin: 50
 font_size: 25
 line_spacing: 2.5
 
-# Keys for question answering
-option_keys: [Y, N]
+# Questions
+question_layout: diamond
+confirm_key: SPACE
 
 # Breaks between items
 breaks_after: 4
