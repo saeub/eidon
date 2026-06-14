@@ -118,9 +118,11 @@ Replace `<<filler>>` with `<<practice>>` for practice items.
   Default: `None`
 - `design` (str)  
   Name of the design to use for assigning items to participants.  
+  Available designs are documented [here](designs.md)  
   Default: `latin_square`
 - `option_keys` (list[str])  
-  List of keys to use for selecting multiple-choice options, in order. For example, ["Y", "N"] to use the Y key for the first option and N key for the second option.
+  List of keys to use for selecting multiple-choice options, in order. For example, ["Y", "N"] to use the Y key for the first option and N key for the second option.  
+  Key names are [pyglet key symbol strings](https://pyglet.readthedocs.io/en/latest/programming_guide/keyboard.html#defined-key-symbols) (e.g. `A`, `LEFT`, `SPACE`).
 - `margin` (int)  
   Margin in pixels around the text on the stimulus pages.  
   Default: `50`

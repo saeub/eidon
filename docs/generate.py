@@ -9,6 +9,7 @@ import docstring_parser
 
 from eidon.__main__ import get_argument_parser
 from eidon.build import ExperimentType
+from eidon.build.designs import DESIGNS
 from eidon.run import ExperimentStage
 
 
@@ -56,6 +57,14 @@ def generate_experimenttype_page(
         markdown += f"- `{field_name}` ({field_type})"
         if field_description:
             markdown += f"  \n  {field_description}"
+        if field_name.endswith(("_key", "_keys")):
+            markdown += (
+                "  \n  Key names are [pyglet key symbol strings]"
+                "(https://pyglet.readthedocs.io/en/latest/programming_guide/keyboard.html#defined-key-symbols) "
+                "(e.g. `A`, `LEFT`, `SPACE`)."
+            )
+        elif field_name == "design":
+            markdown += "  \n  Available designs are documented [here](designs.md)"
         if field_default is not dataclasses.MISSING:
             markdown += f"  \n  Default: `{field_default}`"
         markdown += "\n"
@@ -127,6 +136,16 @@ def generate_experimentstage_page(name: str, cls: type[ExperimentStage]) -> str:
     return markdown
 
 
+def generate_designs_page(designs: dict[str, typing.Callable]) -> str:
+    markdown = "## Experiment designs\n\n"
+    markdown += "| Design | Description |\n"
+    markdown += "| --- | --- |\n"
+    for name, design in sorted(designs.items()):
+        short_description = design.__doc__.replace("\n", " ") or ""
+        markdown += f"| `{name}` | {short_description} |\n"
+    return markdown
+
+
 def generate_cli_index(argument_parser: argparse.ArgumentParser) -> str:
     command_helps = {
         action.dest: action.help
@@ -189,6 +208,10 @@ def main():
         (docs_path / "experiment-stages" / f"{name}.md").write_text(
             generated_prefix + markdown
         )
+
+    # Experiment designs
+    markdown = generate_designs_page(DESIGNS)
+    (docs_path / "experiment-types" / "designs.md").write_text(generated_prefix + markdown)
 
     # CLI
     argument_parser = get_argument_parser(color=False)
