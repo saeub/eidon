@@ -119,8 +119,8 @@ class LatinSquareReading(ExperimentType):
             font_path = FONTS["default"]
 
         text_config = {
-            "width": self.display_size_px[0],
-            "height": self.display_size_px[1],
+            "width": self.stimulus_area_px[0],
+            "height": self.stimulus_area_px[1],
             "margin_px": self.margin_px,
             "font_path": font_path,
             "font_size": self.font_size,

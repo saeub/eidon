@@ -52,7 +52,7 @@ class ExperimentRunner:
         if not setup.confirm_setup():
             setup.do_setup()
 
-        self.display_width, self.display_height = experiment_definition["display_size_px"]
+        self.display_width, self.display_height = experiment_definition["stimulus_area_px"]
         background_color = experiment_definition["background_color"]
         # Convert color to OpenGL's [0, 1] range, add alpha
         background_color = tuple([c / 0xFF for c in background_color] + [1.0])

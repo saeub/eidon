@@ -25,7 +25,7 @@ class HardwareSetup:
         # with open(self.experiment_path / "config.yaml") as f:
         #     config = yaml.safe_load(f)
 
-        self.display_width, self.display_height = experiment_definition["display_size_px"]
+        self.display_width, self.display_height = experiment_definition["stimulus_area_px"]
         self.margin_px = experiment_definition["margin_px"]
 
         self.display_width = self.display_width - 2 * self.margin_px
@@ -95,10 +95,10 @@ class HardwareSetup:
                                          "to the screen in a 90 degrees angle, i.e., in a horizontal line from the eyes "
                                          "to the screen. Note your measurement in millimeters (mm)."
                                          "\n\nPress [SPACE] to continue.",
-            "screen_width_mm": "Please measure the WIDTH of the white rectangle (display area) shown on this screen. "
+            "screen_width_mm": "Please measure the WIDTH of the white rectangle (stimulus area) shown on this screen. "
                               "Note your measurement in millimeters (mm)."
                               "\n\nPress [SPACE] when you did so",
-            "screen_height_mm": "Please measure the HEIGHT of the white rectangle (display area) shown on this screen. "
+            "screen_height_mm": "Please measure the HEIGHT of the white rectangle (stimulus area) shown on this screen. "
                               "Note your measurement in millimeters (mm)."
                               "\n\nPress [SPACE] when you did so.",
             "enter_measurement": "Please enter the measurement in millimeters (mm) as a number (e.g., 605).",
@@ -128,10 +128,10 @@ class HardwareSetup:
         self.hardware_config['eye_to_screen_distance_mm'] = self._get_float_measurement(self.instruction_texts["enter_measurement"])
 
         self._measure_screen_size(self.instruction_texts["screen_width_mm"])
-        self.hardware_config['display_area_width_mm'] = self._get_float_measurement(self.instruction_texts["enter_measurement"])
+        self.hardware_config['stimulus_area_width_mm'] = self._get_float_measurement(self.instruction_texts["enter_measurement"])
 
         self._measure_screen_size(self.instruction_texts["screen_height_mm"])
-        self.hardware_config['display_area_height_mm'] = self._get_float_measurement(self.instruction_texts["enter_measurement"])
+        self.hardware_config['stimulus_area_height_mm'] = self._get_float_measurement(self.instruction_texts["enter_measurement"])
 
         if self.confirm_setup():
             self._save_config()

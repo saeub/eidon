@@ -46,7 +46,7 @@ class ExperimentBuilder:
             "eidon_version": get_package_version(),
             # TODO: Move these settings to session
             "background_color": experiment_type.background_color,
-            "display_size_px": experiment_type.display_size_px,
+            "stimulus_area_px": experiment_type.stimulus_area_px,
             "margin_px": experiment_type.margin_px
         }
         if eyelink_settings is not None:

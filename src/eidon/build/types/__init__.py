@@ -13,11 +13,15 @@ class ExperimentType(ABC):
 
     :param background_color: Color for window and stimulus backgrounds.
         (red, green, blue) with values from 0 to 255.
-    :param display_size_px: Size of the display in pixels (width, height).
+    :param stimulus_area_px: Size of the stimulus area in pixels (width, height). The resulting rectangle will be
+    centered in the screen and all stimuli will be presented within this rectangle. Please ensure that the stimulus
+    area is within the trackable range of your eye-tracker. Note that it is not equivalent to the resolution of
+    the monitor, but it cannot be greater than the resolution.
+    :param margin_px: The margin in px. This margin will be deducted from the width and height of the stimulus area.
     """
 
     # TODO: Use more user-friendly formats for color and size, and avoid list->tuple conversion for PIL
-    display_size_px: tuple[int, int]
+    stimulus_area_px: tuple[int, int]
     margin_px: int
     background_color: tuple[int, int, int] = (204, 204, 204)
 
