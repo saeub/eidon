@@ -35,10 +35,14 @@ def generate_experimenttype_page(
     )
     short_description = parsed_docstring.short_description or ""
     long_description = parsed_docstring.long_description or ""
-    field_descriptions = {
-        field.arg_name: field.description.replace("\n", " ")
-        for field in parsed_docstring.params
-    }
+
+    # Collect param descriptions from the full MRO so inherited fields are documented
+    field_descriptions = {}
+    for parent_cls in reversed(cls.__mro__):
+        doc = getattr(parent_cls, "__doc__", None) or ""
+        for field in docstring_parser.parse(doc, docstring_parser.DocstringStyle.REST).params:
+            field_descriptions[field.arg_name] = field.description.replace("\n", " ")
+
     fields = cls.__dataclass_fields__
 
     markdown = f"## Experiment type: `{name}`\n\n"
