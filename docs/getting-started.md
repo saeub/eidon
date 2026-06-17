@@ -48,14 +48,14 @@ First, create a folder and a `config.yaml` file for your experiment:
 name: "my-experiment"
 type: LatinSquareReading
 
-display_size: [1100, 900]
+display_size_px: [1100, 900]
 num_participants: 8
 option_keys: [Y, N]
 ```
 
 The experiment's `name` will appear, among others, in recordings and metadata files.
 
-`display_size` defines the width and height (in pixels) of the area where your stimuli will be presented. It is important that this is within your eye tracker's **trackable area** on the screen you're going to use for the experiment.
+`display_size_px` defines the width and height (in pixels) of the area where your stimuli will be presented. It is important that this is within your eye tracker's **trackable area** on the screen you're going to use for the experiment.
 
 `option_keys` are the keys on the keyboard that participants are going to use to respond to multiple-choice questions (in this case, we are going to use yes/no questions).
 

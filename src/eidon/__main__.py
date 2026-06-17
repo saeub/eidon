@@ -85,11 +85,6 @@ def get_argument_parser() -> argparse.ArgumentParser:
         help="Path to the built experiment directory (must contain experiment.json and sessions/).",
     )
     setup_parser.add_argument(
-        "--participant-control",
-        action="store_true",
-        help="Allow participant to control calibrations, drift corrects, etc. (useful for testing).",
-    )
-    setup_parser.add_argument(
         "--screen",
         type=int,
         default=0,
@@ -110,7 +105,6 @@ def main():
     elif args.command == "setup":
         setup = HardwareSetup(
             experiment_path=args.path,
-            participant_control=args.participant_control,
             screen=args.screen,
         )
 
