@@ -84,7 +84,7 @@ Replace `<<filler>>` with `<<practice>>` for practice items.
 
 ### Configuration
 
-- `display_size` (tuple[int, int])
+- `display_size_px` (tuple[int, int])
 - `background_color` (tuple[int, int, int])  
   Default: `(204, 204, 204)`
 - `num_participants` (int)  

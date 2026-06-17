@@ -97,7 +97,7 @@ class LatinSquareReading(ExperimentType):
         Should be a multiple of the number of conditions.
     :param option_keys: List of keys to use for selecting multiple-choice options, in order.
         For example, ["Y", "N"] to use the Y key for the first option and N key for the second option.
-    :param margin: Margin in pixels around the text on the stimulus pages.
+    :param margin_px: Margin in pixels around the text on the stimulus pages.
     :param font_monospaced: Whether to use a monospaced font for the stimuli.
         This is recommended when controlling for word length effects.
     :param font_size: Font size for all text.
@@ -107,7 +107,6 @@ class LatinSquareReading(ExperimentType):
 
     num_participants: int
     option_keys: list[str]
-    margin: int = 50
     font_monospaced: bool = True
     font_size: int = 25
     line_spacing: int = 2.0
@@ -120,9 +119,9 @@ class LatinSquareReading(ExperimentType):
             font_path = FONTS["default"]
 
         text_config = {
-            "width": self.display_size[0],
-            "height": self.display_size[1],
-            "margin": self.margin,
+            "width": self.display_size_px[0],
+            "height": self.display_size_px[1],
+            "margin_px": self.margin_px,
             "font_path": font_path,
             "font_size": self.font_size,
             "line_spacing": self.line_spacing,
