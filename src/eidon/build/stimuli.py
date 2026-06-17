@@ -346,7 +346,7 @@ def generate_text_pages(
     text: str,
     width: int,
     height: int,
-    margin: float,
+    margin_px: float,
     font_path: str,
     font_size: float,
     align: str = "left",
@@ -362,7 +362,7 @@ def generate_text_pages(
         text: Text to render.
         width: Image width in pixels.
         height: Image height in pixels.
-        margin: Margin around text in pixels.
+        margin_px: Margin around text in pixels.
         font_path: Font name or path to TrueType/OpenType font file.
         font_size: Font size in pixels.
         align: Text alignment ('left', 'center', 'right').
@@ -375,8 +375,8 @@ def generate_text_pages(
     Returns:
         The generated TextImages.
     """
-    text_width = width - 2 * margin
-    text_height = height - 2 * margin
+    text_width = width - 2 * margin_px
+    text_height = height - 2 * margin_px
 
     font = ImageFont.truetype(font_path, font_size)
 
@@ -405,8 +405,8 @@ def generate_text_pages(
         char_areas, word_areas, text_area = draw_text(
             draw,
             page_lines,
-            margin,
-            margin,
+            margin_px,
+            margin_px,
             text_width,
             font,
             align=align,
@@ -438,7 +438,7 @@ def generate_mcq_page(
     options: list[str],
     width: int,
     height: int,
-    margin: float,
+    margin_px: float,
     font_path: str,
     font_size: float,
     vertical_align: str = "top",
@@ -454,7 +454,7 @@ def generate_mcq_page(
         options: List of answer options.
         width: Image width in pixels.
         height: Image height in pixels.
-        margin: Margin around text in pixels.
+        margin_px: Margin around text in pixels.
         font_path: Font name or path to TrueType/OpenType font file.
         font_size: Font size in pixels.
         vertical_align: Vertical alignment of the content within the image ('top', 'center', 'bottom').
@@ -466,8 +466,8 @@ def generate_mcq_page(
     Returns:
         The generated TextImage.
     """
-    text_width = width - 2 * margin
-    text_height = height - 2 * margin
+    text_width = width - 2 * margin_px
+    text_height = height - 2 * margin_px
 
     image = Image.new("RGB", (width, height), tuple(background_color))
     draw = ImageDraw.Draw(image)
@@ -478,8 +478,8 @@ def generate_mcq_page(
     font_ascent, font_descent = font.getmetrics()
     line_height = (font_ascent + font_descent) * line_spacing
     total_height = line_height * (num_question_lines + 2)
-    question_left = margin
-    question_top = margin
+    question_left = margin_px
+    question_top = margin_px
     question_width = text_width
     if vertical_align == "center":
         question_top += (text_height - total_height) / 2
@@ -512,7 +512,7 @@ def generate_mcq_page(
     section_areas.append(question_area)
 
     # Draw answer options
-    option_left = margin + 2 * font_size
+    option_left = margin_px + 2 * font_size
     option_top = question_area.bottom + line_height
     option_width = text_width / len(options)
 
@@ -554,7 +554,7 @@ def generate_cursor_mcq_page(
     options: list[str],
     width: int,
     height: int,
-    margin: float,
+    margin_px: float,
     font_path: str,
     font_size: float,
     vertical_align: str = "top",
@@ -570,7 +570,7 @@ def generate_cursor_mcq_page(
         options: List of answer options.
         width: Image width in pixels.
         height: Image height in pixels.
-        margin: Margin around text in pixels.
+        margin_px: Margin around text in pixels.
         font_path: Font name or path to TrueType/OpenType font file.
         font_size: Font size in pixels.
         vertical_align: Vertical alignment of the content within the image ('top', 'center', 'bottom').
@@ -582,8 +582,8 @@ def generate_cursor_mcq_page(
     Returns:
         A tuple containing the generated TextImage and the cursor locations.
     """
-    text_width = width - 2 * margin
-    text_height = height - 2 * margin
+    text_width = width - 2 * margin_px
+    text_height = height - 2 * margin_px
 
     image = Image.new("RGB", (width, height), tuple(background_color))
     draw = ImageDraw.Draw(image)
@@ -594,8 +594,8 @@ def generate_cursor_mcq_page(
     font_ascent, font_descent = font.getmetrics()
     line_height = (font_ascent + font_descent) * line_spacing
     total_height = line_height * (num_question_lines + 1 + len(options))
-    question_left = margin
-    question_top = margin
+    question_left = margin_px
+    question_top = margin_px
     question_width = text_width
     if vertical_align == "center":
         question_top += (text_height - total_height) / 2
@@ -628,14 +628,14 @@ def generate_cursor_mcq_page(
     section_areas.append(question_area)
 
     # Draw answer options
-    option_left = margin + 2 * font_size
+    option_left = margin_px + 2 * font_size
     option_top = question_area.bottom + line_height
     option_width = text_width - 2 * font_size
     cursor_locations = []
 
     for option_index, option in enumerate(options):
         # Draw option circle
-        circle_x = margin + font_size / 2
+        circle_x = margin_px + font_size / 2
         circle_y = option_top + line_height / 2
         draw.circle(
             (circle_x, circle_y),

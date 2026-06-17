@@ -13,11 +13,12 @@ class ExperimentType(ABC):
 
     :param background_color: Color for window and stimulus backgrounds.
         (red, green, blue) with values from 0 to 255.
-    :param display_size: Size of the display in pixels (width, height).
+    :param display_size_px: Size of the display in pixels (width, height).
     """
 
     # TODO: Use more user-friendly formats for color and size, and avoid list->tuple conversion for PIL
-    display_size: tuple[int, int]
+    display_size_px: tuple[int, int]
+    margin_px: int
     background_color: tuple[int, int, int] = (204, 204, 204)
 
     @classmethod

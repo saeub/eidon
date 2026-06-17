@@ -670,14 +670,14 @@ class FreeTextQuestion(ExperimentStage):
         )
 
         self.text = ""
-        margin = 5
+        margin_px = 5
         self.label = pyglet.text.Label(
             text=self.text,
-            x=x + margin,
-            y=y + height - margin,
+            x=x + margin_px,
+            y=y + height - margin_px,
             anchor_y="top",
-            width=width - 2 * margin,
-            height=height - 2 * margin,
+            width=width - 2 * margin_px,
+            height=height - 2 * margin_px,
             font_size=font_size,  # TODO: Convert pt to px
             color=(0, 0, 0, 255),
             multiline=multiline,
