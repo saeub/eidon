@@ -3,6 +3,7 @@ from pathlib import Path
 
 from eidon.build import ExperimentBuilder
 from eidon.run import ExperimentRunner
+from eidon.setup.setup import HardwareSetup
 
 
 def get_argument_parser() -> argparse.ArgumentParser:
@@ -72,6 +73,29 @@ def get_argument_parser() -> argparse.ArgumentParser:
         help="Start the session from the stage with the specified name.",
     )
 
+    setup_parser = subparsers.add_parser(
+        "setup",
+        help="Set up the hardware of the experiment. This includes, for example, the eye-to-screen distance.",
+        description="Set up the experiment.",
+    )
+
+    setup_parser.add_argument(
+        "path",
+        type=Path,
+        help="Path to the built experiment directory (must contain experiment.json and sessions/).",
+    )
+    setup_parser.add_argument(
+        "--participant-control",
+        action="store_true",
+        help="Allow participant to control calibrations, drift corrects, etc. (useful for testing).",
+    )
+    setup_parser.add_argument(
+        "--screen",
+        type=int,
+        default=0,
+        help="Screen index to use for the experiment window.",
+    )
+
     return parser
 
 
@@ -82,6 +106,15 @@ def main():
     if args.command == "build":
         builder = ExperimentBuilder(experiment_path=args.path)
         builder.build(generate_area_images=args.area_images)
+
+    elif args.command == "setup":
+        setup = HardwareSetup(
+            experiment_path=args.path,
+            participant_control=args.participant_control,
+            screen=args.screen,
+        )
+
+        setup.do_setup()
 
     elif args.command == "run":
         runner = ExperimentRunner(

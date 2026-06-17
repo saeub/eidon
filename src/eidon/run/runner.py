@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import atexit
 import json
+import shutil
 import time
 import warnings
 from datetime import datetime
@@ -14,6 +15,7 @@ from eidon.run.events import Event
 from eidon.run.devices.eyetracker import EyeLink, MouseTracker
 from eidon.run.devices.microphone import Microphone
 from eidon.run.stages import ExperimentStage
+from eidon.setup.setup import HardwareSetup
 from eidon.utils import get_package_version, import_custom_code
 
 
@@ -46,7 +48,11 @@ class ExperimentRunner:
 
         import_custom_code(self.experiment_path)
 
-        self.display_width, self.display_height = experiment_definition["display_size"]
+        setup = HardwareSetup(self.experiment_path)
+        if not setup.confirm_setup():
+            setup.do_setup()
+
+        self.display_width, self.display_height = experiment_definition["display_size_px"]
         background_color = experiment_definition["background_color"]
         # Convert color to OpenGL's [0, 1] range, add alpha
         background_color = tuple([c / 0xFF for c in background_color] + [1.0])
@@ -60,6 +66,9 @@ class ExperimentRunner:
         self.logfile = open(
             self.recording_path / f"{recording_name}.log", "w", encoding="utf-8"
         )
+
+        # copy hardware settings to recording folder
+        shutil.copy(setup.last_config_path, self.recording_path)
 
         self.clock = pyglet.clock.get_default()
 
