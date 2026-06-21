@@ -1,3 +1,7 @@
+---
+generated: true
+---
+
 ## Experiment stage: `QuestionTree`
 
 Shows a series of question stages, where each stage is based on previous responses.

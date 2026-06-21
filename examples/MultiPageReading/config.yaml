@@ -1,7 +1,8 @@
 # Experiment overview
-name: "latin-square"
-type: LatinSquareReading
+name: "multi-page-reading"
+type: MultiPageReading
 
+# Design
 num_participants: 8
 
 # Appearance
@@ -12,8 +13,9 @@ margin_px: 50
 font_size: 25
 line_spacing: 2.5
 
-# Keys for question answering
-option_keys: [Y, N]
+# Questions
+question_layout: diamond
+confirm_key: SPACE
 
 # Breaks between items
 breaks_after: 4

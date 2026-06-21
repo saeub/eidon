@@ -1,31 +1,31 @@
 <<condition_A>>
-Sun
+The dog is running in the park.
 <<question>>
 Question?
 <<options>>
-yes
-**no
+[Y]es
+**[N]o
 
 <<condition_B>>
-Son
+The cat is running in the park.
 <<question>>
 Question?
 <<options>>
-**yes
-no
+**[Y]es
+[N]o
 
 <<condition_C>>
-Ton
+The horse is running in the park.
 <<question>>
 Question?
 <<options>>
-yes
-**no
+[Y]es
+**[N]o
 
 <<condition_D>>
-Tun
+The child is running in the park.
 <<question>>
 Question?
 <<options>>
-**yes
-no
+**[Y]es
+[N]o

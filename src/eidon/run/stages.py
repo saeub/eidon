@@ -4,12 +4,14 @@ import random
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import pyglet
 
-import eidon
 from eidon.run.events import Event
+
+if TYPE_CHECKING:
+    from eidon.run.runner import ExperimentRunner
 
 
 @dataclass
@@ -23,7 +25,7 @@ class ExperimentStage(ABC):
 
     def __init__(
         self,
-        runner: eidon.ExperimentRunner,
+        runner: ExperimentRunner,
         name: str,
         record_eyes: bool,
         record_audio: bool,
@@ -46,7 +48,7 @@ class ExperimentStage(ABC):
 
     @classmethod
     def from_definition(
-        cls, runner: eidon.ExperimentRunner, definition: dict[str, Any]
+        cls, runner: ExperimentRunner, definition: dict[str, Any]
     ) -> ExperimentStage:
         """Instantiate a stage from a parsed JSON definition."""
         definition = definition.copy()
@@ -280,7 +282,13 @@ class HostControlled(ExperimentStage):
 
     def start(self):
         self.finished = False
-        self.stage.start()
+        if self.runner.dummy and self._backdrop is not None:
+            # In dummy mode, prefer drawing host image
+            self.runner.window.clear()
+            self._backdrop.sprite.draw()
+            self.runner.window.flip()
+        else:
+            self.stage.start()
 
     def on_event(self, event: Event) -> None:
         if self._setup_stage is not None:
@@ -297,7 +305,8 @@ class HostControlled(ExperimentStage):
                 self._setup_stage.start()
 
     def update(self) -> dict[str, Any] | None:
-        self.stage.update()
+        if not self.runner.dummy or self._backdrop is None:
+            self.stage.update()
 
         if self.finished:
             return {}
@@ -306,8 +315,14 @@ class HostControlled(ExperimentStage):
             setup_done = self._setup_stage.update() is not None
             if setup_done:
                 self._setup_stage = None
-                self.stage.start()
-                # TODO: Flush eyetracker events
+                if self.runner.dummy and self._backdrop is not None:
+                    # In dummy mode, prefer drawing host image
+                    self.runner.window.clear()
+                    self._backdrop.sprite.draw()
+                    self.runner.window.flip()
+                else:
+                    self.stage.start()
+                # TODO: Flush eyetracker events?
 
     def get_backdrop(self) -> Backdrop | None:
         if self._backdrop is not None:
@@ -462,6 +477,8 @@ class MultipleChoiceQuestion(ExperimentStage):
         option_keys: list[str],
         option_values: list[str] | None = None,
         correct_option_index: int | None = None,
+        option_boxes: list[tuple[float, float, float, float]] | None = None,
+        confirm_key: str | None = None,
     ):
         """
         :param imgpath:
@@ -474,6 +491,14 @@ class MultipleChoiceQuestion(ExperimentStage):
         :param correct_option_index:
             The index of the correct answer option.
             This does not affect the presentation, but is logged for convenience.
+        :param option_boxes:
+            A list of rectangles (x, y, width, height) in pixels defining the location of each
+            answer options on the stimulus image. When `confirm_key` is provided, this is used to
+            show a box around the currently selected option.
+        :param confirm_key:
+            The key to press to confirm the selected answer option. If not provided, the answer
+            is confirmed immediately when an option key is pressed. Requires `option_boxes` to be
+            defined.
         """
         imgpath = (self.runner.experiment_path / imgpath).absolute()
         img = pyglet.image.load(imgpath)
@@ -483,6 +508,8 @@ class MultipleChoiceQuestion(ExperimentStage):
 
         self.option_values = option_values
         self.option_keys = option_keys
+        self.confirm_key = confirm_key
+        self.option_boxes = None
         if self.option_values is not None:
             assert len(self.option_values) == len(
                 self.option_keys
@@ -492,9 +519,21 @@ class MultipleChoiceQuestion(ExperimentStage):
             assert (
                 0 <= self.correct_option_index < len(self.option_keys)
             ), "correct_option_index must be a valid index in option_keys"
+        if self.confirm_key is not None:
+            assert option_boxes is not None, "option_boxes must be defined if confirm_key is used"
+            assert len(option_boxes) == len(
+                self.option_keys
+            ), "option_boxes must have the same length as option_keys"
+            self.option_boxes = [
+                pyglet.shapes.Box(
+                    x, self.runner.display_height - y - height, width, height, color=(0, 0, 0), thickness=2
+                )
+                for x, y, width, height in option_boxes
+            ]
 
     def start(self) -> dict[str, Any]:
         self.selected_option_index = None
+        self.confirmed = False
 
         self.runner.window.clear()
         self.stimulus.draw()
@@ -507,8 +546,22 @@ class MultipleChoiceQuestion(ExperimentStage):
         # Select answer
         if event.data["symbol"] in self.option_keys:
             self.selected_option_index = self.option_keys.index(event.data["symbol"])
+            if self.option_boxes is not None:
+                self.runner.window.clear()
+                self.stimulus.draw()
+                for i, box in enumerate(self.option_boxes):
+                    if i == self.selected_option_index:
+                        box.draw()
+                self.runner.window.flip()
+
+        # Confirm answer
+        if self.confirm_key is not None and event.data["symbol"] == self.confirm_key:
+            if self.selected_option_index is not None:
+                self.confirmed = True
 
     def update(self) -> dict[str, Any] | None:
+        if self.confirm_key is not None and not self.confirmed:
+            return
         if self.selected_option_index is not None:
             response = self.selected_option_index
             if self.option_values is not None:
@@ -538,6 +591,7 @@ class CursorMultipleChoiceQuestion(ExperimentStage):
         prev_option_key: str,
         confirm_key: str,
         option_values: list[str] | None = None,
+        correct_option_index: int | None = None,
     ):
         """
         :param imgpath:
@@ -555,6 +609,9 @@ class CursorMultipleChoiceQuestion(ExperimentStage):
         :param option_values:
             The values for each answer option that will be returned and logged.
             By default, the option indices are used as values.
+        :param correct_option_index:
+            The index of the correct answer option.
+            This does not affect the presentation, but is logged for convenience.
         """
         imgpath = (self.runner.experiment_path / imgpath).absolute()
         img = pyglet.image.load(imgpath)
@@ -579,6 +636,11 @@ class CursorMultipleChoiceQuestion(ExperimentStage):
             assert len(self.option_values) == len(
                 self.cursor_locations
             ), "option_values must have the same length as cursor_locations"
+        self.correct_option_index = correct_option_index
+        if self.correct_option_index is not None:
+            assert (
+                0 <= self.correct_option_index < len(self.cursor_locations)
+            ), "correct_option_index must be a valid index in cursor_locations"
 
     def start(self) -> dict[str, Any]:
         self.finished = False

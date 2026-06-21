@@ -1,3 +1,7 @@
+---
+generated: true
+---
+
 ## Experiment stage: `DriftCorrect`
 
 Starts the eye tracker's drift correction procedure (device-dependent).

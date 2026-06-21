@@ -1,3 +1,7 @@
+---
+generated: true
+---
+
 ## Experiment stage: `EyeLinkDriftCorrect`
 
 Do not use this stage directly. Use DriftCorrect instead.

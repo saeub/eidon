@@ -1,3 +1,7 @@
+---
+generated: true
+---
+
 ## Experiment stage: `MouseTrackerDriftCorrect`
 
 Do not use this stage directly. Use DriftCorrect instead.

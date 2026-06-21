@@ -1,7 +1,12 @@
+---
+generated: true
+---
+
 ## Experiment types
 
 | Experiment type | Description |
 | --- | --- |
-| [`LatinSquareReading`](LatinSquareReading.md) | Reading experiment with single-page minimal-pair stimuli and a Latin square design. |
+| [`MultiPageReading`](MultiPageReading.md) | Reading experiment with longer, multi-page text stimuli. |
+| [`SinglePageReading`](SinglePageReading.md) | Reading experiment with short, single-page text stimuli. |
 
 > Can't find the experiment type you need? [**Implement your own!**](custom.md)

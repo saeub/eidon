@@ -1,6 +1,7 @@
 import argparse
 import dataclasses
 import inspect
+import os
 import re
 import typing
 from pathlib import Path
@@ -9,6 +10,7 @@ import docstring_parser
 
 from eidon.__main__ import get_argument_parser
 from eidon.build import ExperimentType
+from eidon.build.designs import DESIGNS
 from eidon.run import ExperimentStage
 
 
@@ -60,6 +62,14 @@ def generate_experimenttype_page(
         markdown += f"- `{field_name}` ({field_type})"
         if field_description:
             markdown += f"  \n  {field_description}"
+        if field_name.endswith(("_key", "_keys")):
+            markdown += (
+                "  \n  Key names are [pyglet key symbol strings]"
+                "(https://pyglet.readthedocs.io/en/latest/programming_guide/keyboard.html#defined-key-symbols) "
+                "(e.g. `A`, `LEFT`, `SPACE`)."
+            )
+        elif field_name == "design":
+            markdown += "  \n  Available designs are documented [here](designs.md)."
         if field_default is not dataclasses.MISSING:
             markdown += f"  \n  Default: `{field_default}`"
         markdown += "\n"
@@ -119,9 +129,25 @@ def generate_experimentstage_page(name: str, cls: type[ExperimentStage]) -> str:
         markdown += f"- `{param_name}` ({param_type})"
         if param_description:
             markdown += f"  \n  {param_description}"
+        if param_name.endswith(("_key", "_keys")):
+            markdown += (
+                "  \n  Key names are [pyglet key symbol strings]"
+                "(https://pyglet.readthedocs.io/en/latest/programming_guide/keyboard.html#defined-key-symbols) "
+                "(e.g. `A`, `LEFT`, `SPACE`)."
+            )
         if param_default is not None:
             markdown += f"  \n  Default: `{param_default}`"
         markdown += "\n"
+    return markdown
+
+
+def generate_designs_page(designs: dict[str, typing.Callable]) -> str:
+    markdown = "## Experiment designs\n\n"
+    markdown += "| Design | Description |\n"
+    markdown += "| --- | --- |\n"
+    for name, design in sorted(designs.items()):
+        short_description = design.__doc__.replace("\n", " ") or ""
+        markdown += f"| `{name}` | {short_description} |\n"
     return markdown
 
 
@@ -141,6 +167,8 @@ def generate_cli_index(argument_parser: argparse.ArgumentParser) -> str:
 
 
 def generate_cli_page(command: str, subparser: argparse.ArgumentParser) -> str:
+    os.environ["COLUMNS"] = "80"
+    os.environ["PYTHON_COLORS"] = "0"
     description = subparser.description
     usage = subparser.format_help()
     usage = re.sub(rf"^usage: .+?{command}", f"eidon {command}", usage)
@@ -157,38 +185,48 @@ def main():
     docs_path = Path(__file__).parent
     examples_path = Path(__file__).parent.parent / "examples"
     examples_url = "https://github.com/saeub/eidon/tree/main/examples/{}"
+    generated_prefix = "---\ngenerated: true\n---\n\n"
 
-    # TODO: Remove generated files for classes that no longer exist
+    # Delete old generated files
+    for path in docs_path.glob("**/*.md"):
+        if path.read_text().startswith(generated_prefix):
+            path.unlink()
 
     # Experiment types
     experiment_types = ExperimentType.get_subclasses()
     markdown = generate_experimenttype_index(experiment_types)
-    with open(docs_path / "experiment-types" / "index.md", "w") as f:
-        f.write(markdown)
+    (docs_path / "experiment-types" / "index.md").write_text(
+        generated_prefix + markdown
+    )
     for name, cls in experiment_types.items():
         markdown = generate_experimenttype_page(name, cls, examples_path, examples_url)
-        with open(docs_path / "experiment-types" / f"{name}.md", "w") as f:
-            f.write(markdown)
+        (docs_path / "experiment-types" / f"{name}.md").write_text(
+            generated_prefix + markdown
+        )
 
     # Experiment stages
     experiment_stages = ExperimentStage.get_subclasses()
     markdown = generate_experimentstage_index(experiment_stages)
-    with open(docs_path / "experiment-stages" / "index.md", "w") as f:
-        f.write(markdown)
+    (docs_path / "experiment-stages" / "index.md").write_text(
+        generated_prefix + markdown
+    )
     for name, cls in experiment_stages.items():
         markdown = generate_experimentstage_page(name, cls)
-        with open(docs_path / "experiment-stages" / f"{name}.md", "w") as f:
-            f.write(markdown)
+        (docs_path / "experiment-stages" / f"{name}.md").write_text(
+            generated_prefix + markdown
+        )
+
+    # Experiment designs
+    markdown = generate_designs_page(DESIGNS)
+    (docs_path / "experiment-types" / "designs.md").write_text(generated_prefix + markdown)
 
     # CLI
     argument_parser = get_argument_parser()
     markdown = generate_cli_index(argument_parser)
-    with open(docs_path / "cli" / "index.md", "w") as f:
-        f.write(markdown)
+    (docs_path / "cli" / "index.md").write_text(generated_prefix + markdown)
     for command, subparser in argument_parser._actions[-1].choices.items():
         markdown = generate_cli_page(command, subparser)
-        with open(docs_path / "cli" / f"{command}.md", "w") as f:
-            f.write(markdown)
+        (docs_path / "cli" / f"{command}.md").write_text(generated_prefix + markdown)
 
 
 if __name__ == "__main__":

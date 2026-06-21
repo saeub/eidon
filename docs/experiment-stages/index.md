@@ -1,3 +1,7 @@
+---
+generated: true
+---
+
 ## Experiment stages
 
 | Experiment stage | Description |

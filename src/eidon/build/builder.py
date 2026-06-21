@@ -1,11 +1,13 @@
 import json
 from pathlib import Path
+import shutil
+import sys
 
 import yaml
 
 from eidon.build.stimuli import TextImage
 from eidon.build.types import ExperimentType
-from eidon.utils import get_package_version, import_custom_code
+from eidon.utils import ask_user_yes_no, get_package_version, import_custom_code
 
 
 class ExperimentBuilder:
@@ -32,6 +34,19 @@ class ExperimentBuilder:
             )
         experiment_type = experiment_type_classes[experiment_type_name](**config)
 
+        if (self.experiment_path / "recordings").exists() and any(
+            (self.experiment_path / "recordings").iterdir()
+        ):
+            user_confirms = ask_user_yes_no(
+                "WARNING: There are already some recordings in this experiment. "
+                "Rebuilding the experiment will delete the stimuli referenced in these recordings. "
+                "The recordings will not be deleted, but they may become unusable.\n"
+                "Do you really want to rebuild the experiment?"
+            )
+            if not user_confirms:
+                sys.exit(1)
+        shutil.rmtree(self.experiment_path / "stimuli", ignore_errors=True)
+        shutil.rmtree(self.experiment_path / "sessions", ignore_errors=True)
         (self.experiment_path / "stimuli").mkdir(exist_ok=True)
         (self.experiment_path / "sessions").mkdir(exist_ok=True)
         (self.experiment_path / "recordings").mkdir(exist_ok=True)
