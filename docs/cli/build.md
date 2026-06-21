@@ -11,7 +11,8 @@ Build an experiment from a configuration file and materials. Generates stimuli a
 ```
 eidon build [-h] [--area-images] path
 
-Build an experiment from a configuration file and materials. Generates stimuli and session definitions that can be run with `eidon run`.
+Build an experiment from a configuration file and materials. Generates stimuli
+and session definitions that can be run with `eidon run`.
 
 positional arguments:
   path           Path to the experiment directory (must contain config.yaml).

@@ -1,6 +1,7 @@
 import argparse
 import dataclasses
 import inspect
+import os
 import re
 import typing
 from pathlib import Path
@@ -162,6 +163,8 @@ def generate_cli_index(argument_parser: argparse.ArgumentParser) -> str:
 
 
 def generate_cli_page(command: str, subparser: argparse.ArgumentParser) -> str:
+    os.environ["COLUMNS"] = "80"
+    os.environ["PYTHON_COLORS"] = "0"
     description = subparser.description
     usage = subparser.format_help()
     usage = re.sub(rf"^usage: .+?{command}", f"eidon {command}", usage)
@@ -214,7 +217,7 @@ def main():
     (docs_path / "experiment-types" / "designs.md").write_text(generated_prefix + markdown)
 
     # CLI
-    argument_parser = get_argument_parser(color=False)
+    argument_parser = get_argument_parser()
     markdown = generate_cli_index(argument_parser)
     (docs_path / "cli" / "index.md").write_text(generated_prefix + markdown)
     for command, subparser in argument_parser._actions[-1].choices.items():

@@ -5,8 +5,8 @@ from eidon.build import ExperimentBuilder
 from eidon.run import ExperimentRunner
 
 
-def get_argument_parser(**kwargs) -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Command-line interface for eidon.", **kwargs)
+def get_argument_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="Command-line interface for eidon.")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     build_parser = subparsers.add_parser(
