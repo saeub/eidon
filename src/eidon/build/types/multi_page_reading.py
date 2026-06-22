@@ -183,8 +183,8 @@ class MultiPageReading(ExperimentType):
             font_path = FONTS["default"]
 
         text_config = {
-            "width": self.display_size[0],
-            "height": self.display_size[1],
+            "width": self.stimulus_area_px[0],
+            "height": self.stimulus_area_px[1],
             "margin": self.margin,
             "font_path": font_path,
             "font_size": self.font_size,
