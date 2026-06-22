@@ -185,7 +185,7 @@ class MultiPageReading(ExperimentType):
         text_config = {
             "width": self.stimulus_area_px[0],
             "height": self.stimulus_area_px[1],
-            "margin": self.margin,
+            "margin_px": self.margin,
             "font_path": font_path,
             "font_size": self.font_size,
             "line_spacing": self.line_spacing,

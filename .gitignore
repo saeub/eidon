@@ -179,4 +179,4 @@ experiment.json
 stimuli/
 sessions/
 recordings/
-/examples/LatinSquareReading/hardware_config/
+setup_config/

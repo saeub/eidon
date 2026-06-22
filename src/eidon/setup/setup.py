@@ -1,15 +1,11 @@
 import json
-from datetime import date
+import time
 from pathlib import Path
 
 import pyglet
 import yaml
 
 from eidon.run.events import Event
-from eidon.run.devices.eyetracker import EyeLink, MouseTracker
-from eidon.run.devices.microphone import Microphone
-from eidon.run.stages import ExperimentStage
-from eidon.utils import get_package_version, import_custom_code
 
 class HardwareSetup:
 
@@ -22,11 +18,12 @@ class HardwareSetup:
         with open(self.experiment_path / "experiment.json") as f:
             experiment_definition = json.load(f)
 
-        # with open(self.experiment_path / "config.yaml") as f:
-        #     config = yaml.safe_load(f)
+        with open(self.experiment_path / "config.yaml") as f:
+            config = yaml.safe_load(f)
 
         self.display_width, self.display_height = experiment_definition["stimulus_area_px"]
         self.margin_px = experiment_definition["margin_px"]
+        self.tracking_mode = config["tracking_mode"]
 
         self.display_width = self.display_width - 2 * self.margin_px
         self.display_height = self.display_height - 2 * self.margin_px
@@ -66,16 +63,16 @@ class HardwareSetup:
         self.event_queue: list[Event] = []
 
         def on_key_press(symbol: str, modifiers: int):
-            time = self.clock.time()
+            now = self.clock.time()
             symbol = pyglet.window.key.symbol_string(symbol)
             self.event_queue.append(
-                Event("key", time, {"symbol": symbol, "modifiers": modifiers})
+                Event("key", now, {"symbol": symbol, "modifiers": modifiers})
             )
             return True
 
         def on_text(text: str):
-            time = self.clock.time()
-            self.event_queue.append(Event("text", time, {"text": text}))
+            now = self.clock.time()
+            self.event_queue.append(Event("text", now, {"text": text}))
             return True
 
         self.window.on_key_press = on_key_press
@@ -95,19 +92,22 @@ class HardwareSetup:
                                          "to the screen in a 90 degrees angle, i.e., in a horizontal line from the eyes "
                                          "to the screen. Note your measurement in millimeters (mm)."
                                          "\n\nPress [SPACE] to continue.",
+            "camera_to_screen_distance_mm": "Measure the shortest distance (in millimeters) from the back of the camera "
+                                            "case to the Display monitor. PLease make sure to update this setting in "
+                                            "your local eye-tracker settings. Refer to the manual for more information.",
             "screen_width_mm": "Please measure the WIDTH of the white rectangle (stimulus area) shown on this screen. "
                               "Note your measurement in millimeters (mm)."
                               "\n\nPress [SPACE] when you did so",
             "screen_height_mm": "Please measure the HEIGHT of the white rectangle (stimulus area) shown on this screen. "
                               "Note your measurement in millimeters (mm)."
                               "\n\nPress [SPACE] when you did so.",
-            "enter_measurement": "Please enter the measurement in millimeters (mm) as a number (e.g., 605).",
+            "enter_mm_measurement": "Please enter the measurement in millimeters (mm) as a number (e.g., 605).",
         }
 
-        self.hardware_config = {}
+        self.setup_config = {}
         self.last_config = {}
         self.last_config_path = None
-        self.config_folder = self.experiment_path / "hardware_config"
+        self.config_folder = self.experiment_path / "setup_config"
 
         if not self.config_folder.exists():
             self.config_folder.mkdir(parents=True, exist_ok=True)
@@ -124,14 +124,23 @@ class HardwareSetup:
 
         self._show_instruction_text(self.instruction_texts["start"])
 
-        self._show_instruction_text(self.instruction_texts["eye_to_screen_distance_mm"])
-        self.hardware_config['eye_to_screen_distance_mm'] = self._get_float_measurement(self.instruction_texts["enter_measurement"])
+        if self.tracking_mode == "head-stabilized":
+            self._show_instruction_text(self.instruction_texts["eye_to_screen_distance_mm"])
+            self.setup_config['eye_to_screen_distance_mm'] = self._get_float_measurement(
+                self.instruction_texts["enter_mm_measurement"])
+
+        elif self.tracking_mode == "remote":
+            self._show_instruction_text(self.instruction_texts["camera_to_screen_distance_mm"])
+            self.setup_config['camera_to_screen_distance_mm'] = self._get_float_measurement(
+                self.instruction_texts["enter_mm_measurement"])
 
         self._measure_screen_size(self.instruction_texts["screen_width_mm"])
-        self.hardware_config['stimulus_area_width_mm'] = self._get_float_measurement(self.instruction_texts["enter_measurement"])
+        self.setup_config['stimulus_area_width_mm'] = self._get_float_measurement(
+            self.instruction_texts["enter_mm_measurement"])
 
         self._measure_screen_size(self.instruction_texts["screen_height_mm"])
-        self.hardware_config['stimulus_area_height_mm'] = self._get_float_measurement(self.instruction_texts["enter_measurement"])
+        self.setup_config['stimulus_area_height_mm'] = self._get_float_measurement(
+            self.instruction_texts["enter_mm_measurement"])
 
         if self.confirm_setup():
             self._save_config()
@@ -140,35 +149,26 @@ class HardwareSetup:
 
     def _save_config(self) -> None:
 
-        today = date.today()
-
-        filename = f'hardware_config_{today.strftime("%Y%m%d")}.json'
+        timestamp = time.strftime('%Y%m%d-%H%M%S')
+        filename = f'setup_config_{timestamp}.json'
         config_path = self.config_folder / filename
 
-        vs_tag = 1
-
-        while config_path.exists():
-            filename = f'hardware_config_{today.strftime("%Y%m%d")}_v{vs_tag}.json'
-            config_path = self.config_folder / filename
-            vs_tag += 1
-
-        else:
-            # check if the latest config contains the exact same data! If yes, don't write a new version
-            if self.last_config != self.hardware_config:
-                with open(config_path, 'w') as f:
-                    json.dump(self.hardware_config, f, indent=4)
-                self.last_config_path = config_path
-                self.last_config = self.hardware_config
+        # check if the latest config contains the exact same data! If yes, don't write a new version
+        if self.last_config != self.setup_config:
+            with open(config_path, 'w') as f:
+                json.dump(self.setup_config, f, indent=4)
+            self.last_config_path = config_path
+            self.last_config = self.setup_config
 
 
     def confirm_setup(self) -> bool:
 
         text = "Please confirm the correctness of these measurements:\n\n"
 
-        if not self.last_config and not self.hardware_config:
+        if not self.last_config and not self.setup_config:
             self.do_setup()
 
-        config = self.last_config if not self.hardware_config else self.hardware_config
+        config = self.last_config if not self.setup_config else self.setup_config
         for k, v in config.items():
             setting = f'{k}: {v}\n'.replace('_', ' ')
             setting = setting.capitalize()
@@ -263,6 +263,10 @@ class HardwareSetup:
             self.window.flip()
 
         self.window.remove_handlers(on_mouse_press=on_mouse_press)
+
+        # close all windows
+        if results["confirmed"]:
+            self.window.close()
 
         return results['confirmed']
 

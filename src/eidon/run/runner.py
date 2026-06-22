@@ -57,8 +57,9 @@ class ExperimentRunner:
         # Convert color to OpenGL's [0, 1] range, add alpha
         background_color = tuple([c / 0xFF for c in background_color] + [1.0])
 
+        timestamp = time.strftime('%Y%m%d-%H%M%S')
         if recording_name is None:
-            recording_name = f"{experiment_definition['name']}.{session_name}.{time.strftime('%Y%m%d-%H%M%S')}"
+            recording_name = f"{experiment_definition['name']}.{session_name}.{timestamp}"
         self.recording_name = recording_name
         self.recording_path = (self.experiment_path / "recordings" / recording_name).absolute()
         self.recording_path.mkdir(parents=True, exist_ok=True)
@@ -68,7 +69,15 @@ class ExperimentRunner:
         )
 
         # copy hardware settings to recording folder
-        shutil.copy(setup.last_config_path, self.recording_path)
+        config_path = self.recording_path / f"setup_config.{session_name}.{timestamp}.json"
+        shutil.copy(setup.last_config_path, config_path)
+        with open(self.recording_path / config_path, 'r') as f:
+            data = json.load(f)
+
+        with open(self.recording_path / config_path, 'w') as f:
+            original_config_name = setup.last_config_path.stem
+            data["setup_config_vs"] = original_config_name
+            json.dump(data, f)
 
         self.clock = pyglet.clock.get_default()
 
