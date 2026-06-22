@@ -19,3 +19,6 @@ confirm_key: SPACE
 
 # Breaks between items
 breaks_after: 4
+
+# Eye-tracker setup
+tracking_mode: "remote"

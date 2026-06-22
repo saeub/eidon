@@ -21,3 +21,6 @@ option_keys: [Y, N]
 
 # Breaks between items
 breaks_after: 4
+
+# Eye-tracker setup
+tracking_mode: "head-stabilized"
