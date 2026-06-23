@@ -1,9 +1,11 @@
+from collections import defaultdict
 import csv
 import random
 import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
+import warnings
 
 from eidon.build import ExperimentType, stimuli
 from eidon.build.designs import build_design
@@ -17,7 +19,7 @@ class MultiPageReading(ExperimentType):
 
     Each experimental item consists of a text and optionally one or more multiple-choice questions.
     Each item may appear in multiple conditions, which are assigned to participants according to the
-    specified design (e.g., Latin square). Filler items can also be added.
+    specified design (e.g., Latin square).
 
     The main differences to `SinglePageReading` are:
     - The text for each item can span multiple pages. The text is automatically split into pages
@@ -46,6 +48,8 @@ class MultiPageReading(ExperimentType):
     `instructions.txt`, `wait.txt`, `break.txt`, and `end.txt` contain the text for the
     instructions, wait (after instructions and practice trials), break, and end pages. The
     instructions are split into multiple pages if necessary.
+
+    #### Experimental items
 
     `01.txt`, `02.txt`, etc. each represent one experimental item. The file names (without `.txt`)
     are used as item IDs. Each file must follow the following format (values in [brackets] are
@@ -90,11 +94,15 @@ class MultiPageReading(ExperimentType):
     ...
     ```
 
+    Page breaks can be added by inserting `<<pagebreak>>` in the text (on a separate line).
+
     The number of questions can vary across items. Optionally, one answer option per question can be
     marked with `**` to indicate that it is the correct answer.
 
     `practice.txt` are optional and can contain any number of practice items, which follow a similar
     format (but without conditions):
+
+    #### Practice items
 
     ```
     <<practice>>
@@ -115,6 +123,19 @@ class MultiPageReading(ExperimentType):
     [text for practice item 2]
     ...
     ```
+
+    #### Areas of interest
+
+    Areas of interest can be defined in the text by surrounding them with
+    [[area-name]]...[[/area-name]]. For example:
+
+    ```
+    <<item>>
+    [[subject]]The quick brown fox[[/subject]] jumps over [[object]]the lazy dog[[/object]].
+    ```
+
+    An item can contain any number of areas of interest. Discontinuous areas can be defined by
+    using multiple tags with the same area name.
 
     :param num_participants: Number of participants in the experiment.
         Should be a multiple of the number of conditions.
@@ -145,7 +166,7 @@ class MultiPageReading(ExperimentType):
     breaks_after: int | None = None
     option_keys: list[str]
     margin: int = 50
-    font_monospaced: bool = True
+    font_monospaced: bool = False
     font_size: int = 25
     line_spacing: int = 2.0
     question_layout: str = "horizontal"
@@ -296,7 +317,7 @@ class MultiPageReading(ExperimentType):
 
     def _parse_item(self, item_string: str, filename: str) -> dict[str, Any]:
         """
-        Parse a minimal-pair stimulus string into a dict containing the text and questions for each condition.
+        Parse a stimulus string into a dict containing the text and questions for each condition.
 
         Item string format (values in brackets are placeholders):
         '''
@@ -323,7 +344,10 @@ class MultiPageReading(ExperimentType):
         Returns a dict with this structure:
         {
             "[condition_1]": {
-                "text": "[text for condition A]",
+                "pages": [
+                    {"text": "[text for condition A]", "custom_area_spans": {}},
+                    {"text": "[more text for condition A]", "custom_area_spans": {}}
+                ],
                 "questions": {
                     "stem": "[question stem]"
                     "options": ["[option 1]", "[option 2]", "[option 3]"]
@@ -368,7 +392,10 @@ class MultiPageReading(ExperimentType):
                     raise ValueError(
                         f"'<<pagebreak>>' tag found before any item/condition tag in {filename}."
                     )
-                current_subitem["pages"].append(text)
+                text, custom_area_spans = self._parse_area_spans(text)
+                current_subitem["pages"].append(
+                    {"text": text, "custom_area_spans": custom_area_spans}
+                )
             # Question stem
             elif tag == "question":
                 if current_subitem is None:
@@ -413,7 +440,11 @@ class MultiPageReading(ExperimentType):
                 if current_condition is not None:
                     item[current_condition] = current_subitem
                 current_condition = tag
-                current_subitem = {"pages": [text], "questions": []}
+                text, custom_area_spans = self._parse_area_spans(text)
+                current_subitem = {
+                    "pages": [{"text": text, "custom_area_spans": custom_area_spans}],
+                    "questions": [],
+                }
         # Final condition
         if current_condition is not None:
             item[current_condition] = current_subitem
@@ -426,6 +457,26 @@ class MultiPageReading(ExperimentType):
                     )
 
         return item
+
+    def _parse_area_spans(
+        self, text: str
+    ) -> tuple[str, dict[str, list[tuple[int, int]]]]:
+        """Extract custom area spans from text with tags like [[area_type]]...[[/area_type]]."""
+        area_spans = defaultdict(list)
+        tag_pattern = re.compile(r"\[\[([^\]]+)\]\](.*?)\[\[/\1\]\]")
+        clean_text = ""
+        last_index = 0
+
+        for match in tag_pattern.finditer(text):
+            area_type, span_text = match.groups()
+            clean_start_index = len(clean_text) + (match.start() - last_index)
+            clean_end_index = clean_start_index + len(span_text)
+            area_spans[area_type].append((clean_start_index, clean_end_index))
+            clean_text += text[last_index : match.start()] + span_text
+            last_index = match.end()
+
+        clean_text += text[last_index:]
+        return clean_text, dict(area_spans)
 
     def _generate_instructions_stage(
         self, experiment_path: Path, text_config: dict[str, Any]
@@ -548,11 +599,19 @@ class MultiPageReading(ExperimentType):
                 for page in subitem["pages"]:
                     text_images.extend(
                         stimuli.generate_text_pages(
-                            page,
+                            page["text"],
+                            custom_area_spans=page["custom_area_spans"],
                             **text_config,
                         )
                     )
                 for i, image in enumerate(text_images):
+                    for area_type in page["custom_area_spans"]:
+                        if area_type in image.areas and any(
+                            area.continued for area in image.areas[area_type]
+                        ):
+                            warnings.warn(
+                                f"Area '{area_type}' in item {name} (page {i}) crosses line boundaries."
+                            )
                     image.save(experiment_path, f"{name}.text.{i}")
                 text_start_location = (
                     int(self.margin - self.font_size),

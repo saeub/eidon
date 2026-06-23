@@ -1,3 +1,4 @@
+from collections import defaultdict
 import csv
 import random
 import re
@@ -42,6 +43,8 @@ class SinglePageReading(ExperimentType):
     `instructions.txt`, `wait.txt`, `break.txt`, and `end.txt` contain the text for the
     instructions, wait (after instructions and practice trials), break, and end pages. The
     instructions are split into multiple pages if necessary.
+
+    #### Experimental items
 
     `01.txt`, `02.txt`, etc. each represent one experimental item. The file names (without `.txt`)
     are used as item IDs. Each file must follow the following format (values in [brackets] are
@@ -89,6 +92,8 @@ class SinglePageReading(ExperimentType):
     The number of questions can vary across items. Optionally, one answer option per question can be
     marked with `**` to indicate that it is the correct answer.
 
+    #### Practice and filler items
+
     `practice.txt` and `fillers.txt` are optional and can contain any number of practice and filler
     items, which follow a similar format (but without conditions):
 
@@ -113,6 +118,19 @@ class SinglePageReading(ExperimentType):
     ```
 
     Replace `<<filler>>` with `<<practice>>` for practice items.
+
+    #### Areas of interest
+
+    Areas of interest can be defined in the text by surrounding them with
+    [[area-name]]...[[/area-name]]. For example:
+
+    ```
+    <<item>>
+    [[subject]]The quick brown fox[[/subject]] jumps over [[object]]the lazy dog[[/object]].
+    ```
+
+    An item can contain any number of areas of interest. Discontinuous areas can be defined by
+    using multiple tags with the same area name.
 
     :param num_participants: Number of participants in the experiment.
         Should be a multiple of the number of conditions.
@@ -311,7 +329,7 @@ class SinglePageReading(ExperimentType):
 
     def _parse_item(self, item_string: str, filename: str) -> dict[str, Any]:
         """
-        Parse a minimal-pair stimulus string into a dict containing the text and questions for each condition.
+        Parse a stimulus string into a dict containing the text and questions for each condition.
 
         Item string format (values in brackets are placeholders):
         '''
@@ -339,6 +357,7 @@ class SinglePageReading(ExperimentType):
         {
             "[condition_1]": {
                 "text": "[text for condition A]",
+                "custom_area_spans": {...},
                 "questions": {
                     "stem": "[question stem]"
                     "options": ["[option 1]", "[option 2]", "[option 3]"]
@@ -421,7 +440,12 @@ class SinglePageReading(ExperimentType):
                 if current_condition is not None:
                     item[current_condition] = current_subitem
                 current_condition = tag
-                current_subitem = {"text": text, "questions": []}
+                text, custom_area_spans = self._parse_area_spans(text)
+                current_subitem = {
+                    "text": text,
+                    "custom_area_spans": custom_area_spans,
+                    "questions": [],
+                }
         # Final condition
         if current_condition is not None:
             item[current_condition] = current_subitem
@@ -434,6 +458,26 @@ class SinglePageReading(ExperimentType):
                     )
 
         return item
+
+    def _parse_area_spans(
+        self, text: str
+    ) -> tuple[str, dict[str, list[tuple[int, int]]]]:
+        """Extract custom area spans from text with tags like [[area_type]]...[[/area_type]]."""
+        area_spans = defaultdict(list)
+        tag_pattern = re.compile(r"\[\[([^\]]+)\]\](.*?)\[\[/\1\]\]")
+        clean_text = ""
+        last_index = 0
+
+        for match in tag_pattern.finditer(text):
+            area_type, span_text = match.groups()
+            clean_start_index = len(clean_text) + (match.start() - last_index)
+            clean_end_index = clean_start_index + len(span_text)
+            area_spans[area_type].append((clean_start_index, clean_end_index))
+            clean_text += text[last_index : match.start()] + span_text
+            last_index = match.end()
+
+        clean_text += text[last_index:]
+        return clean_text, dict(area_spans)
 
     def _generate_instructions_stage(
         self, experiment_path: Path, text_config: dict[str, Any]
@@ -560,12 +604,18 @@ class SinglePageReading(ExperimentType):
                     name = f"{item_id}.{condition}"
                 text_images = stimuli.generate_text_pages(
                     subitem["text"],
+                    custom_area_spans=subitem["custom_area_spans"],
                     **text_config,
                 )
                 assert (
                     len(text_images) == 1
                 ), f"Text for item {name} does not fit on a single page."
                 text_image = text_images[0]
+                for area_type in subitem["custom_area_spans"]:
+                    if any(area.continued for area in text_image.areas[area_type]):
+                        warnings.warn(
+                            f"Area '{area_type}' in item {name} crosses line boundaries."
+                        )
                 text_image.save(experiment_path, f"{name}.text")
                 text_start_location = (
                     int(text_image.areas["page"][0].left - self.font_size),

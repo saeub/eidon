@@ -208,6 +208,9 @@ class TextImage:
             "content",
         ]
         for area_type in self.areas:
+            if not self.areas[area_type]:
+                # Skip area types without areas
+                continue
             with open(
                 experiment_path / "stimuli" / f"{stem}.{area_type}.csv", "w"
             ) as f:
@@ -225,6 +228,9 @@ class TextImage:
         # Image with outlined areas
         if area_images:
             for area_type in self.areas:
+                if not self.areas[area_type]:
+                    # Skip area types without areas
+                    continue
                 image = self.image.copy()
                 draw = ImageDraw.Draw(image)
                 for area in self.areas[area_type]:
@@ -412,6 +418,7 @@ def draw_text(
                 word1.right += whitespace_length
                 word2.left -= whitespace_length
 
+    # TODO: Return as dict
     return char_areas, word_areas, text_area, custom_span_areas
 
 
@@ -445,6 +452,8 @@ def generate_text_pages(
         background_color: Background color as an RGB tuple.
         text_color: Text color as an RGB tuple.
         extend_word_areas: Extend word areas to cover whitespace between words.
+        custom_area_spans: Dictionary of lists of (start, end) character index tuples for custom areas.
+            Keys are custom area types.
 
     Returns:
         The generated TextImages.
@@ -472,7 +481,17 @@ def generate_text_pages(
     char_index_start = 0
     word_index_start = 0
     custom_span_index_start = defaultdict(int)
-    for page_index, page_text in enumerate(page_texts):
+    for page_index, (page_text, page_start_index) in enumerate(zip(page_texts, page_start_indices)):
+        page_custom_area_spans = None
+        if custom_area_spans is not None:
+            # Adjust indices in custom_area_spans for this page
+            page_custom_area_spans = custom_area_spans.copy()
+            for area_type, spans in page_custom_area_spans.items():
+                page_custom_area_spans[area_type] = [
+                    (start - page_start_index, end - page_start_index)
+                    for start, end in spans
+                    if start >= page_start_index and end <= page_start_index + len(page_text)
+                ]
         image = Image.new("RGB", (width, height), tuple(background_color))
         draw = ImageDraw.Draw(image)
         char_areas, word_areas, text_area, custom_span_areas = draw_text(
@@ -485,7 +504,7 @@ def generate_text_pages(
             align=align,
             line_spacing=line_spacing,
             extend_word_areas=extend_word_areas,
-            custom_area_spans=custom_area_spans,
+            custom_area_spans=page_custom_area_spans,
             max_height=text_height,
             vertical_align=vertical_align,
             color=text_color,
@@ -594,7 +613,7 @@ def generate_mcq_page(
     section_areas = []
 
     # Draw question
-    question_char_areas, question_word_areas, question_area = draw_text(
+    question_char_areas, question_word_areas, question_area, _ = draw_text(
         draw,
         question,
         question_left,
@@ -618,11 +637,11 @@ def generate_mcq_page(
     # Draw answer options
     option_boxes = []
     if option_layout == "horizontal":
-        option_left = margin + 2 * font_size
+        option_left = margin
         option_top = question_area.bottom + line_height
         for option_index, option in enumerate(options):
             # Draw option text
-            option_char_areas, option_word_areas, option_area = draw_text(
+            option_char_areas, option_word_areas, option_area, _ = draw_text(
                 draw,
                 option,
                 option_left,
@@ -657,7 +676,7 @@ def generate_mcq_page(
         ):
             option_left = option_center[0] - option_width / 2
             option_top = question_bottom + option_center[1] - option_height / 2
-            option_char_areas, option_word_areas, option_area = draw_text(
+            option_char_areas, option_word_areas, option_area, _ = draw_text(
                 draw,
                 option,
                 option_left,
@@ -746,7 +765,7 @@ def generate_cursor_mcq_page(
     word_areas = []
     section_areas = []
 
-    question_char_areas, question_word_areas, question_area = draw_text(
+    question_char_areas, question_word_areas, question_area, _ = draw_text(
         draw,
         question,
         question_left,
@@ -788,7 +807,7 @@ def generate_cursor_mcq_page(
         cursor_locations.append((circle_x, circle_y))
 
         # Draw option text
-        option_char_areas, option_word_areas, option_area = draw_text(
+        option_char_areas, option_word_areas, option_area, _ = draw_text(
             draw,
             option,
             option_left,
