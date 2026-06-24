@@ -10,7 +10,7 @@ Reading experiment with longer, multi-page text stimuli.
 
 Each experimental item consists of a text and optionally one or more multiple-choice questions.
 Each item may appear in multiple conditions, which are assigned to participants according to the
-specified design (e.g., Latin square). Filler items can also be added.
+specified design (e.g., Latin square).
 
 The main differences to `SinglePageReading` are:
 - The text for each item can span multiple pages. The text is automatically split into pages
@@ -39,6 +39,8 @@ The main differences to `SinglePageReading` are:
 `instructions.txt`, `wait.txt`, `break.txt`, and `end.txt` contain the text for the
 instructions, wait (after instructions and practice trials), break, and end pages. The
 instructions are split into multiple pages if necessary.
+
+#### Experimental items
 
 `01.txt`, `02.txt`, etc. each represent one experimental item. The file names (without `.txt`)
 are used as item IDs. Each file must follow the following format (values in [brackets] are
@@ -83,11 +85,15 @@ for all conditions, and the name of the condition must be specified like this:
 ...
 ```
 
+Page breaks can be added by inserting `<<pagebreak>>` in the text (on a separate line).
+
 The number of questions can vary across items. Optionally, one answer option per question can be
 marked with `**` to indicate that it is the correct answer.
 
 `practice.txt` are optional and can contain any number of practice items, which follow a similar
 format (but without conditions):
+
+#### Practice items
 
 ```
 <<practice>>
@@ -108,6 +114,19 @@ format (but without conditions):
 [text for practice item 2]
 ...
 ```
+
+#### Areas of interest
+
+Areas of interest can be defined in the text by surrounding them with
+[[area-name]]...[[/area-name]]. For example:
+
+```
+<<item>>
+[[subject]]The quick brown fox[[/subject]] jumps over [[object]]the lazy dog[[/object]].
+```
+
+An item can contain any number of areas of interest. Discontinuous areas can be defined by
+using multiple tags with the same area name.
 
 ### Configuration
 
@@ -135,7 +154,7 @@ format (but without conditions):
   Default: `50`
 - `font_monospaced` (bool)  
   Whether to use a monospaced font for the stimuli. This is recommended when controlling for word length effects.  
-  Default: `True`
+  Default: `False`
 - `font_size` (int)  
   Font size for all text.  
   Default: `25`
