@@ -390,7 +390,7 @@ def draw_text(
                         if not areas and span_start < line_start_index + char_index:
                             # Add dummy None to indicate that this span is continued from a previous line
                             areas.append(None)
-                        areas.append(char_area)
+                        areas.append((char_area, line_start_index + char_index))
         # Merge collected char areas
         for area_type, spans in line_custom_char_areas.items():
             for span_char_areas in spans:
@@ -400,8 +400,10 @@ def draw_text(
                         # This span is continued from a previous line
                         span_char_areas = span_char_areas[1:]
                         continued = True
-                    area = Area.merge(span_char_areas)
-                    area.content = text[span_start:span_end]
+                    areas = [char_area for char_area, _ in span_char_areas]
+                    indices = [char_index for _, char_index in span_char_areas]
+                    area = Area.merge(areas)
+                    area.content = text[indices[0] : indices[-1] + 1]
                     area.continued = continued
                     custom_span_areas[area_type].append(area)
 
@@ -481,7 +483,9 @@ def generate_text_pages(
     char_index_start = 0
     word_index_start = 0
     custom_span_index_start = defaultdict(int)
-    for page_index, (page_text, page_start_index) in enumerate(zip(page_texts, page_start_indices)):
+    for page_index, (page_text, page_start_index) in enumerate(
+        zip(page_texts, page_start_indices)
+    ):
         page_custom_area_spans = None
         if custom_area_spans is not None:
             # Adjust indices in custom_area_spans for this page
@@ -490,7 +494,8 @@ def generate_text_pages(
                 page_custom_area_spans[area_type] = [
                     (start - page_start_index, end - page_start_index)
                     for start, end in spans
-                    if start >= page_start_index and end <= page_start_index + len(page_text)
+                    if start >= page_start_index
+                    and end <= page_start_index + len(page_text)
                 ]
         image = Image.new("RGB", (width, height), tuple(background_color))
         draw = ImageDraw.Draw(image)
