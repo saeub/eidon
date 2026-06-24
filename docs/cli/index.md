@@ -8,3 +8,4 @@ generated: true
 | --- | --- |
 | [`build`](build.md) | Build an experiment. |
 | [`run`](run.md) | Run an experiment session. |
+| [`convert`](convert.md) | Convert recordings to a standard format. |

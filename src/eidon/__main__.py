@@ -74,7 +74,9 @@ def get_argument_parser() -> argparse.ArgumentParser:
     )
 
     convert_parser = subparsers.add_parser(
-        "convert", help="Convert .asc recordings to .csv."
+        "convert",
+        help="Convert recordings to a standard format.",
+        description="Convert eye-tracking recordings to a CSV file and extract metadata into a JSON file.",
     )
     convert_parser.add_argument(
         "path",

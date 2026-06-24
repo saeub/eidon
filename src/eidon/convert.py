@@ -11,7 +11,7 @@ class RecordingConverter:
         self.experiment_definition = json.loads(
             (self.experiment_path / "experiment.json").read_text()
         )
-        self.columns = ["time", "stage", "stimulus", "pixel_x", "pixel_y", "pupil"]
+        self.columns = ["time", "stage", "imgpath", "pixel_x", "pixel_y", "pupil"]
 
     def convert(self, recording_names: list[str] | None = None):
         if recording_names is None:
@@ -68,9 +68,9 @@ class RecordingConverter:
         gaze.unnest()
         samples = gaze.samples
 
-        # Map stage names to stimulus paths
+        # Map stage names to image paths
         samples = samples.with_columns(
-            stimulus=pl.struct(["stage", "page"]).map_elements(
+            imgpath=pl.struct(["stage", "page"]).map_elements(
                 lambda x: stage_stimuli.get((x["stage"], x["page"])),
                 return_dtype=pl.Utf8,
             )
