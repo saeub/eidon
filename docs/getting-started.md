@@ -145,6 +145,8 @@ eidon run my_experiment P1 --dummy
 
 where `P1` is the name of a session file (without `.json`). This will create a recording directory under `my_experiment/recordings` containing the log file (this is where the question responses are) and eye-tracking data (except when in dummy mode).
 
+> **NOTE:** You can abort the experiment using <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Escape</kbd>.
+
 ### Learn more
 
 Congratulations, you've mastered the basics of _eidon_!

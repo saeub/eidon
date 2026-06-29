@@ -12,29 +12,45 @@ from PIL import Image, ImageDraw, ImageFont
 
 
 def wrap_text(
-    text: str, font: ImageFont.FreeTypeFont, max_width: float
-) -> Generator[str, None, None]:
-    words = re.findall(r"([\S\u00a0]+)([^\S\u00a0]*)", text)
+    text: str,
+    font: ImageFont.FreeTypeFont,
+    max_width: float,
+    return_start_indices: bool = False,
+) -> Generator[str, None, None] | Generator[tuple[str, int], None, None]:
+    word_matches = re.finditer(r"([\S\u00a0]+)([^\S\u00a0]*)", text)
     line = ""
+    start_index = 0
 
     # TODO: Remove first line if it is empty
-    for word, whitespace in words:
+    for match in word_matches:
+        word, whitespace = match.groups()
         # Add new word, wrap line if it's too long
         if font.getlength(line + word) > max_width:
-            yield line.rstrip()
+            if return_start_indices:
+                yield line.rstrip(), start_index
+            else:
+                yield line.rstrip()
             line = word
+            start_index = match.start()
         else:
             line += word
         # Add whitespace, create new line if it's a newline
         for ws in whitespace:
             if ws == "\n":  # TODO: Handle CR/CRLF
-                yield line.rstrip()
+                if return_start_indices:
+                    yield line.rstrip(), start_index
+                else:
+                    yield line.rstrip()
                 line = ""
+                start_index = match.end()
             else:
                 line += ws
     # Last line
     if line:
-        yield line.rstrip()
+        if return_start_indices:
+            yield line.rstrip(), start_index
+        else:
+            yield line.rstrip()
 
 
 class Area:
@@ -48,6 +64,7 @@ class Area:
         section: str | None = None,
         line: int | None = None,
         content: str | None = None,
+        continued: bool = False,
     ):
         assert right >= left, "`right` must be greater than or equal to `left`"
         assert bottom >= top, "`bottom` must be greater than or equal to `top`"
@@ -58,6 +75,7 @@ class Area:
         self.section = section
         self.line = line
         self.content = content
+        self.continued = continued
 
     def __repr__(self) -> str:
         args = self.asdict()
@@ -190,6 +208,9 @@ class TextImage:
             "content",
         ]
         for area_type in self.areas:
+            if not self.areas[area_type]:
+                # Skip area types without areas
+                continue
             with open(
                 experiment_path / "stimuli" / f"{stem}.{area_type}.csv", "w"
             ) as f:
@@ -197,12 +218,19 @@ class TextImage:
                 writer.writeheader()
                 area_index = self.areas_start_index[area_type]
                 for area in self.areas[area_type]:
+                    if area.continued:
+                        # For areas that are continued from a previous line,
+                        # use the same index as the previous area
+                        area_index -= 1
                     writer.writerow({"index": area_index} | area.asdict())
                     area_index += 1
 
         # Image with outlined areas
         if area_images:
             for area_type in self.areas:
+                if not self.areas[area_type]:
+                    # Skip area types without areas
+                    continue
                 image = self.image.copy()
                 draw = ImageDraw.Draw(image)
                 for area in self.areas[area_type]:
@@ -212,7 +240,7 @@ class TextImage:
 
 def draw_text(
     draw: ImageDraw.ImageDraw,
-    text: str | list[str],
+    text: str,
     x: float,
     y: float,
     max_width: float,
@@ -221,16 +249,17 @@ def draw_text(
     line_spacing: float = 1.0,
     extend_word_areas: bool = True,
     extend_char_areas: bool = True,
+    custom_area_spans: dict[str, list[tuple[int, int]]] | None = None,
     max_height: float = float("inf"),
     vertical_align: Literal["top", "center", "bottom"] = "top",
     color: tuple[int, int, int] = (0, 0, 0),
     raise_on_overflow: bool = False,
-) -> tuple[list[Area], list[Area], Area]:
+) -> tuple[list[Area], list[Area], Area, dict[str, list[Area]]]:
     """Draw text on an image and return character, word, and text areas.
 
     Args:
         image: Image to draw on.
-        text: Text to draw (single string or list of one string per line).
+        text: Text to draw.
         x: X coordinate of the top-left corner of the text.
         y: Y coordinate of the top-left corner of the text.
         max_width: Maximum width of the text.
@@ -247,10 +276,9 @@ def draw_text(
     Returns:
         A tuple containing a list of character areas, a list of word areas, and a text area.
     """
-    if isinstance(text, str):
-        lines = list(wrap_text(text, font, max_width))
-    else:
-        lines = text
+    wrapped = list(wrap_text(text, font, max_width, return_start_indices=True))
+    lines = [line for line, _ in wrapped]
+    line_start_indices = [index for _, index in wrapped]
 
     line_left = x
     line_top = y
@@ -282,8 +310,11 @@ def draw_text(
         line_left + max_width,
         line_top + total_height,
     )
+    if custom_area_spans is None:
+        custom_area_spans = {}
+    custom_span_areas = {area_type: [] for area_type in custom_area_spans}
 
-    for line_num, line in enumerate(lines):
+    for line_index, line in enumerate(lines):
         line_width = font.getlength(line)
         if align == "left":
             line_indent = 0
@@ -311,7 +342,7 @@ def draw_text(
                 line_top + char_top + line_offset,
                 line_left + line_indent + char_left + char_width,
                 line_top + char_bottom + line_offset,
-                line=line_num,
+                line=line_index,
                 content=char,
             )
             char_left += char_width
@@ -343,6 +374,39 @@ def draw_text(
         char_areas.extend(line_char_areas)
         line_top += line_height
 
+        # Collect char areas for custom spans on this line
+        line_custom_char_areas = {}
+        line_custom_char_areas = {
+            area_type: [[] for _ in span]  # One list of char areas per span
+            for area_type, span in custom_area_spans.items()
+        }
+        line_start_index = line_start_indices[line_index]
+        for area_type, spans in custom_area_spans.items():
+            for span_num, (span_start, span_end) in enumerate(spans):
+                for char_index, char_area in enumerate(line_char_areas):
+                    # Check if the character is within the span
+                    if span_start <= line_start_index + char_index < span_end:
+                        areas = line_custom_char_areas[area_type][span_num]
+                        if not areas and span_start < line_start_index + char_index:
+                            # Add dummy None to indicate that this span is continued from a previous line
+                            areas.append(None)
+                        areas.append((char_area, line_start_index + char_index))
+        # Merge collected char areas
+        for area_type, spans in line_custom_char_areas.items():
+            for span_char_areas in spans:
+                if span_char_areas:
+                    continued = False
+                    if span_char_areas[0] is None:
+                        # This span is continued from a previous line
+                        span_char_areas = span_char_areas[1:]
+                        continued = True
+                    areas = [char_area for char_area, _ in span_char_areas]
+                    indices = [char_index for _, char_index in span_char_areas]
+                    area = Area.merge(areas)
+                    area.content = text[indices[0] : indices[-1] + 1]
+                    area.continued = continued
+                    custom_span_areas[area_type].append(area)
+
     if extend_word_areas:
         whitespace_length = font.getlength(" ")
         dummy = Area(0, 0, 0, 0, line=None)
@@ -356,7 +420,8 @@ def draw_text(
                 word1.right += whitespace_length
                 word2.left -= whitespace_length
 
-    return char_areas, word_areas, text_area
+    # TODO: Return as dict
+    return char_areas, word_areas, text_area, custom_span_areas
 
 
 def generate_text_pages(
@@ -372,6 +437,7 @@ def generate_text_pages(
     background_color: tuple[int, int, int] = (255, 255, 255),
     text_color: tuple[int, int, int] = (0, 0, 0),
     extend_word_areas: bool = True,
+    custom_area_spans: dict[str, list[tuple[int, int]]] | None = None,
 ) -> list[TextImage]:
     """Generate text stimulus images with character- and word-level areas of interest.
 
@@ -388,6 +454,8 @@ def generate_text_pages(
         background_color: Background color as an RGB tuple.
         text_color: Text color as an RGB tuple.
         extend_word_areas: Extend word areas to cover whitespace between words.
+        custom_area_spans: Dictionary of lists of (start, end) character index tuples for custom areas.
+            Keys are custom area types.
 
     Returns:
         The generated TextImages.
@@ -400,28 +468,40 @@ def generate_text_pages(
     font_ascent, font_descent = font.getmetrics()
     line_height = (font_ascent + font_descent) * line_spacing
     num_lines_per_page = int(text_height / line_height)
-    lines = list(wrap_text(text, font, text_width))
-    pages = [[]]
-    for line in lines:
-        if len(pages[-1]) >= num_lines_per_page:
-            # Add new page
-            pages.append([])
-            # Add line to new page if it's not empty
-            if line.strip():
-                pages[-1].append(line)
-        else:
-            # Add line to current page
-            pages[-1].append(line)
+    wrapped = list(wrap_text(text, font, text_width, return_start_indices=True))
+    line_start_indices = [index for _, index in wrapped]
+    page_start_indices = [
+        line_start_indices[i]
+        for i in range(0, len(line_start_indices), num_lines_per_page)
+    ]
+    page_texts = [
+        text[start:end]
+        for start, end in zip(page_start_indices, page_start_indices[1:] + [len(text)])
+    ]
 
     images = []
     char_index_start = 0
     word_index_start = 0
-    for page_index, page_lines in enumerate(pages):
+    custom_span_index_start = defaultdict(int)
+    for page_index, (page_text, page_start_index) in enumerate(
+        zip(page_texts, page_start_indices)
+    ):
+        page_custom_area_spans = None
+        if custom_area_spans is not None:
+            # Adjust indices in custom_area_spans for this page
+            page_custom_area_spans = custom_area_spans.copy()
+            for area_type, spans in page_custom_area_spans.items():
+                page_custom_area_spans[area_type] = [
+                    (start - page_start_index, end - page_start_index)
+                    for start, end in spans
+                    if start >= page_start_index
+                    and end <= page_start_index + len(page_text)
+                ]
         image = Image.new("RGB", (width, height), tuple(background_color))
         draw = ImageDraw.Draw(image)
-        char_areas, word_areas, text_area = draw_text(
+        char_areas, word_areas, text_area, custom_span_areas = draw_text(
             draw,
-            page_lines,
+            page_text,
             margin_px,
             margin_px,
             text_width,
@@ -429,6 +509,7 @@ def generate_text_pages(
             align=align,
             line_spacing=line_spacing,
             extend_word_areas=extend_word_areas,
+            custom_area_spans=page_custom_area_spans,
             max_height=text_height,
             vertical_align=vertical_align,
             color=text_color,
@@ -436,16 +517,24 @@ def generate_text_pages(
         images.append(
             TextImage(
                 image,
-                areas={"char": char_areas, "word": word_areas, "page": [text_area]},
+                areas={
+                    "char": char_areas,
+                    "word": word_areas,
+                    "page": [text_area],
+                    **custom_span_areas,
+                },
                 areas_start_index={
                     "char": char_index_start,
                     "word": word_index_start,
                     "page": page_index,
+                    **custom_span_index_start,
                 },
             )
         )
         char_index_start += len(char_areas)
         word_index_start += len(word_areas)
+        for area_type, areas in custom_span_areas.items():
+            custom_span_index_start[area_type] += len(areas)
 
     return images
 
@@ -529,7 +618,7 @@ def generate_mcq_page(
     section_areas = []
 
     # Draw question
-    question_char_areas, question_word_areas, question_area = draw_text(
+    question_char_areas, question_word_areas, question_area, _ = draw_text(
         draw,
         question,
         question_left,
@@ -553,11 +642,11 @@ def generate_mcq_page(
     # Draw answer options
     option_boxes = []
     if option_layout == "horizontal":
-        option_left = margin_px + 2 * font_size
+        option_left = margin_px
         option_top = question_area.bottom + line_height
         for option_index, option in enumerate(options):
             # Draw option text
-            option_char_areas, option_word_areas, option_area = draw_text(
+            option_char_areas, option_word_areas, option_area, _ = draw_text(
                 draw,
                 option,
                 option_left,
@@ -592,7 +681,7 @@ def generate_mcq_page(
         ):
             option_left = option_center[0] - option_width / 2
             option_top = question_bottom + option_center[1] - option_height / 2
-            option_char_areas, option_word_areas, option_area = draw_text(
+            option_char_areas, option_word_areas, option_area, _ = draw_text(
                 draw,
                 option,
                 option_left,
@@ -681,7 +770,7 @@ def generate_cursor_mcq_page(
     word_areas = []
     section_areas = []
 
-    question_char_areas, question_word_areas, question_area = draw_text(
+    question_char_areas, question_word_areas, question_area, _ = draw_text(
         draw,
         question,
         question_left,
@@ -723,7 +812,7 @@ def generate_cursor_mcq_page(
         cursor_locations.append((circle_x, circle_y))
 
         # Draw option text
-        option_char_areas, option_word_areas, option_area = draw_text(
+        option_char_areas, option_word_areas, option_area, _ = draw_text(
             draw,
             option,
             option_left,

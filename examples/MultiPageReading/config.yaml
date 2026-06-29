@@ -6,8 +6,7 @@ type: MultiPageReading
 num_participants: 8
 
 # Appearance
-stimulus_area_px: [ 1920, 1200]
-font_monospaced: true
+stimulus_area_px: [1100, 900]
 background_color: [204, 204, 204]
 margin_px: 50
 font_size: 25

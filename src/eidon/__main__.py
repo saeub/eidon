@@ -2,6 +2,7 @@ import argparse
 from pathlib import Path
 
 from eidon.build import ExperimentBuilder
+from eidon.convert import RecordingConverter
 from eidon.run import ExperimentRunner
 from eidon.setup.setup import HardwareSetup
 
@@ -78,7 +79,6 @@ def get_argument_parser() -> argparse.ArgumentParser:
         help="Set up the hardware of the experiment. This includes, for example, the eye-to-screen distance.",
         description="Set up the experiment.",
     )
-
     setup_parser.add_argument(
         "path",
         type=Path,
@@ -89,6 +89,26 @@ def get_argument_parser() -> argparse.ArgumentParser:
         type=int,
         default=0,
         help="Screen index to use for the experiment window.",
+    )
+
+    convert_parser = subparsers.add_parser(
+        "convert",
+        help="Convert recordings to a standard format.",
+        description="Convert eye-tracking recordings to a CSV file and extract metadata into a JSON file.",
+    )
+    convert_parser.add_argument(
+        "path",
+        type=Path,
+        help="Path to the experiment directory (must contain recordings/).",
+    )
+    convert_parser.add_argument(
+        "recording_names",
+        type=str,
+        nargs="*",
+        help=(
+            "Names of the recordings or sessions to convert (without the .asc file extension). "
+            "If not provided, all recordings will be converted."
+        ),
     )
 
     return parser
@@ -120,6 +140,10 @@ def main():
             screen=args.screen,
         )
         runner.run(start_from_stage=args.start_from_stage)
+
+    elif args.command == "convert":
+        converter = RecordingConverter(experiment_path=args.path)
+        converter.convert(args.recording_names)
 
 
 if __name__ == "__main__":

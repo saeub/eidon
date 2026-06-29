@@ -1,5 +1,5 @@
 <<condition_A>>
-This is a minimal pair stimulus sentence.
+This [[verb]]is[[/verb]] a minimal [[noun]]pair[[/noun]] stimulus sentence.
 <<question>>
 Question?
 <<options>>
@@ -7,7 +7,7 @@ Question?
 [N]o
 
 <<condition_B>>
-This are a minimal pair stimulus sentence.
+This [[verb]]are[[/verb]] a minimal [[noun]]pair[[/noun]] stimulus sentence.
 <<question>>
 Question?
 <<options>>
@@ -15,7 +15,7 @@ Question?
 **[N]o
 
 <<condition_C>>
-This is a minimal pairs stimulus sentence.
+This [[verb]]is[[/verb]] a minimal [[noun]]pairs[[/noun]] stimulus sentence.
 <<question>>
 Question?
 <<options>>
@@ -23,7 +23,7 @@ Question?
 [N]o
 
 <<condition_D>>
-This are a minimal pairs stimulus sentence.
+This [[verb]]are[[/verb]] a minimal [[noun]]pairs[[/noun]] stimulus sentence.
 <<question>>
 Question?
 <<options>>

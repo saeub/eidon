@@ -35,6 +35,8 @@ specified design (e.g., Latin square). Filler items can also be added.
 instructions, wait (after instructions and practice trials), break, and end pages. The
 instructions are split into multiple pages if necessary.
 
+#### Experimental items
+
 `01.txt`, `02.txt`, etc. each represent one experimental item. The file names (without `.txt`)
 are used as item IDs. Each file must follow the following format (values in [brackets] are
 placeholders):
@@ -81,6 +83,8 @@ for all conditions, and the name of the condition must be specified like this:
 The number of questions can vary across items. Optionally, one answer option per question can be
 marked with `**` to indicate that it is the correct answer.
 
+#### Practice and filler items
+
 `practice.txt` and `fillers.txt` are optional and can contain any number of practice and filler
 items, which follow a similar format (but without conditions):
 
@@ -106,6 +110,19 @@ items, which follow a similar format (but without conditions):
 
 Replace `<<filler>>` with `<<practice>>` for practice items.
 
+#### Areas of interest
+
+Areas of interest can be defined in the text by surrounding them with
+[[area-name]]...[[/area-name]]. For example:
+
+```
+<<item>>
+[[subject]]The quick brown fox[[/subject]] jumps over [[object]]the lazy dog[[/object]].
+```
+
+An item can contain any number of areas of interest. Discontinuous areas can be defined by
+using multiple tags with the same area name.
+
 ### Configuration
 
 - `stimulus_area_px` (tuple[int, int])  
@@ -116,6 +133,8 @@ Replace `<<filler>>` with `<<practice>>` for practice items.
 - `background_color` (tuple[int, int, int])  
   Color for window and stimulus backgrounds. (red, green, blue) with values from 0 to 255.  
   Default: `(204, 204, 204)`
+- `tracking_mode` (TrackingMode)  
+  Tracking mode of the eye-tracker. For example, remote tracking or head-stabilized.
 - `num_participants` (int)  
   Number of participants in the experiment. Should be a multiple of the number of conditions.
 - `conditions` (list[str] | None)  
