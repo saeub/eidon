@@ -2,6 +2,7 @@ import argparse
 from pathlib import Path
 
 from eidon.build import ExperimentBuilder
+from eidon.clean import RecordingCleaner
 from eidon.convert import RecordingConverter
 from eidon.run import ExperimentRunner
 
@@ -76,7 +77,7 @@ def get_argument_parser() -> argparse.ArgumentParser:
     convert_parser = subparsers.add_parser(
         "convert",
         help="Convert recordings to a standard format.",
-        description="Convert eye-tracking recordings to a CSV file and extract metadata into a JSON file.",
+        description="Convert EyeLink recordings (.asc files) to a CSV file and extract metadata into a JSON file.",
     )
     convert_parser.add_argument(
         "path",
@@ -92,6 +93,39 @@ def get_argument_parser() -> argparse.ArgumentParser:
             "Names of the recordings to convert (without the .asc file extension). "
             "If not provided, all recordings will be converted."
         ),
+    )
+
+    clean_parser = subparsers.add_parser(
+        "clean",
+        help="Clean gaze data.",
+        description=(
+            "Clean gaze data by manually correcting drift or removing bad trials. "
+            "Generates a JSON files with the applied correcions and a new CSV file with the cleaned gaze data."
+        ),
+    )
+    clean_parser.add_argument(
+        "path",
+        type=Path,
+        help="Path to the experiment directory (must contain recordings/).",
+    )
+    clean_parser.add_argument(
+        "recording_name",
+        type=str,
+        help="Name of the recording to clean (without a file extension).",
+    )
+    clean_parser.add_argument(
+        "--areas",
+        type=str,
+        default=None,
+        help=(
+            "Area types to display as a backdrop (e.g., 'word'). "
+            "Requires building the experiment with --area-images."
+        ),
+    )
+    clean_parser.add_argument(
+        "--vertical",
+        action="store_true",
+        help="Restrict corrections to vertical axis only (recommended for reading experiments).",
     )
 
     return parser
@@ -119,6 +153,10 @@ def main():
     elif args.command == "convert":
         converter = RecordingConverter(experiment_path=args.path)
         converter.convert(args.recording_names)
+
+    elif args.command == "clean":
+        cleaner = RecordingCleaner(experiment_path=args.path)
+        cleaner.clean(recording_name=args.recording_name, area_type=args.areas, vertical=args.vertical)
 
 
 if __name__ == "__main__":
