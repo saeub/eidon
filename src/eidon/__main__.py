@@ -4,7 +4,7 @@ from pathlib import Path
 from eidon.build import ExperimentBuilder
 from eidon.convert import RecordingConverter
 from eidon.run import ExperimentRunner
-from eidon.setup.setup import HardwareSetup
+from eidon.setup import HardwareSetup
 
 
 def get_argument_parser() -> argparse.ArgumentParser:

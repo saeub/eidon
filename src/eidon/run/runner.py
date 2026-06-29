@@ -15,7 +15,7 @@ from eidon.run.events import Event
 from eidon.run.devices.eyetracker import EyeLink, MouseTracker
 from eidon.run.devices.microphone import Microphone
 from eidon.run.stages import ExperimentStage
-from eidon.setup.setup import HardwareSetup
+from eidon.setup import HardwareSetup
 from eidon.utils import get_package_version, import_custom_code
 
 
