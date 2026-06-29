@@ -84,12 +84,11 @@ def get_argument_parser() -> argparse.ArgumentParser:
         help="Path to the experiment directory (must contain recordings/).",
     )
     convert_parser.add_argument(
-        "--recording-names",
+        "recording_names",
         type=str,
-        nargs="+",
-        default=None,
+        nargs="*",
         help=(
-            "Names of the recordings to convert (without the .asc file extension). "
+            "Names of the recordings or sessions to convert (without the .asc file extension). "
             "If not provided, all recordings will be converted."
         ),
     )
