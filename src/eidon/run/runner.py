@@ -54,7 +54,9 @@ class ExperimentRunner:
         if recording_name is None:
             recording_name = f"{experiment_definition['name']}.{session_name}.{time.strftime('%Y%m%d-%H%M%S')}"
         self.recording_name = recording_name
-        self.recording_path = (self.experiment_path / "recordings" / recording_name).absolute()
+        self.recording_path = (
+            self.experiment_path / "recordings" / recording_name
+        ).absolute()
         self.recording_path.mkdir(parents=True, exist_ok=True)
 
         self.logfile = open(
@@ -87,7 +89,19 @@ class ExperimentRunner:
 
         self.event_queue: list[Event] = []
 
-        def on_key_press(symbol: str, modifiers: int):
+        def on_key_press(symbol: int, modifiers: int):
+            if (
+                symbol == pyglet.window.key.ESCAPE
+                and modifiers & pyglet.window.key.MOD_CTRL
+                and modifiers & pyglet.window.key.MOD_SHIFT
+            ):
+                self.logfile.write(
+                    json.dumps(
+                        {"time": datetime.now().isoformat(), "error": "aborted by user"}
+                    )
+                    + "\n"
+                )
+                exit(1)
             time = self.clock.time()
             symbol = pyglet.window.key.symbol_string(symbol)
             self.event_queue.append(
