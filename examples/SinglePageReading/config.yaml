@@ -17,7 +17,7 @@ line_spacing: 2.5
 
 # Questions
 question_layout: horizontal
-option_keys: [Y, N]
+option_keys: [F, J]
 
 # Breaks between items
 breaks_after: 4
