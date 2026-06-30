@@ -475,7 +475,7 @@ def generate_text_pages(
         for i in range(0, len(line_start_indices), num_lines_per_page)
     ]
     page_texts = [
-        text[start:end]
+        text[start:end].strip()
         for start, end in zip(page_start_indices, page_start_indices[1:] + [len(text)])
     ]
 
