@@ -3,7 +3,6 @@ import time
 from pathlib import Path
 
 import pyglet
-import yaml
 
 from eidon.run.events import Event
 
@@ -15,14 +14,11 @@ class HardwareSetup:
         with open(self.experiment_path / "experiment.json") as f:
             experiment_definition = json.load(f)
 
-        with open(self.experiment_path / "config.yaml") as f:
-            config = yaml.safe_load(f)
-
         self.display_width, self.display_height = experiment_definition[
             "stimulus_area_px"
         ]
         self.margin_px = experiment_definition["margin_px"]
-        self.tracking_mode = config["tracking_mode"]
+        self.tracking_mode = experiment_definition["tracking_mode"]
 
         self.display_width = self.display_width - 2 * self.margin_px
         self.display_height = self.display_height - 2 * self.margin_px

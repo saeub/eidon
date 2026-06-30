@@ -5,7 +5,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal
 
-TrackingMode = Literal['remote', 'head-stabilized']
 
 @dataclass(kw_only=True)
 class ExperimentType(ABC):
@@ -26,7 +25,7 @@ class ExperimentType(ABC):
     stimulus_area_px: tuple[int, int]
     margin_px: int
     background_color: tuple[int, int, int] = (204, 204, 204)
-    tracking_mode: TrackingMode
+    tracking_mode: Literal["remote", "head-stabilized"]
 
     @classmethod
     def get_subclasses(cls) -> dict[str, type[ExperimentType]]:
