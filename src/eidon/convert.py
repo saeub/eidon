@@ -118,6 +118,7 @@ class RecordingConverter:
         metadata = {
             "session_name": session_path.stem,
             "eye": gaze._metadata["tracked_eye"],
+            "sample_rate": gaze._metadata["sampling_rate"],
             "calibrations": calibration_data.to_dicts(),
         }
 
