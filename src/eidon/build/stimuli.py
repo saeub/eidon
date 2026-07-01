@@ -473,7 +473,7 @@ def generate_text_pages(
     page_start_indices = [
         line_start_indices[i]
         for i in range(0, len(line_start_indices), num_lines_per_page)
-    ]
+    ] or [0]  # Ensure at least one page
     page_texts = [
         text[start:end].strip()
         for start, end in zip(page_start_indices, page_start_indices[1:] + [len(text)])

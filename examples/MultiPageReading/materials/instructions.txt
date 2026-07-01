@@ -1,10 +1,12 @@
-You will read three texts about traditions at US universities. Please read the texts silently and naturally, as you would commonly read. The texts will span multiple pages. To advance to the next page, press [SPACE] on the keyboard.
+You will see texts on screen. Please read them silently and naturally, as you would commonly read. The texts will span multiple pages. To advance to the next page, press [SPACE] on the keyboard.
 
-After each text, you will answer a comprehension question about the text. You will also be asked to rate the texts. To select an answer for the questions and ratings, use the [UP] and [DOWN] arrow keys and confirm your answer with [SPACE].
+After each text, you will have to answer a multiple-choice question about the sentence. Use the arrow keys to select an answer and confirm your answer with [SPACE].
 
 If you have any questions, please ask the experimenter now.
 Otherwise, press [SPACE] to continue.
 
-Please put your left hand on the space bar and your right hand on the arrow keys. Keep our hands on the keyboard during the entire experiment, so that you won't need to look down to press the right keys.
+<<pagebreak>>
+
+Please place your left hand on the space bar and your right hand on the arrow keys. Keep our hands on the keyboard during the entire experiment, so that you won't need to look down to press the correct keys.
 
 Press [SPACE] to proceed with the calibration.
