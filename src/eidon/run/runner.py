@@ -103,10 +103,12 @@ class ExperimentRunner:
                 )
                 exit(1)
             time = self.clock.time()
-            symbol = pyglet.window.key.symbol_string(symbol)
-            self.event_queue.append(
-                Event("key", time, {"symbol": symbol, "modifiers": modifiers})
-            )
+            if isinstance(symbol, int):
+                # FIXME: Some keys on Mac result in None symbols
+                symbol = pyglet.window.key.symbol_string(symbol)
+                self.event_queue.append(
+                    Event("key", time, {"symbol": symbol, "modifiers": modifiers})
+                )
             return True
 
         def on_text(text: str):
