@@ -524,6 +524,7 @@ class MultipleChoiceQuestion(ExperimentStage):
             assert len(option_boxes) == len(
                 self.option_keys
             ), "option_boxes must have the same length as option_keys"
+            # TODO: Make configurable
             self.option_boxes = [
                 pyglet.shapes.Box(
                     x, self.runner.display_height - y - height, width, height, color=(0, 0, 0), thickness=2
@@ -793,7 +794,7 @@ class LabelAnnotation(ExperimentStage):
         imgpath: str,
         label_boxes: dict[str, tuple[float, float, float, float]],
         label_keys: dict[str, str],
-        confirm_key: str,
+        confirm_key: str | None = None,
     ):
         """
         :param imgpath:
@@ -804,7 +805,8 @@ class LabelAnnotation(ExperimentStage):
         :param label_keys:
             An object mapping keys to label names.
         :param confirm_key:
-            The key to press to confirm the selected label.
+            The key to press to confirm the selected label. If not provided, the label is confirmed
+            immediately when a label key is pressed.
         """
         imgpath = (self.runner.experiment_path / imgpath).absolute()
         img = pyglet.image.load(imgpath)
@@ -843,10 +845,16 @@ class LabelAnnotation(ExperimentStage):
         if event.data["symbol"] in self.label_keys:
             self.selected_label = self.label_keys[event.data["symbol"]]
             self.runner.eyetracker.send_message(f"LABEL_SELECTED {self.selected_label}")
-            self.runner.window.clear()
-            self.stimulus.draw()
-            self.label_boxes[self.selected_label].draw()
-            self.runner.window.flip()
+            if self.confirm_key is None:
+                self.runner.eyetracker.send_message(
+                    f"LABEL_CONFIRMED {self.selected_label}"
+                )
+                self.finished = True
+            else:
+                self.runner.window.clear()
+                self.stimulus.draw()
+                self.label_boxes[self.selected_label].draw()
+                self.runner.window.flip()
 
         elif (
             event.data["symbol"] == self.confirm_key and self.selected_label is not None
