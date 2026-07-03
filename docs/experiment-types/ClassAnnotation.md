@@ -107,9 +107,9 @@ questions:
   Default: `None`
 - `label_option_keys` (list[str] | None)  
   List of keys to use for selecting a label, in order. For example, `[Y, N]` to use the Y key for the first label and the N key for the second label.  
-  Key names are [pyglet key symbol strings](https://pyglet.readthedocs.io/en/latest/programming_guide/keyboard.html#defined-key-symbols) (e.g. `A`, `LEFT`, `SPACE`).
+  Available key names are listed [here](../keyboard.md).
 - `label_confirm_key` (str | None)  
-  Key names are [pyglet key symbol strings](https://pyglet.readthedocs.io/en/latest/programming_guide/keyboard.html#defined-key-symbols) (e.g. `A`, `LEFT`, `SPACE`).  
+  Available key names are listed [here](../keyboard.md).  
   Default: `None`
 - `questions` (list[dict[str, typing.Any]] | None)  
   List of multiple-choice questions to present after selecting a label. See [example above](#questions) for details.  
@@ -119,11 +119,11 @@ questions:
   Default: `cursor`
 - `question_option_keys` (list[str] | None)  
   List of keys to use for selecting multiple-choice options, in order. For example, `[Y, N]` to use the Y key for the first option and the N key for the second option. Only required when question layout is `horizontal`.  
-  Key names are [pyglet key symbol strings](https://pyglet.readthedocs.io/en/latest/programming_guide/keyboard.html#defined-key-symbols) (e.g. `A`, `LEFT`, `SPACE`).  
+  Available key names are listed [here](../keyboard.md).  
   Default: `None`
 - `question_confirm_key` (str | None)  
   Key to use for confirming the selection of an option. If not specified, options are selected immediately when the corresponding option key is pressed.  
-  Key names are [pyglet key symbol strings](https://pyglet.readthedocs.io/en/latest/programming_guide/keyboard.html#defined-key-symbols) (e.g. `A`, `LEFT`, `SPACE`).  
+  Available key names are listed [here](../keyboard.md).  
   Default: `SPACE`
 
 ### [Example](https://github.com/saeub/eidon/tree/main/examples/ClassAnnotation)
