@@ -102,7 +102,7 @@ yes
 
 Here, we have an item in two conditions (`active` and `passive`) with one comprehension question each.
 
-Check the [example experiment](https://github.com/saeub/eidon/tree/main/examples/SinglePageReading/items) for more examples of item files.
+Check the [example experiment](https://github.com/saeub/eidon/tree/main/examples/SinglePageReading/materials/items) for more examples of item files.
 
 #### 3. Building the experiment
 
