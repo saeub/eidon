@@ -125,5 +125,3 @@ questions:
   Key to use for confirming the selection of an option. If not specified, options are selected immediately when the corresponding option key is pressed.  
   Available key names are listed [here](../keyboard.md).  
   Default: `SPACE`
-
-### [Example](https://github.com/saeub/eidon/tree/main/examples/ClassAnnotation)
