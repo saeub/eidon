@@ -19,8 +19,10 @@ def get_argument_parser() -> argparse.ArgumentParser:
         ),
     )
     build_parser.add_argument(
-        "path",
+        "experiment_path",
         type=Path,
+        nargs="?",
+        default=Path.cwd(),
         help="Path to the experiment directory (must contain config.yaml).",
     )
     build_parser.add_argument(
@@ -35,8 +37,10 @@ def get_argument_parser() -> argparse.ArgumentParser:
         description="Run a session from a built experiment. Collects eye-tracking data and logs.",
     )
     run_parser.add_argument(
-        "path",
+        "experiment_path",
         type=Path,
+        nargs="?",
+        default=Path.cwd(),
         help="Path to the built experiment directory (must contain experiment.json and sessions/).",
     )
     run_parser.add_argument(
@@ -79,8 +83,10 @@ def get_argument_parser() -> argparse.ArgumentParser:
         description="Convert eye-tracking recordings to a CSV file and extract metadata into a JSON file.",
     )
     convert_parser.add_argument(
-        "path",
+        "experiment_path",
         type=Path,
+        nargs="?",
+        default=Path.cwd(),
         help="Path to the experiment directory (must contain recordings/).",
     )
     convert_parser.add_argument(
@@ -101,12 +107,12 @@ def main():
     args = parser.parse_args()
 
     if args.command == "build":
-        builder = ExperimentBuilder(experiment_path=args.path)
+        builder = ExperimentBuilder(experiment_path=args.experiment_path)
         builder.build(generate_area_images=args.area_images)
 
     elif args.command == "run":
         runner = ExperimentRunner(
-            experiment_path=args.path,
+            experiment_path=args.experiment_path,
             session_name=args.session,
             dummy=args.dummy,
             participant_control=args.participant_control,
@@ -116,7 +122,7 @@ def main():
         runner.run(start_from_stage=args.start_from_stage)
 
     elif args.command == "convert":
-        converter = RecordingConverter(experiment_path=args.path)
+        converter = RecordingConverter(experiment_path=args.experiment_path)
         converter.convert(args.recording_names)
 
 
