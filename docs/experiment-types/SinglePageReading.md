@@ -43,7 +43,7 @@ placeholders):
 
 ```
 <<item>>
-[text for condition 1]
+[text]
 <<question>>
 [question stem]
 <<options>>
@@ -125,8 +125,10 @@ using multiple tags with the same area name.
 
 ### Configuration
 
-- `display_size` (tuple[int, int])
+- `display_size` (tuple[int, int])  
+  Size of the display in pixels (width, height).
 - `background_color` (tuple[int, int, int])  
+  Color for window and stimulus backgrounds. (red, green, blue) with values from 0 to 255.  
   Default: `(204, 204, 204)`
 - `num_participants` (int)  
   Number of participants in the experiment. Should be a multiple of the number of conditions.
@@ -156,10 +158,11 @@ using multiple tags with the same area name.
   Layout for multiple-choice questions. `horizontal` arranges options in a horizontal row, `diamond` arranges them in a diamond shape (requires exactly 4 options that are selected with the UP, LEFT, RIGHT, and DOWN keys), and `cursor` arranges them vertically with a cursor movable with the UP and DOWN keys (requires `confirm_key`).  
   Default: `horizontal`
 - `option_keys` (list[str] | None)  
-  List of keys to use for selecting multiple-choice options, in order. For example, `["Y", "N"]` to use the Y key for the first option and N key for the second option. Only required when question layout is `horizontal`.  
+  List of keys to use for selecting multiple-choice options, in order. For example, `[Y, N]` to use the Y key for the first option and the N key for the second option. Only required when question layout is `horizontal`.  
   Key names are [pyglet key symbol strings](https://pyglet.readthedocs.io/en/latest/programming_guide/keyboard.html#defined-key-symbols) (e.g. `A`, `LEFT`, `SPACE`).  
   Default: `None`
 - `confirm_key` (str | None)  
+  Key to use for confirming the selection of an option. If not specified, options are selected immediately when the corresponding option key is pressed.  
   Key names are [pyglet key symbol strings](https://pyglet.readthedocs.io/en/latest/programming_guide/keyboard.html#defined-key-symbols) (e.g. `A`, `LEFT`, `SPACE`).  
   Default: `None`
 

@@ -52,7 +52,7 @@ class SinglePageReading(ExperimentType):
 
     ```
     <<item>>
-    [text for condition 1]
+    [text]
     <<question>>
     [question stem]
     <<options>>
@@ -148,9 +148,9 @@ class SinglePageReading(ExperimentType):
         keys), and `cursor` arranges them vertically with a cursor movable with the UP and DOWN
         keys (requires `confirm_key`).
     :param option_keys: List of keys to use for selecting multiple-choice options, in order.
-        For example, `["Y", "N"]` to use the Y key for the first option and N key for the second
+        For example, `[Y, N]` to use the Y key for the first option and the N key for the second
         option. Only required when question layout is `horizontal`.
-    :param option_confirm_key: Key to use for confirming the selection of an option.
+    :param confirm_key: Key to use for confirming the selection of an option.
         If not specified, options are selected immediately when the corresponding option key is
         pressed.
     """
@@ -487,6 +487,7 @@ class SinglePageReading(ExperimentType):
             .read_text(encoding="utf8")
             .strip()
         )
+        # TODO: Allow manual page breaks
         images = stimuli.generate_text_pages(text, **text_config)
         for i, image in enumerate(images):
             image.save(experiment_path, f"instructions.{i}")

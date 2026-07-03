@@ -15,6 +15,6 @@ Shows an image stimulus and allows selecting a label.
 - `label_keys` (dict[str, str])  
   An object mapping keys to label names.  
   Key names are [pyglet key symbol strings](https://pyglet.readthedocs.io/en/latest/programming_guide/keyboard.html#defined-key-symbols) (e.g. `A`, `LEFT`, `SPACE`).
-- `confirm_key` (str)  
-  The key to press to confirm the selected label.  
+- `confirm_key` (str | None)  
+  The key to press to confirm the selected label. If not provided, the label is confirmed immediately when a label key is pressed.  
   Key names are [pyglet key symbol strings](https://pyglet.readthedocs.io/en/latest/programming_guide/keyboard.html#defined-key-symbols) (e.g. `A`, `LEFT`, `SPACE`).
