@@ -85,7 +85,7 @@ class HardwareSetup:
 
     def setup(self):
         if (
-            self.latest_setup
+            self.latest_setup is not None
             and self.latest_setup.get("eye_tracker") == self.eye_tracker
             and self.latest_setup.get("tracking_mode") == self.tracking_mode
         ):
@@ -149,7 +149,7 @@ class HardwareSetup:
         return new_setup
 
     def _save_setup(self, setup: dict[str, Any]):
-        if self.latest_setup != setup:
+        if self.latest_setup is None or self.latest_setup | {"timestamp": None} != setup | {"timestamp": None}:
             timestamp = time.strftime("%Y%m%d-%H%M%S")
             filename = f"setup.{timestamp}.json"
             config_path = self.setups_path / filename
@@ -161,12 +161,11 @@ class HardwareSetup:
     def _confirm_setup(self, setup: dict[str, Any]) -> bool:
         text = "Are these measurements correct?\n\n"
 
-        for k, v in setup.items():
-            setting = f"{k}: {v}\n".replace("_", " ")
-            setting = setting.capitalize()
-            text += setting
-        
-        text += "\nPress [Y] for yes or [N] for no."
+        text += "\n".join(
+            f"{key}: {value}" for key, value in setup.items() if key != "timestamp"
+        )
+
+        text += "\n\nPress [Y] for yes or [N] for no."
 
         batch = pyglet.graphics.Batch()
 

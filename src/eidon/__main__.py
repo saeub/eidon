@@ -132,7 +132,7 @@ def main():
 
     elif args.command == "setup":
         setup = HardwareSetup(
-            experiment_path=args.path,
+            experiment_path=args.experiment_path,
             screen=args.screen,
         )
         setup.setup()
