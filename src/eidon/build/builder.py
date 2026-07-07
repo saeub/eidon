@@ -50,6 +50,7 @@ class ExperimentBuilder:
         (self.experiment_path / "stimuli").mkdir(exist_ok=True)
         (self.experiment_path / "sessions").mkdir(exist_ok=True)
         (self.experiment_path / "recordings").mkdir(exist_ok=True)
+        (self.experiment_path / "setups").mkdir(exist_ok=True)
 
         sessions = experiment_type.build(self.experiment_path)
         for name, session in sessions.items():
@@ -59,6 +60,7 @@ class ExperimentBuilder:
         metadata = {
             "name": experiment_name,
             "eidon_version": get_package_version(),
+            "eye_tracker": experiment_type.eye_tracker,
             "tracking_mode": experiment_type.tracking_mode,
             # TODO: Move these settings to session?
             "background_color": experiment_type.background_color,

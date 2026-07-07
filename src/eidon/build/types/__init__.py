@@ -17,13 +17,16 @@ class ExperimentType(ABC):
         The rectangle will be centered in the screen and all stimuli will be presented inside it.
         The area needs to be within the trackable range of your eye tracker.
         The area cannot be larger than the resolution of your monitor.
-    :param tracking_mode: Tracking mode of the eye-tracker (either `remote` or `head-stabilized`).
+    :param eye_tracker: Eye tracker model. `dummy` can only be used for testing in dummy mode.
+    :param tracking_mode: Tracking mode of the eye tracker.
+        Use `head-stabilized` for use with a headrest and `remote` for remote tracking.
     """
 
     # TODO: Use more user-friendly formats for color and size, and avoid list->tuple conversion for PIL
     stimulus_area_px: tuple[int, int]
     background_color: tuple[int, int, int] = (204, 204, 204)
-    tracking_mode: Literal["remote", "head-stabilized"]
+    eye_tracker: Literal["eyelink-1000-plus", "eyelink-portable-duo", "dummy"] = "dummy"
+    tracking_mode: Literal["head-stabilized", "remote"] = "head-stabilized"
 
     @classmethod
     def get_subclasses(cls) -> dict[str, type[ExperimentType]]:

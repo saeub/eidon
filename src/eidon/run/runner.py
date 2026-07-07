@@ -46,20 +46,24 @@ class ExperimentRunner:
                 + "This may cause compatibility issues."
             )
 
+        if not dummy:
+            setup = HardwareSetup(self.experiment_path, screen=screen)
+            setup.setup()
+
         import_custom_code(self.experiment_path)
 
-        setup = HardwareSetup(self.experiment_path)
-        if not setup.confirm_setup():
-            setup.do_setup()
-
-        self.display_width, self.display_height = experiment_definition["stimulus_area_px"]
+        self.display_width, self.display_height = experiment_definition[
+            "stimulus_area_px"
+        ]
         background_color = experiment_definition["background_color"]
         # Convert color to OpenGL's [0, 1] range, add alpha
         background_color = tuple([c / 0xFF for c in background_color] + [1.0])
 
-        timestamp = time.strftime('%Y%m%d-%H%M%S')
+        timestamp = time.strftime("%Y%m%d-%H%M%S")
         if recording_name is None:
-            recording_name = f"{experiment_definition['name']}.{session_name}.{timestamp}"
+            recording_name = (
+                f"{experiment_definition['name']}.{session_name}.{timestamp}"
+            )
         self.recording_name = recording_name
         self.recording_path = (
             self.experiment_path / "recordings" / recording_name
@@ -70,16 +74,12 @@ class ExperimentRunner:
             self.recording_path / f"{recording_name}.log", "w", encoding="utf-8"
         )
 
-        # copy hardware settings to recording folder
-        config_path = self.recording_path / f"setup_config.{session_name}.{timestamp}.json"
-        shutil.copy(setup.last_config_path, config_path)
-        with open(self.recording_path / config_path, 'r') as f:
-            data = json.load(f)
-
-        with open(self.recording_path / config_path, 'w') as f:
-            original_config_name = setup.last_config_path.stem
-            data["setup_config_vs"] = original_config_name
-            json.dump(data, f)
+        if not dummy:
+            # Copy hardware setup to recording folder
+            setup_path = self.recording_path / f"{recording_name}.setup.json"
+            setup_path.write_text(
+                json.dumps(setup.latest_setup, indent=4), encoding="utf-8"
+            )
 
         self.clock = pyglet.clock.get_default()
 
@@ -143,6 +143,11 @@ class ExperimentRunner:
                 origin_y=(self.window.height - self.display_height) // 2,
             )
         else:
+            if experiment_definition["eye_tracker"] == "dummy":
+                raise ValueError(
+                    "To run the experiment with a real eye tracker, an eye-tracker model must be specified in the experiment definition. "
+                    "Either specify `eye_tracker` in the experiment configuration or run with the `--dummy` flag."
+                )
             edf_path = self.recording_path / f"{recording_name}.edf"
             eyelink_settings = experiment_definition.get("eyelink_settings")
             self.eyetracker = EyeLink(
@@ -212,6 +217,7 @@ class ExperimentRunner:
             start_time = datetime.now()
 
             if stage.record_eyes:
+                # TODO: Send trial number instead of stage name
                 self.eyetracker.send_status_message(stage.name)
                 self.eyetracker.start_recording()
 

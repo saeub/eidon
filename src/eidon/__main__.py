@@ -88,7 +88,7 @@ def get_argument_parser() -> argparse.ArgumentParser:
         "--screen",
         type=int,
         default=0,
-        help="Screen index to use for the experiment window.",
+        help="Screen index to use for the setup window.",
     )
 
     convert_parser = subparsers.add_parser(
@@ -127,8 +127,7 @@ def main():
             experiment_path=args.path,
             screen=args.screen,
         )
-
-        setup.do_setup()
+        setup.setup()
 
     elif args.command == "run":
         runner = ExperimentRunner(
