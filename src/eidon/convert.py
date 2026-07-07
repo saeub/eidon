@@ -27,6 +27,7 @@ class RecordingConverter:
     def convert(self, recording_names: list[str] | None = None):
         all_recording_names = [
             path.name for path in (self.experiment_path / "recordings").glob("*")
+            if path.name.startswith(self.experiment_definition["name"] + ".")
         ]
         if not recording_names:
             asc_paths = [
