@@ -84,8 +84,10 @@ def get_argument_parser() -> argparse.ArgumentParser:
         description="Set up the experiment.",
     )
     setup_parser.add_argument(
-        "path",
+        "experiment_path",
         type=Path,
+        nargs="?",
+        default=Path.cwd(),
         help="Path to the built experiment directory (must contain experiment.json and sessions/).",
     )
     setup_parser.add_argument(

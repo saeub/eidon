@@ -9,13 +9,13 @@ Convert eye-tracking recordings to a CSV file and extract metadata into a JSON f
 ### Usage
 
 ```
-eidon convert [-h] path [recording_names ...]
+eidon convert [-h] [experiment_path] [recording_names ...]
 
 Convert eye-tracking recordings to a CSV file and extract metadata into a JSON
 file.
 
 positional arguments:
-  path             Path to the experiment directory (must contain
+  experiment_path  Path to the experiment directory (must contain
                    recordings/).
   recording_names  Names of the recordings or sessions to convert (without the
                    .asc file extension). If not provided, all recordings will
