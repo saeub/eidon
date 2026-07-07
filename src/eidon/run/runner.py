@@ -145,11 +145,6 @@ class ExperimentRunner:
                 origin_y=(self.window.height - self.display_height) // 2,
             )
         else:
-            if experiment_definition["eye_tracker"] == "dummy":
-                raise ValueError(
-                    "To run the experiment with a real eye tracker, an eye-tracker model must be specified in the experiment definition. "
-                    "Either specify `eye_tracker` in the experiment configuration or run with the `--dummy` flag."
-                )
             edf_path = self.recording_path / f"{recording_name}.edf"
             eyelink_settings = experiment_definition.get("eyelink_settings")
             self.eyetracker = EyeLink(

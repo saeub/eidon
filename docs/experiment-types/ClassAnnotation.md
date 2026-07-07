@@ -83,12 +83,6 @@ questions:
 - `background_color` (tuple[int, int, int])  
   Color for window and stimulus backgrounds. (red, green, blue) with values from 0 to 255.  
   Default: `(204, 204, 204)`
-- `eye_tracker` (Literal['eyelink-1000-plus', 'eyelink-portable-duo', 'dummy'])  
-  Eye tracker model. `dummy` can only be used for testing in dummy mode.  
-  Default: `dummy`
-- `tracking_mode` (Literal['head-stabilized', 'remote'])  
-  Tracking mode of the eye tracker. Use `head-stabilized` for use with a headrest and `remote` for remote tracking.  
-  Default: `head-stabilized`
 - `num_participants` (int)  
   Number of participants in the experiment. Should be a multiple of the number of conditions.
 - `breaks_after` (int | None)  

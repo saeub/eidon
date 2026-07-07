@@ -1,12 +1,19 @@
 import json
-import time
 import math
+import time
 from pathlib import Path
 from typing import Any
 
 import pyglet
 
-from eidon.run.events import Event
+EYE_TRACKERS = {
+    "eyelink-1000-plus": "Eyelink 1000 Plus",
+    "eyelink-portable-duo": "Eyelink Portable Duo",
+}
+TRACKING_MODES = {
+    "head-stabilized": "Head-stabilized (with chinrest or headrest)",
+    "remote": "Remote (without headrest)",
+}
 
 TRACKABLE_RANGES = {  # (horizontal, vertical) in degrees
     "eyelink-1000-plus": (32, 25),
@@ -24,18 +31,6 @@ class HardwareSetup:
         self.display_width, self.display_height = experiment_definition[
             "stimulus_area_px"
         ]
-        # TODO: Ask about eye-tracker settings during setup instead of defining them in experiment.json
-        self.eye_tracker = experiment_definition["eye_tracker"]
-        self.tracking_mode = experiment_definition["tracking_mode"]
-
-        assert self.eye_tracker in TRACKABLE_RANGES, (
-            f"Unknown eye_tracker specified in config.yaml: {self.eye_tracker}. "
-            f"Supported eye trackers: {list(TRACKABLE_RANGES.keys())}"
-        )
-        assert self.tracking_mode in ["head-stabilized", "remote"], (
-            f"Unknown tracking_mode specified in config.yaml: {self.tracking_mode}. "
-            f"Supported tracking modes: ['head-stabilized', 'remote']"
-        )
 
         self.setups_path = self.experiment_path / "setups"
         self.setups_path.mkdir(parents=True, exist_ok=True)
@@ -85,12 +80,8 @@ class HardwareSetup:
         self.window.clear()
 
     def setup(self):
-        if (
-            self.latest_setup is not None
-            and self.latest_setup.get("eye_tracker") == self.eye_tracker
-            and self.latest_setup.get("tracking_mode") == self.tracking_mode
-        ):
-            # Latest setup exists and eye-tracker settings have not changed
+        if self.latest_setup is not None:
+            # Latest setup exists
             if self._confirm_setup(self.latest_setup):
                 self.window.close()
                 return
@@ -104,8 +95,6 @@ class HardwareSetup:
 
     def _do_setup(self) -> dict[str, Any]:
         new_setup = {
-            "eye_tracker": self.eye_tracker,
-            "tracking_mode": self.tracking_mode,
             "stimulus_area_width_px": self.display_width,
             "stimulus_area_height_px": self.display_height,
         }
@@ -119,98 +108,52 @@ class HardwareSetup:
             "Press [SPACE] to continue."
         )
 
-        # TODO: Check if eye tracker and tracking mode are correctly defined
-
         okay = False
         while not okay:
+            new_setup["eye_tracker"] = self._select_from_list(
+                "Select eye tracker:", EYE_TRACKERS
+            )
+            new_setup["tracking_mode"] = self._select_from_list(
+                "Select tracking mode:", TRACKING_MODES
+            )
+
             new_setup["stimulus_area_width_mm"] = self._get_float_measurement(
-                "Measure the WIDTH of the black rectangle on this screen.\n"
+                "Measure the WIDTH of the black rectangle on this screen.\n\n"
                 "Enter the measurement in millimeters as a number (e.g., 605), then press [ENTER].",
                 rectangle=True,
             )
 
             new_setup["stimulus_area_height_mm"] = self._get_float_measurement(
-                "Measure the HEIGHT of the black rectangle on this screen.\n"
+                "Measure the HEIGHT of the black rectangle on this screen.\n\n"
                 "Enter the measurement in millimeters as a number (e.g., 605), then press [ENTER].",
                 rectangle=True,
             )
 
-            if self.tracking_mode == "head-stabilized":
+            if new_setup["tracking_mode"] == "head-stabilized":
                 new_setup["eye_to_screen_distance_mm"] = self._get_float_measurement(
-                    "Measure the shortest distance from the participant's eyes to the screen.\n"
+                    "Measure the shortest distance from the participant's eyes to the screen.\n\n"
                     "Enter the measurement in millimeters as a number (e.g., 605), then press [ENTER]."
                 )
 
-            elif self.tracking_mode == "remote":
+            elif new_setup["tracking_mode"] == "remote":
+                new_setup["eye_to_screen_distance_mm"] = self._get_float_measurement(
+                    "Measure the expected shortest distance from the participant's eyes to the screen.\n\n"
+                    "Enter the measurement in millimeters as a number (e.g., 605), then press [ENTER]."
+                )
                 new_setup["camera_to_screen_distance_mm"] = self._get_float_measurement(
-                    "Measure the shortest distance from the back of the camera case to the screen.\n"
+                    "Measure the shortest distance from the back of the camera case to the screen.\n\n"
                     "IMPORTANT: Make sure to update this setting on the host PC, too! "
-                    "Refer to your eye tracker's instruction manual for more information.\n"
+                    "Refer to your eye tracker's instruction manual for more information.\n\n"
                     "Enter the measurement in millimeters as a number (e.g., 605), then press [ENTER]."
                 )
             okay = self._check_trackable_range(new_setup)
 
         return new_setup
 
-    def _check_trackable_range(self, setup: dict[str, Any]) -> bool:
-        distance_mm = setup["eye_to_screen_distance_mm"]
-        width_mm = setup["stimulus_area_width_mm"]
-        height_mm = setup["stimulus_area_height_mm"]
-        width_deg = 2 * math.degrees(math.atan(width_mm / 2 / distance_mm))
-        height_deg = 2 * math.degrees(math.atan(height_mm / 2 / distance_mm))
-        max_width_deg, max_height_deg = TRACKABLE_RANGES[self.eye_tracker]
-        min_distance_mm = max(
-            width_mm / 2 / math.sin(math.radians(max_width_deg / 2)),
-            height_mm / 2 / math.sin(math.radians(max_height_deg / 2)),
-        )
-
-        if width_deg > max_width_deg or height_deg > max_height_deg:
-            label = pyglet.text.Label(
-                f"The stimulus area exceeds the eye tracker's trackable range.\n\n"
-                f"Stimulus area: {width_deg:.1f}° x {height_deg:.1f}°\n"
-                f"Maximum trackable area: {max_width_deg:.1f}° x {max_height_deg:.1f}°\n\n"
-                "Options:\n"
-                "- Reduce the size of the stimulus area in config.yaml and rebuild the experiment.\n"
-                f"- Increase the eye-to-screen distance to at least {min_distance_mm:.1f} mm.\n\n"
-                "Press [SPACE] to repeat the measurements or [ESCAPE] to exit.",
-                x=self.display_width // 2,
-                y=self.display_height // 2,
-                anchor_x="center",
-                anchor_y="center",
-                width=self.display_width * 0.9,
-                multiline=True,
-                font_size=self.font_size,
-                color=(0, 0, 0),
-            )
-
-            repeat = None
-
-            def on_key_press(symbol, modifiers):
-                nonlocal repeat
-                if pyglet.window.key.symbol_string(symbol) == "SPACE":
-                    repeat = True
-                elif pyglet.window.key.symbol_string(symbol) == "ESCAPE":
-                    repeat = False
-
-            self.window.push_handlers(on_key_press=on_key_press)
-            self.window.clear()
-            label.draw()
-            self.window.flip()
-
-            while repeat is None:
-                pyglet.app.platform_event_loop.step(0.001)
-                self.window.dispatch_events()
-
-            self.window.remove_handlers(on_key_press=on_key_press)
-
-            if not repeat:
-                exit(1)
-            return False
-
-        return True
-
     def _save_setup(self, setup: dict[str, Any]):
-        if self.latest_setup is None or self.latest_setup | {"timestamp": None} != setup | {"timestamp": None}:
+        if self.latest_setup is None or self.latest_setup | {
+            "timestamp": None
+        } != setup | {"timestamp": None}:
             timestamp = time.strftime("%Y%m%d-%H%M%S")
             filename = f"setup.{timestamp}.json"
             config_path = self.setups_path / filename
@@ -358,3 +301,98 @@ class HardwareSetup:
         self.window.remove_handlers(text_entry)
 
         return measurement
+
+    def _select_from_list(self, instructions: str, items: dict[str, Any]) -> str:
+        device_keys = {str(i): key for i, key in enumerate(items, start=1)}
+        text = f"{instructions}\n\n"
+        text += "\n".join(f"[{i}] {items[key]}" for i, key in device_keys.items())
+        text += "\n\nPress the corresponding number key to select."
+        label = pyglet.text.Label(
+            text=text,
+            x=self.display_width // 2,
+            y=self.display_height // 2,
+            anchor_x="center",
+            anchor_y="center",
+            width=self.display_width * 0.9,
+            multiline=True,
+            font_size=self.font_size,
+            color=(0, 0, 0),
+        )
+
+        selected = None
+
+        def on_key_press(symbol, modifiers):
+            nonlocal selected
+            number = pyglet.window.key.symbol_string(symbol).removeprefix("_").removeprefix("NUM_")
+            if number in device_keys:
+                selected = device_keys[number]
+
+        self.window.push_handlers(on_key_press=on_key_press)
+        self.window.clear()
+        label.draw()
+        self.window.flip()
+
+        while selected is None:
+            pyglet.app.platform_event_loop.step(0.001)
+            self.window.dispatch_events()
+
+        self.window.remove_handlers(on_key_press=on_key_press)
+
+        return selected
+
+    def _check_trackable_range(self, setup: dict[str, Any]) -> bool:
+        distance_mm = setup["eye_to_screen_distance_mm"]
+        width_mm = setup["stimulus_area_width_mm"]
+        height_mm = setup["stimulus_area_height_mm"]
+        width_deg = 2 * math.degrees(math.atan(width_mm / 2 / distance_mm))
+        height_deg = 2 * math.degrees(math.atan(height_mm / 2 / distance_mm))
+        max_width_deg, max_height_deg = TRACKABLE_RANGES[setup["eye_tracker"]]
+        min_distance_mm = max(
+            width_mm / 2 / math.sin(math.radians(max_width_deg / 2)),
+            height_mm / 2 / math.sin(math.radians(max_height_deg / 2)),
+        )
+
+        if width_deg > max_width_deg or height_deg > max_height_deg:
+            label = pyglet.text.Label(
+                f"The stimulus area exceeds the eye tracker's trackable range.\n\n"
+                f"Stimulus area: {width_deg:.1f}° x {height_deg:.1f}°\n"
+                f"Maximum trackable area: {max_width_deg:.1f}° x {max_height_deg:.1f}°\n\n"
+                "Options:\n"
+                "- Reduce the size of the stimulus area in config.yaml and rebuild the experiment.\n"
+                f"- Increase the eye-to-screen distance to at least {min_distance_mm:.1f} mm.\n\n"
+                "Press [SPACE] to repeat the measurements or [ESCAPE] to exit.",
+                x=self.display_width // 2,
+                y=self.display_height // 2,
+                anchor_x="center",
+                anchor_y="center",
+                width=self.display_width * 0.9,
+                multiline=True,
+                font_size=self.font_size,
+                color=(0, 0, 0),
+            )
+
+            repeat = None
+
+            def on_key_press(symbol, modifiers):
+                nonlocal repeat
+                if pyglet.window.key.symbol_string(symbol) == "SPACE":
+                    repeat = True
+                elif pyglet.window.key.symbol_string(symbol) == "ESCAPE":
+                    repeat = False
+
+            self.window.push_handlers(on_key_press=on_key_press)
+            self.window.clear()
+            label.draw()
+            self.window.flip()
+
+            while repeat is None:
+                pyglet.app.platform_event_loop.step(0.001)
+                self.window.dispatch_events()
+
+            self.window.remove_handlers(on_key_press=on_key_press)
+
+            if not repeat:
+                exit(1)
+            return False
+
+        return True

@@ -21,7 +21,3 @@ option_keys: [F, J]
 
 # Breaks between items
 breaks_after: 4
-
-# Eye-tracker setup
-eye_tracker: "eyelink-1000-plus"
-tracking_mode: "head-stabilized"

@@ -60,12 +60,9 @@ class ExperimentBuilder:
         metadata = {
             "name": experiment_name,
             "eidon_version": get_package_version(),
-            "eye_tracker": experiment_type.eye_tracker,
-            "tracking_mode": experiment_type.tracking_mode,
             # TODO: Move these settings to session?
             "background_color": experiment_type.background_color,
             "stimulus_area_px": experiment_type.stimulus_area_px,
-            "margin_px": experiment_type.margin_px,
         }
         if eyelink_settings is not None:
             metadata["eyelink_settings"] = eyelink_settings
