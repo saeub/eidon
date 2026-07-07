@@ -310,6 +310,10 @@ class SinglePageReading(ExperimentType):
                         f"expected {set(self.conditions)}."
                     )
                 experimental_items[f"item.{item_path.stem}"] = item
+        if len(experimental_items) == 0:
+            warnings.warn(
+                f"No experimental items found in {experiment_path / 'materials' / 'items'}."
+            )
         if len(filler_items) < len(experimental_items):
             percentage = (
                 len(filler_items) / (len(experimental_items) + len(filler_items))

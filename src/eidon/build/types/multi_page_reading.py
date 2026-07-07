@@ -305,6 +305,10 @@ class MultiPageReading(ExperimentType):
                         f"expected {set(self.conditions)}."
                     )
                 experimental_items[f"item.{item_path.stem}"] = item
+        if len(experimental_items) == 0:
+            warnings.warn(
+                f"No experimental items found in {experiment_path / 'materials' / 'items'}."
+            )
         if self.conditions is not None:
             for item_id, item in experimental_items.items():
                 item_conditions = set(item.keys())

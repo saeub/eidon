@@ -8,7 +8,6 @@ from typing import Any
 import warnings
 
 from eidon.build import ExperimentType, stimuli
-from eidon.build.designs import build_design
 from eidon.fonts import FONTS
 
 
@@ -255,6 +254,10 @@ class ClassAnnotation(ExperimentType):
                 practice_items[item_path.stem] = item
             else:
                 experimental_items[f"item.{item_path.stem}"] = item
+        if len(experimental_items) == 0:
+            warnings.warn(
+                f"No experimental items found in {experiment_path / 'materials' / 'items'}."
+            )
         return experimental_items, practice_items
 
     def _parse_area_spans(
