@@ -10,22 +10,24 @@ The easiest way to install _eidon_ is using `pip`:
 pip install eidon
 ```
 
+> **NOTE:** On Mac, you will first have to install the [portaudio library](https://portaudio.com/). For example, using Homebrew: `brew install portaudio`
+
 ### Building and running an example experiment
 
 Download one of the [example experiments](https://github.com/saeub/eidon/tree/main/examples) and place the folder in your working directory. You can use this link to download a ZIP archive of the `SinglePageReading` example:
 
 https://download-directory.github.io/?url=https://github.com/saeub/eidon/tree/main/examples/SinglePageReading
 
-Build the experiment using this command:
+In your terminal, navigate into the experiment directory (where `config.yaml` is located). Then build the experiment using this command:
 
 ```bash
-eidon build SinglePageReading
+eidon build
 ```
 
 Then run the session for participant `P1` in dummy mode:
 
 ```bash
-eidon run SinglePageReading P1 --dummy
+eidon run P1 --dummy
 ```
 
 > Dummy mode means that you won't need an eye tracker to test the experiment.
@@ -106,10 +108,10 @@ Check the [example experiment](https://github.com/saeub/eidon/tree/main/examples
 
 #### 3. Building the experiment
 
-To build your experiment, run:
+To build your experiment, navigate into the `my_experiment` folder and run:
 
 ```bash
-eidon build my_experiment
+eidon build
 ```
 
 where `my_experiment` is the path to your experiment folder. This will generate the stimulus images, AOI files, and session files:
@@ -140,12 +142,42 @@ where `my_experiment` is the path to your experiment folder. This will generate 
 To run a session of your experiment, run:
 
 ```bash
-eidon run my_experiment P1 --dummy
+eidon run P1 --dummy
 ```
 
 where `P1` is the name of a session file (without `.json`). This will create a recording directory under `my_experiment/recordings` containing the log file (this is where the question responses are) and eye-tracking data (except when in dummy mode).
 
 > **NOTE:** You can abort the experiment using <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Escape</kbd>.
+
+### Using a real eye tracker
+
+#### 1. Installing `pylink`
+
+Currently, only EyeLink devices by SR Research are supported. To connect to an EyeLink eye tracker, you first need to install `pylink`:
+
+```bash
+pip install sr-research-pylink
+```
+
+> **NOTE:** At the time of writing, `pylink` only supports version Python 3.12. If the installation fails, make sure are using the correct Python version (`python --version`).
+
+#### 2. Running the experiment
+
+While connected to the eye tracker, navigate to the root directory of your experiment and run:
+
+```bash
+eidon run P1
+```
+
+#### 3. Convert recordings
+
+After completing a session, the EDF file will automatically be transferred to a directory under `my_experiment/recordings`. To convert the EDF file to a more interoperable format, use the ["EDF Converter" tool by SR Research](https://www.sr-research.com/support/thread-7674.html). After converting the `.edf` to a `.asc` file, run the following command from the root directory of your experiment:
+
+```bash
+eidon convert
+```
+
+This will convert all `.asc` files to `.csv` files, which can be opened by all major data analysis software packages.
 
 ### Learn more
 
@@ -153,6 +185,5 @@ Congratulations, you've mastered the basics of _eidon_!
 
 As a next step, you can:
 
-- Look at [experiment stages](experiment-stages/index.md) and how session files are structured.
-- [Create your own experiment type](experiment-types/custom.md). This gives you maximum control over the experimental procedure.
-- [Create your own experiment stage](experiment-stages/custom.md). This allows you to present types of stimuli or implement interfaces that are not supported out of the box.
+- [Create your own experiment type](experiment-types/custom.md) using Python code. This gives you maximum control over the experimental procedure.
+- Learn how to [inspect and clean your data](cli/clean.md) after recording.
