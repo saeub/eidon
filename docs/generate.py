@@ -148,8 +148,7 @@ def generate_designs_page(designs: dict[str, typing.Callable]) -> str:
 
 def generate_keyboard_page() -> str:
     markdown = "## Keyboard keys\n\n"
-    markdown += "Key names are [pyglet key symbol strings]"
-    markdown += "(https://pyglet.readthedocs.io/en/latest/programming_guide/keyboard.html#defined-key-symbols):\n\n"
+    markdown += "To configure keyboard keys, the following key names can be used.\n\n"
 
     def get_description(key: str) -> str:
         if len(key) == 1:
@@ -161,7 +160,7 @@ def generate_keyboard_page() -> str:
         else:
             return ""
 
-    markdown += "| Key | Description |\n"
+    markdown += "| Key name | Description |\n"
     markdown += "| --- | --- |\n"
     for key in pyglet.window.key._key_names.values():
         markdown += f"| `{key}` | {get_description(key)} |\n"

@@ -4,9 +4,9 @@ generated: true
 
 ## Keyboard keys
 
-Key names are [pyglet key symbol strings](https://pyglet.readthedocs.io/en/latest/programming_guide/keyboard.html#defined-key-symbols):
+To configure keyboard keys, the following key names can be used.
 
-| Key | Description |
+| Key name | Description |
 | --- | --- |
 | `BACKSPACE` |  |
 | `TAB` |  |

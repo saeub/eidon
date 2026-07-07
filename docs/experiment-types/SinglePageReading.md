@@ -31,9 +31,13 @@ specified design (e.g., Latin square). Filler items can also be added.
       └─ 📄 fillers.txt (optional)
 ```
 
-`instructions.txt`, `wait.txt`, `break.txt`, and `end.txt` contain the text for the
-instructions, wait (after instructions and practice trials), break, and end pages. The
-instructions are split into multiple pages if necessary.
+- `instructions.txt` contains the text for the instructions shown at the beginning of the experiment.
+  The text is automatically split into multiple pages if necessary.
+- `wait.txt` (optional) contains the text shown after the instructions and after the practice trials,
+  where the participant waits for the experimenter to start the experiment. This is an opportunity
+  for the participant to ask questions or for the experimenter to perform calibration if necessary.
+- `break.txt` (optional) contains the text shown during breaks.
+- `end.txt` contains the text shown at the end of the experiment.
 
 #### Experimental items
 
@@ -155,7 +159,7 @@ using multiple tags with the same area name.
   Line spacing multiplier for all text.  
   Default: `2.0`
 - `question_layout` (str)  
-  Layout for multiple-choice questions. `horizontal` arranges options in a horizontal row, `diamond` arranges them in a diamond shape (requires exactly 4 options that are selected with the UP, LEFT, RIGHT, and DOWN keys), and `cursor` arranges them vertically with a cursor movable with the UP and DOWN keys (requires `confirm_key`).  
+  Layout for multiple-choice questions. `horizontal` arranges options in a horizontal row, `diamond` arranges them in a diamond shape (requires exactly 4 options that are selected with the UP, LEFT, RIGHT, and DOWN keys), and `cursor` arranges them vertically with a visual selector that can be controlled with the UP and DOWN keys (requires `confirm_key`).  
   Default: `horizontal`
 - `option_keys` (list[str] | None)  
   List of keys to use for selecting multiple-choice options, in order. For example, `[Y, N]` to use the Y key for the first option and the N key for the second option. Only required when question layout is `horizontal`.  

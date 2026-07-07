@@ -32,9 +32,13 @@ items is randomized for each participant.
       ├─ 📄 ...
 ```
 
-`instructions.txt`, `wait.txt`, `break.txt`, and `end.txt` contain the text for the
-instructions, wait (after instructions and practice trials), break, and end pages. The
-instructions are split into multiple pages if necessary.
+- `instructions.txt` contains the text for the instructions shown at the beginning of the experiment.
+  The text is automatically split into multiple pages if necessary.
+- `wait.txt` (optional) contains the text shown after the instructions and after the practice trials,
+  where the participant waits for the experimenter to start the experiment. This is an opportunity
+  for the participant to ask questions or for the experimenter to perform calibration if necessary.
+- `break.txt` (optional) contains the text shown during breaks.
+- `end.txt` contains the text shown at the end of the experiment.
 
 #### Annotation items
 
@@ -44,7 +48,7 @@ are used as item IDs. Each file contains the text to be annotated.
 #### Practice items
 
 Practice items are optional and follow the same format as regular items. File names of practice
-items must start with `practice.`.
+items must start with `practice.` (e.g., `practice.01.txt`).
 
 #### Areas of interest
 
@@ -70,7 +74,7 @@ questions:
     options:
       - "Very confident"
       - "Somewhat confident"
-      - "Not at all confident"
+      - "Not confident at all"
   - stem: "Which label would be your second choice?"
     options:
     - ...
@@ -115,7 +119,7 @@ questions:
   List of multiple-choice questions to present after selecting a label. See [example above](#questions) for details.  
   Default: `None`
 - `question_layout` (str)  
-  Layout for multiple-choice questions. `horizontal` arranges options in a horizontal row, `diamond` arranges them in a diamond shape (requires exactly 4 options that are selected with the UP, LEFT, RIGHT, and DOWN keys), and `cursor` arranges them vertically with a cursor movable with the UP and DOWN keys (requires `question_confirm_key`).  
+  Layout for multiple-choice questions. `horizontal` arranges options in a horizontal row, `diamond` arranges them in a diamond shape (requires exactly 4 options that are selected with the UP, LEFT, RIGHT, and DOWN keys), and `cursor` arranges them vertically with a visual selector that can be controlled with the UP and DOWN keys (requires `question_confirm_key`).  
   Default: `cursor`
 - `question_option_keys` (list[str] | None)  
   List of keys to use for selecting multiple-choice options, in order. For example, `[Y, N]` to use the Y key for the first option and the N key for the second option. Only required when question layout is `horizontal`.  
