@@ -43,7 +43,7 @@ placeholders):
 
 ```
 <<item>>
-[text for condition 1]
+[text]
 <<question>>
 [question stem]
 <<options>>
@@ -126,15 +126,16 @@ using multiple tags with the same area name.
 ### Configuration
 
 - `stimulus_area_px` (tuple[int, int])  
-  Size of the stimulus area in pixels (width, height). The resulting rectangle will be centered in the screen and all stimuli will be presented within this rectangle. Please ensure that the stimulus area is within the trackable range of your eye-tracker. Note that it is not equivalent to the resolution of the monitor, but it cannot be greater than the resolution.
-- `margin_px` (int)  
-  Margin in pixels around the text on the stimulus pages.  
-  Default: `50`
+  Size of the rectangular stimulus area in pixels (width, height). The rectangle will be centered in the screen and all stimuli will be presented inside it. The area needs to be within the trackable range of your eye tracker. The area cannot be larger than the resolution of your monitor.
 - `background_color` (tuple[int, int, int])  
   Color for window and stimulus backgrounds. (red, green, blue) with values from 0 to 255.  
   Default: `(204, 204, 204)`
-- `tracking_mode` (TrackingMode)  
-  Tracking mode of the eye-tracker. For example, remote tracking or head-stabilized.
+- `eye_tracker` (Literal['eyelink-1000-plus', 'eyelink-portable-duo', 'dummy'])  
+  Eye tracker model. `dummy` can only be used for testing in dummy mode.  
+  Default: `dummy`
+- `tracking_mode` (Literal['head-stabilized', 'remote'])  
+  Tracking mode of the eye tracker. Use `head-stabilized` for use with a headrest and `remote` for remote tracking.  
+  Default: `head-stabilized`
 - `num_participants` (int)  
   Number of participants in the experiment. Should be a multiple of the number of conditions.
 - `conditions` (list[str] | None)  
@@ -147,6 +148,9 @@ using multiple tags with the same area name.
 - `breaks_after` (int | None)  
   Insert a break after every N items.  
   Default: `None`
+- `margin_px` (int)  
+  Margin in pixels around the text on the stimulus pages.  
+  Default: `50`
 - `font_monospaced` (bool)  
   Whether to use a monospaced font for the stimuli. This is recommended when controlling for word length effects.  
   Default: `True`
@@ -160,11 +164,12 @@ using multiple tags with the same area name.
   Layout for multiple-choice questions. `horizontal` arranges options in a horizontal row, `diamond` arranges them in a diamond shape (requires exactly 4 options that are selected with the UP, LEFT, RIGHT, and DOWN keys), and `cursor` arranges them vertically with a cursor movable with the UP and DOWN keys (requires `confirm_key`).  
   Default: `horizontal`
 - `option_keys` (list[str] | None)  
-  List of keys to use for selecting multiple-choice options, in order. For example, `["Y", "N"]` to use the Y key for the first option and N key for the second option. Only required when question layout is `horizontal`.  
-  Key names are [pyglet key symbol strings](https://pyglet.readthedocs.io/en/latest/programming_guide/keyboard.html#defined-key-symbols) (e.g. `A`, `LEFT`, `SPACE`).  
+  List of keys to use for selecting multiple-choice options, in order. For example, `[Y, N]` to use the Y key for the first option and the N key for the second option. Only required when question layout is `horizontal`.  
+  Available key names are listed [here](../keyboard.md).  
   Default: `None`
 - `confirm_key` (str | None)  
-  Key names are [pyglet key symbol strings](https://pyglet.readthedocs.io/en/latest/programming_guide/keyboard.html#defined-key-symbols) (e.g. `A`, `LEFT`, `SPACE`).  
+  Key to use for confirming the selection of an option. If not specified, options are selected immediately when the corresponding option key is pressed.  
+  Available key names are listed [here](../keyboard.md).  
   Default: `None`
 
 ### [Example](https://github.com/saeub/eidon/tree/main/examples/SinglePageReading)

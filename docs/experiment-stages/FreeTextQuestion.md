@@ -15,6 +15,6 @@ Shows an image stimulus and allows entering a free text response.
 - `font_size` (int)
 - `confirm_key` (str)  
   The key to press to confirm the entered text.  
-  Key names are [pyglet key symbol strings](https://pyglet.readthedocs.io/en/latest/programming_guide/keyboard.html#defined-key-symbols) (e.g. `A`, `LEFT`, `SPACE`).
+  Available key names are listed [here](../keyboard.md).
 - `multiline` (bool)  
   Default: `False`

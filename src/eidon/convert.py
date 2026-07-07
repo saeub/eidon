@@ -28,10 +28,11 @@ class RecordingConverter:
         all_recording_names = [
             path.name for path in (self.experiment_path / "recordings").glob("*")
         ]
-        if recording_names is None:
+        if not recording_names:
             asc_paths = [
-                self.experiment_path / "recordings" / name / f"{name}.asc"
+                asc_path
                 for name in all_recording_names
+                if (asc_path := self.experiment_path / "recordings" / name / f"{name}.asc").exists()
             ]
         else:
             selected_recording_names = []

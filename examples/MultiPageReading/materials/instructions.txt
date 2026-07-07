@@ -1,12 +1,9 @@
 You will see texts on screen. Please read them silently and naturally, as you would commonly read. The texts will span multiple pages. To advance to the next page, press [SPACE] on the keyboard.
-
 After each text, you will have to answer a multiple-choice question about the sentence. Use the arrow keys to select an answer and confirm your answer with [SPACE].
 
 If you have any questions, please ask the experimenter now.
 Otherwise, press [SPACE] to continue.
 
-<<pagebreak>>
-
 Please place your left hand on the space bar and your right hand on the arrow keys. Keep our hands on the keyboard during the entire experiment, so that you won't need to look down to press the correct keys.
 
-Press [SPACE] to proceed with the calibration.
+Press [SPACE] to proceed.
