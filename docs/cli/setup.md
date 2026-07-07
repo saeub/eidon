@@ -4,14 +4,16 @@ generated: true
 
 ## CLI command: `setup`
 
-Set up the experiment.
+Specify the hardware setup, including eye tracker model and stimulus area measurements. This is required before running a session for the first time, and has to be confirmed before every subsequent session.
 
 ### Usage
 
 ```
 eidon setup [-h] [--screen SCREEN] [experiment_path]
 
-Set up the experiment.
+Specify the hardware setup, including eye tracker model and stimulus area
+measurements. This is required before running a session for the first time,
+and has to be confirmed before every subsequent session.
 
 positional arguments:
   experiment_path  Path to the built experiment directory (must contain

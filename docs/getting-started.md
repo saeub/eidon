@@ -161,7 +161,17 @@ pip install sr-research-pylink
 
 > **NOTE:** At the time of writing, `pylink` only supports version Python 3.12. If the installation fails, make sure are using the correct Python version (`python --version`).
 
-#### 2. Running the experiment
+#### 2. Recording the hardware setup
+
+When you run a session for the first time, you will be required to take a few measurements, including the size of the stimulus area and the eye-to-screen distance. This will make sure that your stimuli are presented within the trackable range of your eye tracker. Running this command from the root directory of your experiment will guide you through all of the settings:
+
+```bash
+eidon setup
+```
+
+Before each subsequent session, you will be asked to confirm if the previous setup is still accurate. If any of the measurements have changed, you will be prompted to re-enter them.
+
+#### 3. Running a session
 
 While connected to the eye tracker, navigate to the root directory of your experiment and run:
 
@@ -169,7 +179,7 @@ While connected to the eye tracker, navigate to the root directory of your exper
 eidon run P1
 ```
 
-#### 3. Convert recordings
+#### 4. Convert recordings
 
 After completing a session, the EDF file will automatically be transferred to a directory under `my_experiment/recordings`. To convert the EDF file to a more interoperable format, use the ["EDF Converter" tool by SR Research](https://www.sr-research.com/support/thread-7674.html). After converting the `.edf` to a `.asc` file, run the following command from the root directory of your experiment:
 

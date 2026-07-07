@@ -157,7 +157,7 @@ def generate_keyboard_page() -> str:
         elif len(key) == 2 and key.startswith("_"):
             return f"Number `{key[1]}` above the letter keys"
         elif key.startswith("NUM_"):
-            return f"Number `{key[4:]}` on the number keypad"
+            return f"`{key[4:]}` on the number keypad"
         else:
             return ""
 

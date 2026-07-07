@@ -41,41 +41,41 @@ Key names are [pyglet key symbol strings](https://pyglet.readthedocs.io/en/lates
 | `SCRIPTSWITCH` |  |
 | `F21` |  |
 | `NUMLOCK` |  |
-| `NUM_SPACE` | Number `SPACE` on the number keypad |
-| `NUM_TAB` | Number `TAB` on the number keypad |
-| `NUM_ENTER` | Number `ENTER` on the number keypad |
-| `NUM_F1` | Number `F1` on the number keypad |
-| `NUM_F2` | Number `F2` on the number keypad |
-| `NUM_F3` | Number `F3` on the number keypad |
-| `NUM_F4` | Number `F4` on the number keypad |
-| `NUM_HOME` | Number `HOME` on the number keypad |
-| `NUM_LEFT` | Number `LEFT` on the number keypad |
-| `NUM_UP` | Number `UP` on the number keypad |
-| `NUM_RIGHT` | Number `RIGHT` on the number keypad |
-| `NUM_DOWN` | Number `DOWN` on the number keypad |
-| `NUM_PAGE_UP` | Number `PAGE_UP` on the number keypad |
-| `NUM_PAGE_DOWN` | Number `PAGE_DOWN` on the number keypad |
-| `NUM_END` | Number `END` on the number keypad |
-| `NUM_BEGIN` | Number `BEGIN` on the number keypad |
-| `NUM_INSERT` | Number `INSERT` on the number keypad |
-| `NUM_DELETE` | Number `DELETE` on the number keypad |
-| `NUM_EQUAL` | Number `EQUAL` on the number keypad |
-| `NUM_MULTIPLY` | Number `MULTIPLY` on the number keypad |
-| `NUM_ADD` | Number `ADD` on the number keypad |
-| `NUM_SEPARATOR` | Number `SEPARATOR` on the number keypad |
-| `NUM_SUBTRACT` | Number `SUBTRACT` on the number keypad |
-| `NUM_DECIMAL` | Number `DECIMAL` on the number keypad |
-| `NUM_DIVIDE` | Number `DIVIDE` on the number keypad |
-| `NUM_0` | Number `0` on the number keypad |
-| `NUM_1` | Number `1` on the number keypad |
-| `NUM_2` | Number `2` on the number keypad |
-| `NUM_3` | Number `3` on the number keypad |
-| `NUM_4` | Number `4` on the number keypad |
-| `NUM_5` | Number `5` on the number keypad |
-| `NUM_6` | Number `6` on the number keypad |
-| `NUM_7` | Number `7` on the number keypad |
-| `NUM_8` | Number `8` on the number keypad |
-| `NUM_9` | Number `9` on the number keypad |
+| `NUM_SPACE` | `SPACE` on the number keypad |
+| `NUM_TAB` | `TAB` on the number keypad |
+| `NUM_ENTER` | `ENTER` on the number keypad |
+| `NUM_F1` | `F1` on the number keypad |
+| `NUM_F2` | `F2` on the number keypad |
+| `NUM_F3` | `F3` on the number keypad |
+| `NUM_F4` | `F4` on the number keypad |
+| `NUM_HOME` | `HOME` on the number keypad |
+| `NUM_LEFT` | `LEFT` on the number keypad |
+| `NUM_UP` | `UP` on the number keypad |
+| `NUM_RIGHT` | `RIGHT` on the number keypad |
+| `NUM_DOWN` | `DOWN` on the number keypad |
+| `NUM_PAGE_UP` | `PAGE_UP` on the number keypad |
+| `NUM_PAGE_DOWN` | `PAGE_DOWN` on the number keypad |
+| `NUM_END` | `END` on the number keypad |
+| `NUM_BEGIN` | `BEGIN` on the number keypad |
+| `NUM_INSERT` | `INSERT` on the number keypad |
+| `NUM_DELETE` | `DELETE` on the number keypad |
+| `NUM_EQUAL` | `EQUAL` on the number keypad |
+| `NUM_MULTIPLY` | `MULTIPLY` on the number keypad |
+| `NUM_ADD` | `ADD` on the number keypad |
+| `NUM_SEPARATOR` | `SEPARATOR` on the number keypad |
+| `NUM_SUBTRACT` | `SUBTRACT` on the number keypad |
+| `NUM_DECIMAL` | `DECIMAL` on the number keypad |
+| `NUM_DIVIDE` | `DIVIDE` on the number keypad |
+| `NUM_0` | `0` on the number keypad |
+| `NUM_1` | `1` on the number keypad |
+| `NUM_2` | `2` on the number keypad |
+| `NUM_3` | `3` on the number keypad |
+| `NUM_4` | `4` on the number keypad |
+| `NUM_5` | `5` on the number keypad |
+| `NUM_6` | `6` on the number keypad |
+| `NUM_7` | `7` on the number keypad |
+| `NUM_8` | `8` on the number keypad |
+| `NUM_9` | `9` on the number keypad |
 | `F1` |  |
 | `F2` |  |
 | `F3` |  |

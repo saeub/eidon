@@ -80,8 +80,11 @@ def get_argument_parser() -> argparse.ArgumentParser:
 
     setup_parser = subparsers.add_parser(
         "setup",
-        help="Set up the hardware of the experiment. This includes, for example, the eye-to-screen distance.",
-        description="Set up the experiment.",
+        help="Specify the hardware setup before running a session.",
+        description=(
+            "Specify the hardware setup, including eye tracker model and stimulus area measurements. "
+            "This is required before running a session for the first time, and has to be confirmed before every subsequent session."
+        ),
     )
     setup_parser.add_argument(
         "experiment_path",
