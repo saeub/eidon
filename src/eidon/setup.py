@@ -1,5 +1,6 @@
 import json
 import time
+import math
 from pathlib import Path
 from typing import Any
 
@@ -120,33 +121,93 @@ class HardwareSetup:
 
         # TODO: Check if eye tracker and tracking mode are correctly defined
 
-        if self.tracking_mode == "head-stabilized":
-            new_setup["eye_to_screen_distance_mm"] = self._get_float_measurement(
-                "Measure the shortest distance from the participant's eyes to the screen.\n"
-                "Enter the measurement in millimeters as a number (e.g., 605), then press [ENTER]."
+        okay = False
+        while not okay:
+            new_setup["stimulus_area_width_mm"] = self._get_float_measurement(
+                "Measure the WIDTH of the black rectangle on this screen.\n"
+                "Enter the measurement in millimeters as a number (e.g., 605), then press [ENTER].",
+                rectangle=True,
             )
 
-        elif self.tracking_mode == "remote":
-            new_setup["camera_to_screen_distance_mm"] = self._get_float_measurement(
-                "Measure the shortest distance from the back of the camera case to the screen.\n"
-                "IMPORTANT: Make sure to update this setting on the host PC, too! "
-                "Refer to your eye tracker's instruction manual for more information.\n"
-                "Enter the measurement in millimeters as a number (e.g., 605), then press [ENTER]."
+            new_setup["stimulus_area_height_mm"] = self._get_float_measurement(
+                "Measure the HEIGHT of the black rectangle on this screen.\n"
+                "Enter the measurement in millimeters as a number (e.g., 605), then press [ENTER].",
+                rectangle=True,
             )
 
-        new_setup["stimulus_area_width_mm"] = self._get_float_measurement(
-            "Measure the WIDTH of the black rectangle on this screen.\n"
-            "Enter the measurement in millimeters as a number (e.g., 605), then press [ENTER].",
-            rectangle=True,
-        )
+            if self.tracking_mode == "head-stabilized":
+                new_setup["eye_to_screen_distance_mm"] = self._get_float_measurement(
+                    "Measure the shortest distance from the participant's eyes to the screen.\n"
+                    "Enter the measurement in millimeters as a number (e.g., 605), then press [ENTER]."
+                )
 
-        new_setup["stimulus_area_height_mm"] = self._get_float_measurement(
-            "Measure the HEIGHT of the black rectangle on this screen.\n"
-            "Enter the measurement in millimeters as a number (e.g., 605), then press [ENTER].",
-            rectangle=True,
-        )
+            elif self.tracking_mode == "remote":
+                new_setup["camera_to_screen_distance_mm"] = self._get_float_measurement(
+                    "Measure the shortest distance from the back of the camera case to the screen.\n"
+                    "IMPORTANT: Make sure to update this setting on the host PC, too! "
+                    "Refer to your eye tracker's instruction manual for more information.\n"
+                    "Enter the measurement in millimeters as a number (e.g., 605), then press [ENTER]."
+                )
+            okay = self._check_trackable_range(new_setup)
 
         return new_setup
+
+    def _check_trackable_range(self, setup: dict[str, Any]) -> bool:
+        distance_mm = setup["eye_to_screen_distance_mm"]
+        width_mm = setup["stimulus_area_width_mm"]
+        height_mm = setup["stimulus_area_height_mm"]
+        width_deg = 2 * math.degrees(math.atan(width_mm / 2 / distance_mm))
+        height_deg = 2 * math.degrees(math.atan(height_mm / 2 / distance_mm))
+        max_width_deg, max_height_deg = TRACKABLE_RANGES[self.eye_tracker]
+        min_distance_mm = max(
+            width_mm / 2 / math.sin(math.radians(max_width_deg / 2)),
+            height_mm / 2 / math.sin(math.radians(max_height_deg / 2)),
+        )
+
+        if width_deg > max_width_deg or height_deg > max_height_deg:
+            label = pyglet.text.Label(
+                f"The stimulus area exceeds the eye tracker's trackable range.\n\n"
+                f"Stimulus area: {width_deg:.1f}° x {height_deg:.1f}°\n"
+                f"Maximum trackable area: {max_width_deg:.1f}° x {max_height_deg:.1f}°\n\n"
+                "Options:\n"
+                "- Reduce the size of the stimulus area in config.yaml and rebuild the experiment.\n"
+                f"- Increase the eye-to-screen distance to at least {min_distance_mm:.1f} mm.\n\n"
+                "Press [SPACE] to repeat the measurements or [ESCAPE] to exit.",
+                x=self.display_width // 2,
+                y=self.display_height // 2,
+                anchor_x="center",
+                anchor_y="center",
+                width=self.display_width * 0.9,
+                multiline=True,
+                font_size=self.font_size,
+                color=(0, 0, 0),
+            )
+
+            repeat = None
+
+            def on_key_press(symbol, modifiers):
+                nonlocal repeat
+                if pyglet.window.key.symbol_string(symbol) == "SPACE":
+                    repeat = True
+                elif pyglet.window.key.symbol_string(symbol) == "ESCAPE":
+                    repeat = False
+
+            self.window.push_handlers(on_key_press=on_key_press)
+            self.window.clear()
+            label.draw()
+            self.window.flip()
+
+            while repeat is None:
+                pyglet.app.platform_event_loop.step(0.001)
+                self.window.dispatch_events()
+
+            self.window.remove_handlers(on_key_press=on_key_press)
+
+            if not repeat:
+                exit(1)
+            return False
+
+        return True
 
     def _save_setup(self, setup: dict[str, Any]):
         if self.latest_setup is None or self.latest_setup | {"timestamp": None} != setup | {"timestamp": None}:
@@ -171,14 +232,14 @@ class HardwareSetup:
 
         label = pyglet.text.Label(
             text=text,
-            color=(0, 0, 0),
-            font_size=self.font_size,
-            anchor_x="center",
-            anchor_y="center",
             x=self.display_width // 2,
             y=self.display_height // 2,
-            multiline=True,
+            anchor_x="center",
+            anchor_y="center",
             width=self.display_width // 2,
+            multiline=True,
+            font_size=self.font_size,
+            color=(0, 0, 0),
             batch=batch,
         )
 
