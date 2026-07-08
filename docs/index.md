@@ -31,15 +31,18 @@ _eidon_ is **not** the best choice for you if you want to ...
 ```mermaid
 flowchart TD
     A("Stimulus material + configuration file") -->|fa:fa-hammer eidon build| B(Compiled experiment)
-    B -->|fa:fa-play eidon setup| C(Hardware setup completed)
-    C -->|fa:fa-play eidon run| D(Conduct experiment)
-    D -->|fa:fa-broom eidon clean| E(Clean, publishable eye-tracking data)
+    B -->|fa:fa-play eidon setup| C(Hardware setup configuration)
+    C -->|fa:fa-play eidon run| D(Eye-tracking recordings)
+    D -->|fa:fa-broom eidon convert| E(Raw eye-tracking data + metadata)
+    E -->|fa:fa-broom eidon clean| F(Clean, publishable eye-tracking data)
 ```
 
 _eidon_ consists of several components:
 
 - **`eidon build`** builds your experiment. You provide the stimuli and configure fonts, colors, participant numbers, and other settings, and `eidon build` will turn it into a presentable experiment.
-- **`eidon run`** runs your experiment. Simply provide the session ID, and `eidon run` will present the stimuli, handle participant interaction, and record eye-tracking data.
+- **`eidon setup`** records metadata about your hardware setup. This keeps track of settings like the eye-to-screen distance and makes sure that your stimuli are within your eye tracker's trackable range.
+- **`eidon run`** runs your experiment. You provide a session ID, and `eidon run` will present the stimuli, handle participant interaction, and record eye-tracking data.
+- **`eidon correct`** converts your data into easy-to-use CSV files and extracts relevant metadata.
 - **`eidon clean`** helps you inspect and clean your eye-tracking data.
 
 ## [➡️ Getting started](getting-started.md)
