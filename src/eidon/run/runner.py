@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import atexit
 import json
+import shutil
 import time
 import warnings
 from datetime import datetime
@@ -14,6 +15,7 @@ from eidon.run.events import Event
 from eidon.run.devices.eyetracker import EyeLink, MouseTracker
 from eidon.run.devices.microphone import Microphone
 from eidon.run.stages import ExperimentStage
+from eidon.setup import HardwareSetup
 from eidon.utils import get_package_version, import_custom_code
 
 
@@ -44,22 +46,40 @@ class ExperimentRunner:
                 + "This may cause compatibility issues."
             )
 
+        if not dummy:
+            setup = HardwareSetup(self.experiment_path, screen=screen)
+            setup.setup()
+
         import_custom_code(self.experiment_path)
 
-        self.display_width, self.display_height = experiment_definition["display_size"]
+        self.stimulus_area_width, self.stimulus_area_height = experiment_definition[
+            "stimulus_area_size"
+        ]
         background_color = experiment_definition["background_color"]
         # Convert color to OpenGL's [0, 1] range, add alpha
         background_color = tuple([c / 0xFF for c in background_color] + [1.0])
 
+        timestamp = time.strftime("%Y%m%d-%H%M%S")
         if recording_name is None:
-            recording_name = f"{experiment_definition['name']}.{session_name}.{time.strftime('%Y%m%d-%H%M%S')}"
+            recording_name = (
+                f"{experiment_definition['name']}.{session_name}.{timestamp}"
+            )
         self.recording_name = recording_name
-        self.recording_path = (self.experiment_path / "recordings" / recording_name).absolute()
+        self.recording_path = (
+            self.experiment_path / "recordings" / recording_name
+        ).absolute()
         self.recording_path.mkdir(parents=True, exist_ok=True)
 
         self.logfile = open(
             self.recording_path / f"{recording_name}.log", "w", encoding="utf-8"
         )
+
+        if not dummy:
+            # Copy hardware setup to recording folder
+            setup_path = self.recording_path / f"{recording_name}.setup.json"
+            setup_path.write_text(
+                json.dumps(setup.latest_setup, indent=4), encoding="utf-8"
+            )
 
         self.clock = pyglet.clock.get_default()
 
@@ -70,13 +90,13 @@ class ExperimentRunner:
 
         def on_resize(width, height):
             # Set viewport to use display coordinates (centered in the window)
-            viewport_x = int((width * self.screen_scale - self.display_width) // 2)
-            viewport_y = int((height * self.screen_scale - self.display_height) // 2)
+            viewport_x = int((width * self.screen_scale - self.stimulus_area_width) // 2)
+            viewport_y = int((height * self.screen_scale - self.stimulus_area_height) // 2)
             pyglet.gl.glViewport(
-                viewport_x, viewport_y, self.display_width, self.display_height
+                viewport_x, viewport_y, self.stimulus_area_width, self.stimulus_area_height
             )
             self.window.projection = pyglet.math.Mat4.orthogonal_projection(
-                0, self.display_width, 0, self.display_height, -1, 1
+                0, self.stimulus_area_width, 0, self.stimulus_area_height, -1, 1
             )
 
         self.window._on_internal_resize = on_resize
@@ -87,12 +107,26 @@ class ExperimentRunner:
 
         self.event_queue: list[Event] = []
 
-        def on_key_press(symbol: str, modifiers: int):
+        def on_key_press(symbol: int, modifiers: int):
+            if (
+                symbol == pyglet.window.key.ESCAPE
+                and modifiers & pyglet.window.key.MOD_CTRL
+                and modifiers & pyglet.window.key.MOD_SHIFT
+            ):
+                self.logfile.write(
+                    json.dumps(
+                        {"time": datetime.now().isoformat(), "error": "aborted by user"}
+                    )
+                    + "\n"
+                )
+                exit(1)
             time = self.clock.time()
-            symbol = pyglet.window.key.symbol_string(symbol)
-            self.event_queue.append(
-                Event("key", time, {"symbol": symbol, "modifiers": modifiers})
-            )
+            if isinstance(symbol, int):
+                # FIXME: Some keys on Mac result in None symbols
+                symbol = pyglet.window.key.symbol_string(symbol)
+                self.event_queue.append(
+                    Event("key", time, {"symbol": symbol, "modifiers": modifiers})
+                )
             return True
 
         def on_text(text: str):
@@ -107,8 +141,8 @@ class ExperimentRunner:
         if self.dummy:
             self.eyetracker = MouseTracker(
                 self.window,
-                origin_x=(self.window.width - self.display_width) // 2,
-                origin_y=(self.window.height - self.display_height) // 2,
+                origin_x=(self.window.width - self.stimulus_area_width) // 2,
+                origin_y=(self.window.height - self.stimulus_area_height) // 2,
             )
         else:
             edf_path = self.recording_path / f"{recording_name}.edf"
@@ -180,6 +214,7 @@ class ExperimentRunner:
             start_time = datetime.now()
 
             if stage.record_eyes:
+                # TODO: Send trial number instead of stage name
                 self.eyetracker.send_status_message(stage.name)
                 self.eyetracker.start_recording()
 

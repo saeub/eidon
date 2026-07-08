@@ -6,6 +6,7 @@ generated: true
 
 | Experiment type | Description |
 | --- | --- |
+| [`ClassAnnotation`](ClassAnnotation.md) | Annotation experiment for text classification. |
 | [`MultiPageReading`](MultiPageReading.md) | Reading experiment with longer, multi-page text stimuli. |
 | [`SinglePageReading`](SinglePageReading.md) | Reading experiment with short, single-page text stimuli. |
 

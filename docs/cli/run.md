@@ -12,12 +12,12 @@ Run a session from a built experiment. Collects eye-tracking data and logs.
 eidon run [-h] [--dummy] [--participant-control]
                        [--recording-name RECORDING_NAME] [--screen SCREEN]
                        [--start-from-stage START_FROM_STAGE]
-                       path session
+                       [experiment_path] session
 
 Run a session from a built experiment. Collects eye-tracking data and logs.
 
 positional arguments:
-  path                  Path to the built experiment directory (must contain
+  experiment_path       Path to the built experiment directory (must contain
                         experiment.json and sessions/).
   session               Name of the session to run (without the .json file
                         extension).

@@ -5,6 +5,8 @@ from typing import Any
 import polars as pl
 import pymovements as pm
 
+from eidon.utils import get_session_name
+
 
 class RecordingConverter:
     def __init__(self, experiment_path: Path):
@@ -12,24 +14,57 @@ class RecordingConverter:
         self.experiment_definition = json.loads(
             (self.experiment_path / "experiment.json").read_text()
         )
-        self.columns = ["time", "stage", "imgpath", "pixel_x", "pixel_y", "pupil"]
+        self.columns = [
+            "time",
+            "stage",
+            "page",
+            "imgpath",
+            "pixel_x",
+            "pixel_y",
+            "pupil",
+        ]
 
     def convert(self, recording_names: list[str] | None = None):
-        if recording_names is None:
-            asc_paths = list((self.experiment_path / "recordings").glob("*/*.asc"))
+        all_recording_names = [
+            path.name for path in (self.experiment_path / "recordings").glob("*")
+            if path.name.startswith(self.experiment_definition["name"] + ".")
+        ]
+        if not recording_names:
+            asc_paths = [
+                asc_path
+                for name in all_recording_names
+                if (asc_path := self.experiment_path / "recordings" / name / f"{name}.asc").exists()
+            ]
         else:
+            selected_recording_names = []
+            for recording_name in recording_names:
+                if recording_name in all_recording_names:
+                    selected_recording_names.append(recording_name)
+                else:
+                    # Check if it is a session name
+                    found = False
+                    for other_recording_name in all_recording_names:
+                        other_session_name = get_session_name(
+                            other_recording_name, self.experiment_definition["name"]
+                        )
+                        if recording_name == other_session_name:
+                            selected_recording_names.append(other_recording_name)
+                            found = True
+                    if not found:
+                        raise ValueError(
+                            f"Recording or session '{recording_name}' not found in {self.experiment_path / 'recordings'}"
+                        )
             asc_paths = [
                 self.experiment_path / "recordings" / name / f"{name}.asc"
-                for name in recording_names
+                for name in selected_recording_names
             ]
 
         for asc_path in asc_paths:
             recording_name = asc_path.parent.name
             print(f"Converting {recording_name}...")
-            session_name = recording_name.removeprefix(
-                self.experiment_definition["name"] + "."
+            session_name = get_session_name(
+                recording_name, self.experiment_definition["name"]
             )
-            session_name = "".join(session_name.split(".")[:-1])
             session_path = self.experiment_path / "sessions" / f"{session_name}.json"
             samples, metadata = self.convert_recording(asc_path, session_path)
             samples.write_csv(asc_path.with_suffix(".csv"))
@@ -85,6 +120,7 @@ class RecordingConverter:
         metadata = {
             "session_name": session_path.stem,
             "eye": gaze._metadata["tracked_eye"],
+            "sample_rate": gaze._metadata["sampling_rate"],
             "calibrations": calibration_data.to_dicts(),
         }
 

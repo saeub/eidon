@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Any, Literal
 
 
-EventType = Literal["key", "hostkey", "fixation", "button"]
+EventType = Literal["key", "hostkey", "fixation", "button", "text"]
 
 
 @dataclass(frozen=True)

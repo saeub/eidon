@@ -5,6 +5,7 @@ from eidon.build import ExperimentBuilder
 from eidon.clean import RecordingCleaner
 from eidon.convert import RecordingConverter
 from eidon.run import ExperimentRunner
+from eidon.setup import HardwareSetup
 
 
 def get_argument_parser() -> argparse.ArgumentParser:
@@ -20,8 +21,10 @@ def get_argument_parser() -> argparse.ArgumentParser:
         ),
     )
     build_parser.add_argument(
-        "path",
+        "experiment_path",
         type=Path,
+        nargs="?",
+        default=Path.cwd(),
         help="Path to the experiment directory (must contain config.yaml).",
     )
     build_parser.add_argument(
@@ -36,8 +39,10 @@ def get_argument_parser() -> argparse.ArgumentParser:
         description="Run a session from a built experiment. Collects eye-tracking data and logs.",
     )
     run_parser.add_argument(
-        "path",
+        "experiment_path",
         type=Path,
+        nargs="?",
+        default=Path.cwd(),
         help="Path to the built experiment directory (must contain experiment.json and sessions/).",
     )
     run_parser.add_argument(
@@ -74,23 +79,46 @@ def get_argument_parser() -> argparse.ArgumentParser:
         help="Start the session from the stage with the specified name.",
     )
 
+    setup_parser = subparsers.add_parser(
+        "setup",
+        help="Specify the hardware setup before running a session.",
+        description=(
+            "Specify the hardware setup, including eye tracker model and stimulus area measurements. "
+            "This is required before running a session for the first time, and has to be confirmed before every subsequent session."
+        ),
+    )
+    setup_parser.add_argument(
+        "experiment_path",
+        type=Path,
+        nargs="?",
+        default=Path.cwd(),
+        help="Path to the built experiment directory (must contain experiment.json and sessions/).",
+    )
+    setup_parser.add_argument(
+        "--screen",
+        type=int,
+        default=0,
+        help="Screen index to use for the setup window.",
+    )
+
     convert_parser = subparsers.add_parser(
         "convert",
         help="Convert recordings to a standard format.",
         description="Convert EyeLink recordings (.asc files) to a CSV file and extract metadata into a JSON file.",
     )
     convert_parser.add_argument(
-        "path",
+        "experiment_path",
         type=Path,
+        nargs="?",
+        default=Path.cwd(),
         help="Path to the experiment directory (must contain recordings/).",
     )
     convert_parser.add_argument(
-        "--recording-names",
+        "recording_names",
         type=str,
-        nargs="+",
-        default=None,
+        nargs="*",
         help=(
-            "Names of the recordings to convert (without the .asc file extension). "
+            "Names of the recordings or sessions to convert (without the .asc file extension). "
             "If not provided, all recordings will be converted."
         ),
     )
@@ -136,12 +164,19 @@ def main():
     args = parser.parse_args()
 
     if args.command == "build":
-        builder = ExperimentBuilder(experiment_path=args.path)
+        builder = ExperimentBuilder(experiment_path=args.experiment_path)
         builder.build(generate_area_images=args.area_images)
+
+    elif args.command == "setup":
+        setup = HardwareSetup(
+            experiment_path=args.experiment_path,
+            screen=args.screen,
+        )
+        setup.setup()
 
     elif args.command == "run":
         runner = ExperimentRunner(
-            experiment_path=args.path,
+            experiment_path=args.experiment_path,
             session_name=args.session,
             dummy=args.dummy,
             participant_control=args.participant_control,
@@ -151,7 +186,7 @@ def main():
         runner.run(start_from_stage=args.start_from_stage)
 
     elif args.command == "convert":
-        converter = RecordingConverter(experiment_path=args.path)
+        converter = RecordingConverter(experiment_path=args.experiment_path)
         converter.convert(args.recording_names)
 
     elif args.command == "clean":

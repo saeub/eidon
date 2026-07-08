@@ -10,22 +10,24 @@ The easiest way to install _eidon_ is using `pip`:
 pip install eidon
 ```
 
+> **NOTE:** On Mac, you will first have to install the [portaudio library](https://portaudio.com/). For example, using Homebrew: `brew install portaudio`
+
 ### Building and running an example experiment
 
 Download one of the [example experiments](https://github.com/saeub/eidon/tree/main/examples) and place the folder in your working directory. You can use this link to download a ZIP archive of the `SinglePageReading` example:
 
 https://download-directory.github.io/?url=https://github.com/saeub/eidon/tree/main/examples/SinglePageReading
 
-Build the experiment using this command:
+In your terminal, navigate into the experiment directory (where `config.yaml` is located). Then build the experiment using this command:
 
 ```bash
-eidon build SinglePageReading
+eidon build
 ```
 
 Then run the session for participant `P1` in dummy mode:
 
 ```bash
-eidon run SinglePageReading P1 --dummy
+eidon run P1 --dummy
 ```
 
 > Dummy mode means that you won't need an eye tracker to test the experiment.
@@ -48,14 +50,14 @@ First, create a folder and a `config.yaml` file for your experiment:
 name: "my-experiment"
 type: SinglePageReading
 
-display_size: [1100, 900]
+stimulus_area_size: [1100, 900]
 num_participants: 8
 option_keys: [Y, N]
 ```
 
 The experiment's `name` will appear, among others, in recordings and metadata files.
 
-`display_size` defines the width and height (in pixels) of the area where your stimuli will be presented. It is important that this is within your eye tracker's **trackable area** on the screen you're going to use for the experiment.
+`stimulus_area_size` defines the width and height (in pixels) of the area where your stimuli will be presented. It is important that this is within your eye tracker's **trackable area** on the screen you're going to use for the experiment. You can use `eidon setup` to test this -- see [below](#2-recording-the-hardware-setup).
 
 `option_keys` are the keys on the keyboard that participants are going to use to respond to multiple-choice questions (in this case, we are going to use yes/no questions).
 
@@ -100,16 +102,16 @@ yes
 **no
 ```
 
-Here, we have an item in two conditions (`active` and `passive`) with one comprehension question each.
+Here, we have an item in two conditions (`active` and `passive`) with one comprehension question each. The asterisks `**` indicate the correct answer.
 
-Check the [example experiment](https://github.com/saeub/eidon/tree/main/examples/SinglePageReading/items) for more examples of item files.
+Check the [example experiment](https://github.com/saeub/eidon/tree/main/examples/SinglePageReading/materials/items) for more examples of item files.
 
 #### 3. Building the experiment
 
-To build your experiment, run:
+To build your experiment, navigate into the `my_experiment` folder and run:
 
 ```bash
-eidon build my_experiment
+eidon build
 ```
 
 where `my_experiment` is the path to your experiment folder. This will generate the stimulus images, AOI files, and session files:
@@ -140,10 +142,52 @@ where `my_experiment` is the path to your experiment folder. This will generate 
 To run a session of your experiment, run:
 
 ```bash
-eidon run my_experiment P1 --dummy
+eidon run P1 --dummy
 ```
 
 where `P1` is the name of a session file (without `.json`). This will create a recording directory under `my_experiment/recordings` containing the log file (this is where the question responses are) and eye-tracking data (except when in dummy mode).
+
+> **NOTE:** You can abort the experiment using <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Escape</kbd>.
+
+### Using a real eye tracker
+
+#### 1. Installing `pylink`
+
+Currently, only EyeLink devices by SR Research are supported. To connect to an EyeLink eye tracker, you first need to install `pylink`:
+
+```bash
+pip install sr-research-pylink
+```
+
+> **NOTE:** At the time of writing, `pylink` only supports version Python 3.12. If the installation fails, make sure are using the correct Python version (`python --version`).
+
+#### 2. Recording the hardware setup
+
+When you run a session for the first time, you will be required to take a few measurements, including the size of the stimulus area and the eye-to-screen distance. This will make sure that your stimuli are presented within the trackable range of your eye tracker. Running this command from the root directory of your experiment will guide you through all of the settings:
+
+```bash
+eidon setup
+```
+
+Before each subsequent session, you will be asked to confirm if the previous setup is still accurate. If any of the measurements have changed, you will be prompted to re-enter them.
+
+#### 3. Running a session
+
+While connected to the eye tracker, navigate to the root directory of your experiment and run:
+
+```bash
+eidon run P1
+```
+
+#### 4. Convert recordings
+
+After completing a session, the EDF file will automatically be transferred to a directory under `my_experiment/recordings`. To convert the EDF file to a more interoperable format, use the ["EDF Converter" tool by SR Research](https://www.sr-research.com/support/thread-7674.html). After converting the `.edf` to a `.asc` file, run the following command from the root directory of your experiment:
+
+```bash
+eidon convert
+```
+
+This will convert all `.asc` files to `.csv` files, which can be opened by all major data analysis software packages.
 
 ### Learn more
 
@@ -151,6 +195,5 @@ Congratulations, you've mastered the basics of _eidon_!
 
 As a next step, you can:
 
-- Look at [experiment stages](experiment-stages/index.md) and how session files are structured.
-- [Create your own experiment type](experiment-types/custom.md). This gives you maximum control over the experimental procedure.
-- [Create your own experiment stage](experiment-stages/custom.md). This allows you to present types of stimuli or implement interfaces that are not supported out of the box.
+- [Create your own experiment type](experiment-types/custom.md) using Python code. This gives you maximum control over the experimental procedure.
+- Learn how to [inspect and clean your data](cli/clean.md) after recording.

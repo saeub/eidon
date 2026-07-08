@@ -7,6 +7,7 @@ import typing
 from pathlib import Path
 
 import docstring_parser
+import pyglet.window.key
 
 from eidon.__main__ import get_argument_parser
 from eidon.build import ExperimentType
@@ -37,10 +38,16 @@ def generate_experimenttype_page(
     )
     short_description = parsed_docstring.short_description or ""
     long_description = parsed_docstring.long_description or ""
-    field_descriptions = {
-        field.arg_name: field.description.replace("\n", " ")
-        for field in parsed_docstring.params
-    }
+
+    # Collect param descriptions from the full MRO so inherited fields are documented
+    field_descriptions = {}
+    for parent_cls in reversed(cls.__mro__):
+        doc = getattr(parent_cls, "__doc__", None) or ""
+        for field in docstring_parser.parse(
+            doc, docstring_parser.DocstringStyle.REST
+        ).params:
+            field_descriptions[field.arg_name] = field.description.replace("\n", " ")
+
     fields = cls.__dataclass_fields__
 
     markdown = f"## Experiment type: `{name}`\n\n"
@@ -59,11 +66,7 @@ def generate_experimenttype_page(
         if field_description:
             markdown += f"  \n  {field_description}"
         if field_name.endswith(("_key", "_keys")):
-            markdown += (
-                "  \n  Key names are [pyglet key symbol strings]"
-                "(https://pyglet.readthedocs.io/en/latest/programming_guide/keyboard.html#defined-key-symbols) "
-                "(e.g. `A`, `LEFT`, `SPACE`)."
-            )
+            markdown += "  \n  Available key names are listed [here](../keyboard.md)."
         elif field_name == "design":
             markdown += "  \n  Available designs are documented [here](designs.md)."
         if field_default is not dataclasses.MISSING:
@@ -126,11 +129,7 @@ def generate_experimentstage_page(name: str, cls: type[ExperimentStage]) -> str:
         if param_description:
             markdown += f"  \n  {param_description}"
         if param_name.endswith(("_key", "_keys")):
-            markdown += (
-                "  \n  Key names are [pyglet key symbol strings]"
-                "(https://pyglet.readthedocs.io/en/latest/programming_guide/keyboard.html#defined-key-symbols) "
-                "(e.g. `A`, `LEFT`, `SPACE`)."
-            )
+            markdown += "  \n  Available key names are listed [here](../keyboard.md)."
         if param_default is not None:
             markdown += f"  \n  Default: `{param_default}`"
         markdown += "\n"
@@ -144,6 +143,27 @@ def generate_designs_page(designs: dict[str, typing.Callable]) -> str:
     for name, design in sorted(designs.items()):
         short_description = design.__doc__.replace("\n", " ") or ""
         markdown += f"| `{name}` | {short_description} |\n"
+    return markdown
+
+
+def generate_keyboard_page() -> str:
+    markdown = "## Keyboard keys\n\n"
+    markdown += "To configure keyboard keys, the following key names can be used.\n\n"
+
+    def get_description(key: str) -> str:
+        if len(key) == 1:
+            return f"Letter `{key}`"
+        elif len(key) == 2 and key.startswith("_"):
+            return f"Number `{key[1]}` above the letter keys"
+        elif key.startswith("NUM_"):
+            return f"`{key[4:]}` on the number keypad"
+        else:
+            return ""
+
+    markdown += "| Key name | Description |\n"
+    markdown += "| --- | --- |\n"
+    for key in pyglet.window.key._key_names.values():
+        markdown += f"| `{key}` | {get_description(key)} |\n"
     return markdown
 
 
@@ -214,7 +234,13 @@ def main():
 
     # Experiment designs
     markdown = generate_designs_page(DESIGNS)
-    (docs_path / "experiment-types" / "designs.md").write_text(generated_prefix + markdown)
+    (docs_path / "experiment-types" / "designs.md").write_text(
+        generated_prefix + markdown
+    )
+
+    # Keyboard keys
+    markdown = generate_keyboard_page()
+    (docs_path / "keyboard.md").write_text(generated_prefix + markdown)
 
     # CLI
     argument_parser = get_argument_parser()

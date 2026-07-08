@@ -45,9 +45,13 @@ class MultiPageReading(ExperimentType):
           ├─ 📄 practice.txt (optional)
     ```
 
-    `instructions.txt`, `wait.txt`, `break.txt`, and `end.txt` contain the text for the
-    instructions, wait (after instructions and practice trials), break, and end pages. The
-    instructions are split into multiple pages if necessary.
+    - `instructions.txt` contains the text for the instructions shown at the beginning of the experiment.
+      The text is automatically split into multiple pages if necessary.
+    - `wait.txt` (optional) contains the text shown after the instructions and after the practice trials,
+      where the participant waits for the experimenter to start the experiment. This is an opportunity
+      for the participant to ask questions or for the experimenter to perform calibration if necessary.
+    - `break.txt` (optional) contains the text shown during breaks.
+    - `end.txt` contains the text shown at the end of the experiment.
 
     #### Experimental items
 
@@ -57,7 +61,7 @@ class MultiPageReading(ExperimentType):
 
     ```
     <<item>>
-    [text for condition 1]
+    [text]
     <<question>>
     [question stem]
     <<options>>
@@ -145,17 +149,17 @@ class MultiPageReading(ExperimentType):
     :param margin: Margin in pixels around the text on the stimulus pages.
     :param font_monospaced: Whether to use a monospaced font for the stimuli.
         This is recommended when controlling for word length effects.
-    :param font_size: Font size for all text.
+    :param font_size: Font size in pixels for all text.
     :param line_spacing: Line spacing multiplier for all text.
     :param question_layout: Layout for multiple-choice questions.
         `horizontal` arranges options in a horizontal row, `diamond` arranges them in a diamond
         shape (requires exactly 4 options that are selected with the UP, LEFT, RIGHT, and DOWN
-        keys), and `cursor` arranges them vertically with a cursor movable with the UP and DOWN
-        keys (requires `confirm_key`).
+        keys), and `cursor` arranges them vertically with a visual selector that can be controlled
+        with the UP and DOWN keys (requires `confirm_key`).
     :param option_keys: List of keys to use for selecting multiple-choice options, in order.
-        For example, `["Y", "N"]` to use the Y key for the first option and N key for the second
+        For example, `[Y, N]` to use the Y key for the first option and the N key for the second
         option. Only required when question layout is `horizontal`.
-    :param option_confirm_key: Key to use for confirming the selection of an option.
+    :param confirm_key: Key to use for confirming the selection of an option.
         If not specified, options are selected immediately when the corresponding option key is
         pressed.
     """
@@ -164,7 +168,6 @@ class MultiPageReading(ExperimentType):
     conditions: list[str] | None = None
     design: str = "latin_square"
     breaks_after: int | None = None
-    option_keys: list[str]
     margin: int = 50
     font_monospaced: bool = False
     font_size: int = 25
@@ -204,8 +207,8 @@ class MultiPageReading(ExperimentType):
             font_path = FONTS["default"]
 
         text_config = {
-            "width": self.display_size[0],
-            "height": self.display_size[1],
+            "width": self.stimulus_area_size[0],
+            "height": self.stimulus_area_size[1],
             "margin": self.margin,
             "font_path": font_path,
             "font_size": self.font_size,
@@ -306,6 +309,10 @@ class MultiPageReading(ExperimentType):
                         f"expected {set(self.conditions)}."
                     )
                 experimental_items[f"item.{item_path.stem}"] = item
+        if len(experimental_items) == 0:
+            warnings.warn(
+                f"No experimental items found in {experiment_path / 'materials' / 'items'}."
+            )
         if self.conditions is not None:
             for item_id, item in experimental_items.items():
                 item_conditions = set(item.keys())
@@ -486,6 +493,7 @@ class MultiPageReading(ExperimentType):
             .read_text(encoding="utf8")
             .strip()
         )
+        # TODO: Allow manual page breaks
         images = stimuli.generate_text_pages(text, **text_config)
         for i, image in enumerate(images):
             image.save(experiment_path, f"instructions.{i}")

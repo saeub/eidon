@@ -473,9 +473,11 @@ def generate_text_pages(
     page_start_indices = [
         line_start_indices[i]
         for i in range(0, len(line_start_indices), num_lines_per_page)
-    ]
+    ] or [
+        0
+    ]  # Ensure at least one page
     page_texts = [
-        text[start:end]
+        text[start:end].strip()
         for start, end in zip(page_start_indices, page_start_indices[1:] + [len(text)])
     ]
 
@@ -840,4 +842,105 @@ def generate_cursor_mcq_page(
             image, {"char": char_areas, "word": word_areas, "section": section_areas}
         ),
         cursor_locations,
+    )
+
+
+def generate_label_annotation_page(
+    text: str,
+    labels: list[str],
+    width: int,
+    height: int,
+    margin: float,
+    font_path: str,
+    font_size: float,
+    label_texts: list[str] | None = None,
+    align: Literal["left", "center", "right"] = "left",
+    vertical_align: Literal["top", "center", "bottom"] = "top",
+    line_spacing: float = 1.0,
+    background_color: tuple[int, int, int] = (255, 255, 255),
+    text_color: tuple[int, int, int] = (0, 0, 0),
+    extend_word_areas: bool = True,
+    custom_area_spans: dict[str, list[tuple[int, int]]] | None = None,
+) -> TextImage:
+    if label_texts is None:
+        label_texts = labels
+    else:
+        assert len(labels) == len(
+            label_texts
+        ), "labels and label_texts must have the same length"
+
+    image = Image.new("RGB", (width, height), tuple(background_color))
+    draw = ImageDraw.Draw(image)
+    font = ImageFont.truetype(font_path, font_size)
+    line_height = sum(font.getmetrics()) * line_spacing
+
+    text_width = width - 2 * margin
+    text_height = height - 2 * margin - 2 * line_height
+
+    char_areas = []
+    word_areas = []
+    section_areas = []
+
+    # Draw text
+    text_char_areas, text_word_areas, text_area, custom_span_areas = draw_text(
+        draw,
+        text,
+        margin,
+        margin,
+        text_width,
+        font,
+        align=align,
+        vertical_align=vertical_align,
+        line_spacing=line_spacing,
+        extend_word_areas=extend_word_areas,
+        custom_area_spans=custom_area_spans,
+        max_height=text_height,
+        color=text_color,
+    )
+    for char_area in char_areas:
+        char_area.section = "text"
+    for word_area in word_areas:
+        word_area.section = "text"
+    text_area.content = "text"
+    char_areas.extend(text_char_areas)
+    word_areas.extend(text_word_areas)
+    section_areas.append(text_area)
+
+    # Draw labels
+    if len(labels) > 0:
+        label_width = text_width / len(labels)
+        label_height = line_height
+        label_y = height - margin - label_height
+        for i, (label, label_text) in enumerate(zip(labels, label_texts)):
+            label_x = margin + i * label_width
+            label_char_areas, label_word_areas, label_area, _ = draw_text(
+                draw,
+                label_text,
+                label_x,
+                label_y,
+                label_width,
+                font,
+                align="center",
+                line_spacing=line_spacing,
+                max_height=label_height,
+                vertical_align="center",
+                color=text_color,
+            )
+            for char_area in label_char_areas:
+                char_area.section = f"label:{label}"
+            for word_area in label_word_areas:
+                word_area.section = f"label:{label}"
+            label_area.content = f"label:{label}"
+            char_areas.extend(label_char_areas)
+            word_areas.extend(label_word_areas)
+            section_areas.append(label_area)
+
+    return TextImage(
+        image,
+        {
+            "char": char_areas,
+            "word": word_areas,
+            "section": section_areas,
+            **custom_span_areas,
+        },
     )

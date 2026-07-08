@@ -185,8 +185,8 @@ class DriftCorrect(ExperimentStage):
         """
         if location is None:
             location = (
-                self.runner.display_width // 2,
-                self.runner.display_height // 2,
+                self.runner.stimulus_area_width // 2,
+                self.runner.stimulus_area_height // 2,
             )
         self.location = location
 
@@ -201,16 +201,16 @@ class AudioCheck(ExperimentStage):
         )
         self.title = pyglet.text.Label(
             text="Audio check",
-            x=self.runner.display_width / 2,
-            y=self.runner.display_height - 50,
+            x=self.runner.stimulus_area_width / 2,
+            y=self.runner.stimulus_area_height - 50,
             anchor_x="center",
             anchor_y="center",
             font_size=50,
             color=(0, 0, 0),
         )
         self.volume_indicator = pyglet.shapes.Circle(
-            x=self.runner.display_width / 2,
-            y=self.runner.display_height / 2,
+            x=self.runner.stimulus_area_width / 2,
+            y=self.runner.stimulus_area_height / 2,
             radius=0,
             color=(0, 0, 0),
         )
@@ -272,7 +272,7 @@ class HostControlled(ExperimentStage):
             host_imgpath = (self.runner.experiment_path / host_imgpath).absolute()
             img = pyglet.image.load(host_imgpath)
             self._backdrop = Backdrop(
-                pyglet.sprite.Sprite(img, x=0, y=self.runner.display_height - img.height),
+                pyglet.sprite.Sprite(img, x=0, y=self.runner.stimulus_area_height - img.height),
                 host_imgpath,
             )
         else:
@@ -346,7 +346,7 @@ class StimulusPage(ExperimentStage):
         imgpath = (self.runner.experiment_path / imgpath).absolute()
         img = pyglet.image.load(imgpath)
         self.stimulus = pyglet.sprite.Sprite(
-            img, x=0, y=self.runner.display_height - img.height
+            img, x=0, y=self.runner.stimulus_area_height - img.height
         )
         self._backdrop = Backdrop(self.stimulus, imgpath)
 
@@ -406,7 +406,7 @@ class StimulusMultiPage(ExperimentStage):
         ]
         imgs = [pyglet.image.load(imgpath) for imgpath in imgpaths]
         self.stimuli = [
-            pyglet.sprite.Sprite(img, x=0, y=self.runner.display_height - img.height)
+            pyglet.sprite.Sprite(img, x=0, y=self.runner.stimulus_area_height - img.height)
             for img in imgs
         ]
         self.page_index = 0
@@ -502,7 +502,7 @@ class MultipleChoiceQuestion(ExperimentStage):
         """
         imgpath = (self.runner.experiment_path / imgpath).absolute()
         img = pyglet.image.load(imgpath)
-        self.stimulus = pyglet.sprite.Sprite(img, x=0, y=self.runner.display_height - img.height)
+        self.stimulus = pyglet.sprite.Sprite(img, x=0, y=self.runner.stimulus_area_height - img.height)
 
         self._backdrop = Backdrop(self.stimulus, imgpath)
 
@@ -524,9 +524,10 @@ class MultipleChoiceQuestion(ExperimentStage):
             assert len(option_boxes) == len(
                 self.option_keys
             ), "option_boxes must have the same length as option_keys"
+            # TODO: Make configurable
             self.option_boxes = [
                 pyglet.shapes.Box(
-                    x, self.runner.display_height - y - height, width, height, color=(0, 0, 0), thickness=2
+                    x, self.runner.stimulus_area_height - y - height, width, height, color=(0, 0, 0), thickness=2
                 )
                 for x, y, width, height in option_boxes
             ]
@@ -615,12 +616,12 @@ class CursorMultipleChoiceQuestion(ExperimentStage):
         """
         imgpath = (self.runner.experiment_path / imgpath).absolute()
         img = pyglet.image.load(imgpath)
-        self.stimulus = pyglet.sprite.Sprite(img, x=0, y=self.runner.display_height - img.height)
+        self.stimulus = pyglet.sprite.Sprite(img, x=0, y=self.runner.stimulus_area_height - img.height)
 
         self._backdrop = Backdrop(self.stimulus, imgpath)
 
         self.cursor_locations = [
-            (x, self.runner.display_height - y) for x, y in cursor_locations
+            (x, self.runner.stimulus_area_height - y) for x, y in cursor_locations
         ]
         self.cursor = pyglet.shapes.Circle(
             0, 0, radius=cursor_size / 2, color=(0, 0, 0)
@@ -720,13 +721,13 @@ class FreeTextQuestion(ExperimentStage):
         """
         imgpath = (self.runner.experiment_path / imgpath).absolute()
         img = pyglet.image.load(imgpath)
-        self.stimulus = pyglet.sprite.Sprite(img, x=0, y=self.runner.display_height - img.height)
+        self.stimulus = pyglet.sprite.Sprite(img, x=0, y=self.runner.stimulus_area_height - img.height)
         self._backdrop = Backdrop(self.stimulus, imgpath)
 
         self.confirm_key = confirm_key
 
         x, y, width, height = input_box
-        y = self.runner.display_height - y - height  # Invert y-axis
+        y = self.runner.stimulus_area_height - y - height  # Invert y-axis
         self.input_box = pyglet.shapes.Box(
             x, y, width, height, color=(0, 0, 0), thickness=2
         )
@@ -793,7 +794,7 @@ class LabelAnnotation(ExperimentStage):
         imgpath: str,
         label_boxes: dict[str, tuple[float, float, float, float]],
         label_keys: dict[str, str],
-        confirm_key: str,
+        confirm_key: str | None = None,
     ):
         """
         :param imgpath:
@@ -804,11 +805,12 @@ class LabelAnnotation(ExperimentStage):
         :param label_keys:
             An object mapping keys to label names.
         :param confirm_key:
-            The key to press to confirm the selected label.
+            The key to press to confirm the selected label. If not provided, the label is confirmed
+            immediately when a label key is pressed.
         """
         imgpath = (self.runner.experiment_path / imgpath).absolute()
         img = pyglet.image.load(imgpath)
-        self.stimulus = pyglet.sprite.Sprite(img, x=0, y=self.runner.display_height - img.height)
+        self.stimulus = pyglet.sprite.Sprite(img, x=0, y=self.runner.stimulus_area_height - img.height)
         self._backdrop = Backdrop(self.stimulus, imgpath)
 
         self.label_keys = label_keys
@@ -820,7 +822,7 @@ class LabelAnnotation(ExperimentStage):
         self.label_boxes = {}
         for label, box in label_boxes.items():
             x, y, width, height = box
-            y = self.runner.display_height - y - height  # Invert y-axis
+            y = self.runner.stimulus_area_height - y - height  # Invert y-axis
             # TODO: Make configurable
             self.label_boxes[label] = pyglet.shapes.Box(
                 x, y, width, height, color=(0, 0, 0), thickness=2
@@ -843,10 +845,16 @@ class LabelAnnotation(ExperimentStage):
         if event.data["symbol"] in self.label_keys:
             self.selected_label = self.label_keys[event.data["symbol"]]
             self.runner.eyetracker.send_message(f"LABEL_SELECTED {self.selected_label}")
-            self.runner.window.clear()
-            self.stimulus.draw()
-            self.label_boxes[self.selected_label].draw()
-            self.runner.window.flip()
+            if self.confirm_key is None:
+                self.runner.eyetracker.send_message(
+                    f"LABEL_CONFIRMED {self.selected_label}"
+                )
+                self.finished = True
+            else:
+                self.runner.window.clear()
+                self.stimulus.draw()
+                self.label_boxes[self.selected_label].draw()
+                self.runner.window.flip()
 
         elif (
             event.data["symbol"] == self.confirm_key and self.selected_label is not None
@@ -956,7 +964,7 @@ class FixationCross(ExperimentStage):
         self.tolerance = tolerance
         self.timeout = timeout
         cross_x = self.x
-        cross_y = self.runner.display_height - self.y  # Invert y-axis
+        cross_y = self.runner.stimulus_area_height - self.y  # Invert y-axis
         self.hline = pyglet.shapes.Line(
             cross_x - 10,
             cross_y,

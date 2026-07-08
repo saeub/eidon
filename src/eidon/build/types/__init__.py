@@ -3,7 +3,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 
 @dataclass(kw_only=True)
@@ -13,11 +13,14 @@ class ExperimentType(ABC):
 
     :param background_color: Color for window and stimulus backgrounds.
         (red, green, blue) with values from 0 to 255.
-    :param display_size: Size of the display in pixels (width, height).
+    :param stimulus_area_size: Size of the rectangular stimulus area in pixels (width, height).
+        The rectangle will be centered in the screen and all stimuli will be presented inside it.
+        The area needs to be within the trackable range of your eye tracker.
+        The area cannot be larger than the resolution of your monitor.
     """
 
     # TODO: Use more user-friendly formats for color and size, and avoid list->tuple conversion for PIL
-    display_size: tuple[int, int]
+    stimulus_area_size: tuple[int, int]
     background_color: tuple[int, int, int] = (204, 204, 204)
 
     @classmethod

@@ -31,9 +31,13 @@ specified design (e.g., Latin square). Filler items can also be added.
       └─ 📄 fillers.txt (optional)
 ```
 
-`instructions.txt`, `wait.txt`, `break.txt`, and `end.txt` contain the text for the
-instructions, wait (after instructions and practice trials), break, and end pages. The
-instructions are split into multiple pages if necessary.
+- `instructions.txt` contains the text for the instructions shown at the beginning of the experiment.
+  The text is automatically split into multiple pages if necessary.
+- `wait.txt` (optional) contains the text shown after the instructions and after the practice trials,
+  where the participant waits for the experimenter to start the experiment. This is an opportunity
+  for the participant to ask questions or for the experimenter to perform calibration if necessary.
+- `break.txt` (optional) contains the text shown during breaks.
+- `end.txt` contains the text shown at the end of the experiment.
 
 #### Experimental items
 
@@ -43,7 +47,7 @@ placeholders):
 
 ```
 <<item>>
-[text for condition 1]
+[text]
 <<question>>
 [question stem]
 <<options>>
@@ -125,8 +129,10 @@ using multiple tags with the same area name.
 
 ### Configuration
 
-- `display_size` (tuple[int, int])
+- `stimulus_area_size` (tuple[int, int])  
+  Size of the rectangular stimulus area in pixels (width, height). The rectangle will be centered in the screen and all stimuli will be presented inside it. The area needs to be within the trackable range of your eye tracker. The area cannot be larger than the resolution of your monitor.
 - `background_color` (tuple[int, int, int])  
+  Color for window and stimulus backgrounds. (red, green, blue) with values from 0 to 255.  
   Default: `(204, 204, 204)`
 - `num_participants` (int)  
   Number of participants in the experiment. Should be a multiple of the number of conditions.
@@ -147,20 +153,21 @@ using multiple tags with the same area name.
   Whether to use a monospaced font for the stimuli. This is recommended when controlling for word length effects.  
   Default: `True`
 - `font_size` (int)  
-  Font size for all text.  
+  Font size in pixels for all text.  
   Default: `25`
 - `line_spacing` (int)  
   Line spacing multiplier for all text.  
   Default: `2.0`
 - `question_layout` (str)  
-  Layout for multiple-choice questions. `horizontal` arranges options in a horizontal row, `diamond` arranges them in a diamond shape (requires exactly 4 options that are selected with the UP, LEFT, RIGHT, and DOWN keys), and `cursor` arranges them vertically with a cursor movable with the UP and DOWN keys (requires `confirm_key`).  
+  Layout for multiple-choice questions. `horizontal` arranges options in a horizontal row, `diamond` arranges them in a diamond shape (requires exactly 4 options that are selected with the UP, LEFT, RIGHT, and DOWN keys), and `cursor` arranges them vertically with a visual selector that can be controlled with the UP and DOWN keys (requires `confirm_key`).  
   Default: `horizontal`
 - `option_keys` (list[str] | None)  
-  List of keys to use for selecting multiple-choice options, in order. For example, `["Y", "N"]` to use the Y key for the first option and N key for the second option. Only required when question layout is `horizontal`.  
-  Key names are [pyglet key symbol strings](https://pyglet.readthedocs.io/en/latest/programming_guide/keyboard.html#defined-key-symbols) (e.g. `A`, `LEFT`, `SPACE`).  
+  List of keys to use for selecting multiple-choice options, in order. For example, `[Y, N]` to use the Y key for the first option and the N key for the second option. Only required when question layout is `horizontal`.  
+  Available key names are listed [here](../keyboard.md).  
   Default: `None`
 - `confirm_key` (str | None)  
-  Key names are [pyglet key symbol strings](https://pyglet.readthedocs.io/en/latest/programming_guide/keyboard.html#defined-key-symbols) (e.g. `A`, `LEFT`, `SPACE`).  
+  Key to use for confirming the selection of an option. If not specified, options are selected immediately when the corresponding option key is pressed.  
+  Available key names are listed [here](../keyboard.md).  
   Default: `None`
 
 ### [Example](https://github.com/saeub/eidon/tree/main/examples/SinglePageReading)

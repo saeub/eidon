@@ -26,3 +26,9 @@ def ask_user_yes_no(question: str) -> bool:
             return False
         else:
             print("Please enter 'y' or 'n'.")
+
+def get_session_name(recording_name: str, experiment_name: str) -> str:
+    """Extract the session name from a recording name."""
+    session_name = recording_name.removeprefix(experiment_name + ".")
+    session_name = "".join(session_name.split(".")[:-1])
+    return session_name
