@@ -94,7 +94,7 @@ class ClassAnnotation(ExperimentType):
     :param margin: Margin in pixels around the text on the stimulus pages.
     :param font_monospaced: Whether to use a monospaced font for the stimuli.
         This is recommended when controlling for word length effects.
-    :param font_size: Font size for all text.
+    :param font_size: Font size in pixels for all text.
     :param line_spacing: Line spacing multiplier for all text.
     :param labels: Names of the labels to choose from.
     :param label_texts: Texts to display for each label. If not provided, the label names are used.
@@ -165,8 +165,8 @@ class ClassAnnotation(ExperimentType):
             font_path = FONTS["default"]
 
         text_config = {
-            "width": self.display_size[0],
-            "height": self.display_size[1],
+            "width": self.stimulus_area_size[0],
+            "height": self.stimulus_area_size[1],
             "margin": self.margin,
             "font_path": font_path,
             "font_size": self.font_size,

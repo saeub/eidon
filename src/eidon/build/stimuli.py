@@ -428,7 +428,7 @@ def generate_text_pages(
     text: str,
     width: int,
     height: int,
-    margin_px: float,
+    margin: float,
     font_path: str,
     font_size: float,
     align: Literal["left", "center", "right"] = "left",
@@ -445,7 +445,7 @@ def generate_text_pages(
         text: Text to render.
         width: Image width in pixels.
         height: Image height in pixels.
-        margin_px: Margin around text in pixels.
+        margin: Margin around text in pixels.
         font_path: Font name or path to TrueType/OpenType font file.
         font_size: Font size in pixels.
         align: Text alignment ('left', 'center', 'right').
@@ -460,8 +460,8 @@ def generate_text_pages(
     Returns:
         The generated TextImages.
     """
-    text_width = width - 2 * margin_px
-    text_height = height - 2 * margin_px
+    text_width = width - 2 * margin
+    text_height = height - 2 * margin
 
     font = ImageFont.truetype(font_path, font_size)
 
@@ -504,8 +504,8 @@ def generate_text_pages(
         char_areas, word_areas, text_area, custom_span_areas = draw_text(
             draw,
             page_text,
-            margin_px,
-            margin_px,
+            margin,
+            margin,
             text_width,
             font,
             align=align,
@@ -546,7 +546,7 @@ def generate_mcq_page(
     options: list[str],
     width: int,
     height: int,
-    margin_px: float,
+    margin: float,
     font_path: str,
     font_size: float,
     vertical_align: Literal["top", "center", "bottom"] = "top",
@@ -563,7 +563,7 @@ def generate_mcq_page(
         options: List of answer options.
         width: Image width in pixels.
         height: Image height in pixels.
-        margin_px: Margin around text in pixels.
+        margin: Margin around text in pixels.
         font_path: Font name or path to TrueType/OpenType font file.
         font_size: Font size in pixels.
         vertical_align: Vertical alignment of the content within the image ('top', 'center', 'bottom').
@@ -578,8 +578,8 @@ def generate_mcq_page(
     Returns:
         A tuple containing the generated TextImage and the option boxes (x, y, width, height).
     """
-    text_width = width - 2 * margin_px
-    text_height = height - 2 * margin_px
+    text_width = width - 2 * margin
+    text_height = height - 2 * margin
 
     image = Image.new("RGB", (width, height), tuple(background_color))
     draw = ImageDraw.Draw(image)
@@ -606,8 +606,8 @@ def generate_mcq_page(
     elif option_layout == "diamond":
         option_height = line_height * max(num_option_lines)
         total_height = (num_question_lines + 1) * line_height + 3 * option_height
-    question_left = margin_px
-    question_top = margin_px
+    question_left = margin
+    question_top = margin
     question_bottom = question_top + num_question_lines * line_height
     question_width = text_width
     if vertical_align == "center":
@@ -644,7 +644,7 @@ def generate_mcq_page(
     # Draw answer options
     option_boxes = []
     if option_layout == "horizontal":
-        option_left = margin_px
+        option_left = margin
         option_top = question_area.bottom + line_height
         for option_index, option in enumerate(options):
             # Draw option text
@@ -674,8 +674,8 @@ def generate_mcq_page(
     elif option_layout == "diamond":
         option_centers = [
             (width / 2, line_height * 2),
-            (margin_px + option_width / 2, line_height * 2 + option_height),
-            (width - margin_px - option_width / 2, line_height * 2 + option_height),
+            (margin + option_width / 2, line_height * 2 + option_height),
+            (width - margin - option_width / 2, line_height * 2 + option_height),
             (width / 2, line_height * 2 + option_height * 2),
         ]
         for option_index, (option, option_center) in enumerate(
@@ -720,7 +720,7 @@ def generate_cursor_mcq_page(
     options: list[str],
     width: int,
     height: int,
-    margin_px: float,
+    margin: float,
     font_path: str,
     font_size: float,
     vertical_align: Literal["top", "center", "bottom"] = "top",
@@ -736,7 +736,7 @@ def generate_cursor_mcq_page(
         options: List of answer options.
         width: Image width in pixels.
         height: Image height in pixels.
-        margin_px: Margin around text in pixels.
+        margin: Margin around text in pixels.
         font_path: Font name or path to TrueType/OpenType font file.
         font_size: Font size in pixels.
         vertical_align: Vertical alignment of the content within the image ('top', 'center', 'bottom').
@@ -748,8 +748,8 @@ def generate_cursor_mcq_page(
     Returns:
         A tuple containing the generated TextImage and the cursor locations.
     """
-    text_width = width - 2 * margin_px
-    text_height = height - 2 * margin_px
+    text_width = width - 2 * margin
+    text_height = height - 2 * margin
 
     image = Image.new("RGB", (width, height), tuple(background_color))
     draw = ImageDraw.Draw(image)
@@ -760,8 +760,8 @@ def generate_cursor_mcq_page(
     font_ascent, font_descent = font.getmetrics()
     line_height = (font_ascent + font_descent) * line_spacing
     total_height = line_height * (num_question_lines + 1 + len(options))
-    question_left = margin_px
-    question_top = margin_px
+    question_left = margin
+    question_top = margin
     question_width = text_width
     if vertical_align == "center":
         question_top += (text_height - total_height) / 2
@@ -794,14 +794,14 @@ def generate_cursor_mcq_page(
     section_areas.append(question_area)
 
     # Draw answer options
-    option_left = margin_px + 2 * font_size
+    option_left = margin + 2 * font_size
     option_top = question_area.bottom + line_height
     option_width = text_width - 2 * font_size
     cursor_locations = []
 
     for option_index, option in enumerate(options):
         # Draw option circle
-        circle_x = margin_px + font_size / 2
+        circle_x = margin + font_size / 2
         circle_y = option_top + line_height / 2
         draw.circle(
             (circle_x, circle_y),

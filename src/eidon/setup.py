@@ -28,8 +28,8 @@ class HardwareSetup:
         with open(self.experiment_path / "experiment.json") as f:
             experiment_definition = json.load(f)
 
-        self.display_width, self.display_height = experiment_definition[
-            "stimulus_area_px"
+        self.stimulus_area_width, self.stimulus_area_height = experiment_definition[
+            "stimulus_area_size"
         ]
 
         self.setups_path = self.experiment_path / "setups"
@@ -43,7 +43,7 @@ class HardwareSetup:
             # No previous setup found
             self.latest_setup = None
 
-        self.font_size = self.display_height // 40
+        self.font_size = self.stimulus_area_height // 40
 
         self.clock = pyglet.clock.get_default()
 
@@ -58,19 +58,19 @@ class HardwareSetup:
         def on_resize(width, height):
             # Set viewport to use display coordinates (centered in the window)
             self._viewport_x = int(
-                (width * self.screen_scale - self.display_width) // 2
+                (width * self.screen_scale - self.stimulus_area_width) // 2
             )
             self._viewport_y = int(
-                (height * self.screen_scale - self.display_height) // 2
+                (height * self.screen_scale - self.stimulus_area_height) // 2
             )
             pyglet.gl.glViewport(
                 self._viewport_x,
                 self._viewport_y,
-                self.display_width,
-                self.display_height,
+                self.stimulus_area_width,
+                self.stimulus_area_height,
             )
             self.window.projection = pyglet.math.Mat4.orthogonal_projection(
-                0, self.display_width, 0, self.display_height, -1, 1
+                0, self.stimulus_area_width, 0, self.stimulus_area_height, -1, 1
             )
 
         self.window._on_internal_resize = on_resize
@@ -95,8 +95,11 @@ class HardwareSetup:
 
     def _do_setup(self) -> dict[str, Any]:
         new_setup = {
-            "stimulus_area_width_px": self.display_width,
-            "stimulus_area_height_px": self.display_height,
+            "stimulus_area_size_px": [
+                self.stimulus_area_width,
+                self.stimulus_area_height,
+            ],
+            "stimulus_area_size_mm": [None, None],
         }
 
         self._show_text(
@@ -117,13 +120,13 @@ class HardwareSetup:
                 "Select tracking mode:", TRACKING_MODES
             )
 
-            new_setup["stimulus_area_width_mm"] = self._get_float_measurement(
+            new_setup["stimulus_area_size_mm"][0] = self._get_float_measurement(
                 "Measure the WIDTH of the black rectangle on this screen.\n\n"
                 "Enter the measurement in millimeters as a number (e.g., 605), then press [ENTER].",
                 rectangle=True,
             )
 
-            new_setup["stimulus_area_height_mm"] = self._get_float_measurement(
+            new_setup["stimulus_area_size_mm"][1] = self._get_float_measurement(
                 "Measure the HEIGHT of the black rectangle on this screen.\n\n"
                 "Enter the measurement in millimeters as a number (e.g., 605), then press [ENTER].",
                 rectangle=True,
@@ -175,11 +178,11 @@ class HardwareSetup:
 
         label = pyglet.text.Label(
             text=text,
-            x=self.display_width // 2,
-            y=self.display_height // 2,
+            x=self.stimulus_area_width // 2,
+            y=self.stimulus_area_height // 2,
             anchor_x="center",
             anchor_y="center",
-            width=self.display_width // 2,
+            width=self.stimulus_area_width // 2,
             multiline=True,
             font_size=self.font_size,
             color=(0, 0, 0),
@@ -211,11 +214,11 @@ class HardwareSetup:
     def _show_text(self, text: str):
         label = pyglet.text.Label(
             text=text,
-            x=self.display_width // 2,
-            y=self.display_height // 2,
+            x=self.stimulus_area_width // 2,
+            y=self.stimulus_area_height // 2,
             anchor_x="center",
             anchor_y="center",
-            width=self.display_width,
+            width=self.stimulus_area_width,
             multiline=True,
             font_size=self.font_size,
             color=(0, 0, 0),
@@ -246,19 +249,19 @@ class HardwareSetup:
             rect = pyglet.shapes.Rectangle(
                 x=0,
                 y=0,
-                width=self.display_width,
-                height=self.display_height,
+                width=self.stimulus_area_width,
+                height=self.stimulus_area_height,
                 color=(0, 0, 0),
                 batch=batch,
             )
 
         label = pyglet.text.Label(
             text=instructions,
-            x=self.display_width // 2,
-            y=self.display_height // 2,
+            x=self.stimulus_area_width // 2,
+            y=self.stimulus_area_height // 2,
             anchor_x="center",
             anchor_y="bottom",
-            width=self.display_width * 0.9,
+            width=self.stimulus_area_width * 0.9,
             multiline=True,
             font_size=self.font_size,
             color=(255, 255, 255) if rectangle else (0, 0, 0),
@@ -267,16 +270,16 @@ class HardwareSetup:
 
         text_entry = pyglet.gui.TextEntry(
             text="",
-            x=self.display_width // 4,
-            y=self.display_height // 2,
-            width=self.display_width // 2,
+            x=self.stimulus_area_width // 4,
+            y=self.stimulus_area_height // 2,
+            width=self.stimulus_area_width // 2,
             batch=batch,
         )
         text_entry._layout.document.set_style(
             0, len(text_entry.value), {"font_size": self.font_size, "align": "center"}
         )
         text_entry.height = text_entry._layout.content_height
-        text_entry.y = self.display_height // 2 - text_entry.height
+        text_entry.y = self.stimulus_area_height // 2 - text_entry.height
 
         self.window.push_handlers(text_entry)
 
@@ -309,11 +312,11 @@ class HardwareSetup:
         text += "\n\nPress the corresponding number key to select."
         label = pyglet.text.Label(
             text=text,
-            x=self.display_width // 2,
-            y=self.display_height // 2,
+            x=self.stimulus_area_width // 2,
+            y=self.stimulus_area_height // 2,
             anchor_x="center",
             anchor_y="center",
-            width=self.display_width * 0.9,
+            width=self.stimulus_area_width * 0.9,
             multiline=True,
             font_size=self.font_size,
             color=(0, 0, 0),
@@ -323,7 +326,11 @@ class HardwareSetup:
 
         def on_key_press(symbol, modifiers):
             nonlocal selected
-            number = pyglet.window.key.symbol_string(symbol).removeprefix("_").removeprefix("NUM_")
+            number = (
+                pyglet.window.key.symbol_string(symbol)
+                .removeprefix("_")
+                .removeprefix("NUM_")
+            )
             if number in device_keys:
                 selected = device_keys[number]
 
@@ -342,8 +349,8 @@ class HardwareSetup:
 
     def _check_trackable_range(self, setup: dict[str, Any]) -> bool:
         distance_mm = setup["eye_to_screen_distance_mm"]
-        width_mm = setup["stimulus_area_width_mm"]
-        height_mm = setup["stimulus_area_height_mm"]
+        width_mm = setup["stimulus_area_size_mm"][0]
+        height_mm = setup["stimulus_area_size_mm"][1]
         width_deg = 2 * math.degrees(math.atan(width_mm / 2 / distance_mm))
         height_deg = 2 * math.degrees(math.atan(height_mm / 2 / distance_mm))
         max_width_deg, max_height_deg = TRACKABLE_RANGES[setup["eye_tracker"]]
@@ -358,14 +365,15 @@ class HardwareSetup:
                 f"Stimulus area: {width_deg:.1f}° x {height_deg:.1f}°\n"
                 f"Maximum trackable area: {max_width_deg:.1f}° x {max_height_deg:.1f}°\n\n"
                 "Options:\n"
+                # TODO: Calculate maximum width and height in pixels
                 "- Reduce the size of the stimulus area in config.yaml and rebuild the experiment.\n"
                 f"- Increase the eye-to-screen distance to at least {min_distance_mm:.1f} mm.\n\n"
                 "Press [SPACE] to repeat the measurements or [ESCAPE] to exit.",
-                x=self.display_width // 2,
-                y=self.display_height // 2,
+                x=self.stimulus_area_width // 2,
+                y=self.stimulus_area_height // 2,
                 anchor_x="center",
                 anchor_y="center",
-                width=self.display_width * 0.9,
+                width=self.stimulus_area_width * 0.9,
                 multiline=True,
                 font_size=self.font_size,
                 color=(0, 0, 0),

@@ -98,12 +98,12 @@ class MouseTracker(EyeTracker):
             label = pyglet.text.Label(
                 "Eye tracker setup\n[ESC] to continue",
                 color=(0, 0, 0, 255),
-                x=self.runner.display_width / 2,
-                y=self.runner.display_height / 2,
+                x=self.runner.stimulus_area_width / 2,
+                y=self.runner.stimulus_area_height / 2,
                 anchor_x="center",
                 font_size=30,
                 multiline=True,
-                width=self.runner.display_width,
+                width=self.runner.stimulus_area_width,
                 align="center",
             )
             label.draw()
@@ -128,7 +128,7 @@ class MouseTracker(EyeTracker):
 
             self.runner.window.clear()
             cross_x, cross_y = self.location
-            cross_y = self.runner.display_height - cross_y  # Invert y-axis
+            cross_y = self.runner.stimulus_area_height - cross_y  # Invert y-axis
             hline = pyglet.shapes.Line(
                 cross_x - 10,
                 cross_y,
@@ -148,12 +148,12 @@ class MouseTracker(EyeTracker):
             label = pyglet.text.Label(
                 "Drift correct\n[SPACE] to continue",
                 color=(0, 0, 0, 255),
-                x=self.runner.display_width / 2,
-                y=self.runner.display_height / 2,
+                x=self.runner.stimulus_area_width / 2,
+                y=self.runner.stimulus_area_height / 2,
                 anchor_x="center",
                 font_size=30,
                 multiline=True,
-                width=self.runner.display_width,
+                width=self.runner.stimulus_area_width,
                 align="center",
             )
             hline.draw()
@@ -235,7 +235,7 @@ class EyeLink(EyeTracker):
         self.eyelink.openDataFile(self.host_filename)
 
         display_coords = (
-            f"0 0 {self.runner.display_width - 1} {self.runner.display_height - 1}"
+            f"0 0 {self.runner.stimulus_area_width - 1} {self.runner.stimulus_area_height - 1}"
         )
         self.eyelink.sendMessage(f"DISPLAY_COORDS {display_coords}")
         self.eyelink.sendCommand(f"screen_pixel_coords = {display_coords}")
@@ -315,7 +315,7 @@ class EyeLink(EyeTracker):
         width, height = backdrop.sprite.width, backdrop.sprite.height
 
         # Invert y-axis
-        y = self.runner.display_height - y - height
+        y = self.runner.stimulus_area_height - y - height
 
         # Convert to integer
         x = round(x)
@@ -440,12 +440,12 @@ if PYLINK_AVAILABLE:
         def _camera_image_to_window_coords(self, x: float, y: float):
             x = (
                 x * self.image_scale
-                + self.runner.display_width / 2
+                + self.runner.stimulus_area_width / 2
                 - self.image_width / 2
             )
             y = (
                 -y * self.image_scale
-                + self.runner.display_height / 2
+                + self.runner.stimulus_area_height / 2
                 + self.image_height / 2
             )
             return x, y
@@ -525,7 +525,7 @@ if PYLINK_AVAILABLE:
                 return
 
             self.runner.window.clear()
-            y = self.runner.display_height - y
+            y = self.runner.stimulus_area_height - y
             for shape in self.calibration_target:
                 shape.x, shape.y = x, y
                 shape.draw()

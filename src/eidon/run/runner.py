@@ -52,8 +52,8 @@ class ExperimentRunner:
 
         import_custom_code(self.experiment_path)
 
-        self.display_width, self.display_height = experiment_definition[
-            "stimulus_area_px"
+        self.stimulus_area_width, self.stimulus_area_height = experiment_definition[
+            "stimulus_area_size"
         ]
         background_color = experiment_definition["background_color"]
         # Convert color to OpenGL's [0, 1] range, add alpha
@@ -90,13 +90,13 @@ class ExperimentRunner:
 
         def on_resize(width, height):
             # Set viewport to use display coordinates (centered in the window)
-            viewport_x = int((width * self.screen_scale - self.display_width) // 2)
-            viewport_y = int((height * self.screen_scale - self.display_height) // 2)
+            viewport_x = int((width * self.screen_scale - self.stimulus_area_width) // 2)
+            viewport_y = int((height * self.screen_scale - self.stimulus_area_height) // 2)
             pyglet.gl.glViewport(
-                viewport_x, viewport_y, self.display_width, self.display_height
+                viewport_x, viewport_y, self.stimulus_area_width, self.stimulus_area_height
             )
             self.window.projection = pyglet.math.Mat4.orthogonal_projection(
-                0, self.display_width, 0, self.display_height, -1, 1
+                0, self.stimulus_area_width, 0, self.stimulus_area_height, -1, 1
             )
 
         self.window._on_internal_resize = on_resize
@@ -141,8 +141,8 @@ class ExperimentRunner:
         if self.dummy:
             self.eyetracker = MouseTracker(
                 self.window,
-                origin_x=(self.window.width - self.display_width) // 2,
-                origin_y=(self.window.height - self.display_height) // 2,
+                origin_x=(self.window.width - self.stimulus_area_width) // 2,
+                origin_y=(self.window.height - self.stimulus_area_height) // 2,
             )
         else:
             edf_path = self.recording_path / f"{recording_name}.edf"

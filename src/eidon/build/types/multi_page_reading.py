@@ -146,10 +146,10 @@ class MultiPageReading(ExperimentType):
     :param conditions: List of item condition names (if any).
     :param design: Name of the design to use for assigning items to participants.
     :param breaks_after: Insert a break after every N items.
-    :param margin_px: Margin in pixels around the text on the stimulus pages.
+    :param margin: Margin in pixels around the text on the stimulus pages.
     :param font_monospaced: Whether to use a monospaced font for the stimuli.
         This is recommended when controlling for word length effects.
-    :param font_size: Font size for all text.
+    :param font_size: Font size in pixels for all text.
     :param line_spacing: Line spacing multiplier for all text.
     :param question_layout: Layout for multiple-choice questions.
         `horizontal` arranges options in a horizontal row, `diamond` arranges them in a diamond
@@ -168,7 +168,7 @@ class MultiPageReading(ExperimentType):
     conditions: list[str] | None = None
     design: str = "latin_square"
     breaks_after: int | None = None
-    margin_px: int = 50
+    margin: int = 50
     font_monospaced: bool = False
     font_size: int = 25
     line_spacing: int = 2.0
@@ -207,9 +207,9 @@ class MultiPageReading(ExperimentType):
             font_path = FONTS["default"]
 
         text_config = {
-            "width": self.stimulus_area_px[0],
-            "height": self.stimulus_area_px[1],
-            "margin_px": self.margin_px,
+            "width": self.stimulus_area_size[0],
+            "height": self.stimulus_area_size[1],
+            "margin": self.margin,
             "font_path": font_path,
             "font_size": self.font_size,
             "line_spacing": self.line_spacing,
@@ -622,8 +622,8 @@ class MultiPageReading(ExperimentType):
                             )
                     image.save(experiment_path, f"{name}.text.{i}")
                 text_start_location = (
-                    int(self.margin_px - self.font_size),
-                    int(self.margin_px + self.font_size * self.line_spacing / 2),
+                    int(self.margin - self.font_size),
+                    int(self.margin + self.font_size * self.line_spacing / 2),
                 )
 
                 stages = [

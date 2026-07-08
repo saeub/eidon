@@ -50,14 +50,14 @@ First, create a folder and a `config.yaml` file for your experiment:
 name: "my-experiment"
 type: SinglePageReading
 
-stimulus_area_px: [1100, 900]
+stimulus_area_size: [1100, 900]
 num_participants: 8
 option_keys: [Y, N]
 ```
 
 The experiment's `name` will appear, among others, in recordings and metadata files.
 
-`stimulus_area_px` defines the width and height (in pixels) of the area where your stimuli will be presented. It is important that this is within your eye tracker's **trackable area** on the screen you're going to use for the experiment.
+`stimulus_area_size` defines the width and height (in pixels) of the area where your stimuli will be presented. It is important that this is within your eye tracker's **trackable area** on the screen you're going to use for the experiment. You can use `eidon setup` to test this -- see [below](#2-recording-the-hardware-setup).
 
 `option_keys` are the keys on the keyboard that participants are going to use to respond to multiple-choice questions (in this case, we are going to use yes/no questions).
 
@@ -102,7 +102,7 @@ yes
 **no
 ```
 
-Here, we have an item in two conditions (`active` and `passive`) with one comprehension question each.
+Here, we have an item in two conditions (`active` and `passive`) with one comprehension question each. The asterisks `**` indicate the correct answer.
 
 Check the [example experiment](https://github.com/saeub/eidon/tree/main/examples/SinglePageReading/materials/items) for more examples of item files.
 
