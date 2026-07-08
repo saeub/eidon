@@ -129,7 +129,7 @@ using multiple tags with the same area name.
 
 ### Configuration
 
-- `stimulus_area_px` (tuple[int, int])  
+- `stimulus_area_size` (tuple[int, int])  
   Size of the rectangular stimulus area in pixels (width, height). The rectangle will be centered in the screen and all stimuli will be presented inside it. The area needs to be within the trackable range of your eye tracker. The area cannot be larger than the resolution of your monitor.
 - `background_color` (tuple[int, int, int])  
   Color for window and stimulus backgrounds. (red, green, blue) with values from 0 to 255.  
@@ -146,14 +146,14 @@ using multiple tags with the same area name.
 - `breaks_after` (int | None)  
   Insert a break after every N items.  
   Default: `None`
-- `margin_px` (int)  
+- `margin` (int)  
   Margin in pixels around the text on the stimulus pages.  
   Default: `50`
 - `font_monospaced` (bool)  
   Whether to use a monospaced font for the stimuli. This is recommended when controlling for word length effects.  
   Default: `True`
 - `font_size` (int)  
-  Font size for all text.  
+  Font size in pixels for all text.  
   Default: `25`
 - `line_spacing` (int)  
   Line spacing multiplier for all text.  

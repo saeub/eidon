@@ -1,0 +1,9 @@
+You will annotate texts with sentiment class labels (positive, neutral, negative). Select a label using the [A], [S], [D], and [F] keys on the keyboard. To confirm your choice, press [SPACE].
+After each text, you be asked how confident you are in your label choice. Use the arrow keys to select an answer and confirm your answer with [SPACE].
+
+If you have any questions, please ask the experimenter now.
+Otherwise, press [SPACE] to continue.
+
+Please place the fingers of your left hand on the [ASDF] keys, your left thumb on [SPACE], and your right hand on the arrow keys. Keep our hands on the keyboard during the entire experiment, so that you won't need to look down to press the correct keys.
+
+Press [SPACE] to proceed.

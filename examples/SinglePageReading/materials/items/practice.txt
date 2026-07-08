@@ -3,13 +3,13 @@ This is a minimal pair stimulus sentence.
 <<question>>
 Question?
 <<options>>
-[Y]es
-[N]o
+[F] Yes
+[J] No
 
 <<practice>>
 This are a minimal pair stimulus sentence.
 <<question>>
 Question?
 <<options>>
-[Y]es
-[N]o
+[F] Yes
+[J] No

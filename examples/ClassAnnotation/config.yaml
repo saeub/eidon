@@ -1,0 +1,29 @@
+# Experiment overview
+name: "class-annotation"
+type: ClassAnnotation
+
+# Design
+num_participants: 8
+
+# Appearance
+stimulus_area_size: [1100, 900]
+font_monospaced: true
+background_color: [204, 204, 204]
+margin: 50
+font_size: 25
+line_spacing: 2.5
+
+# Labels
+labels: [positive, negative, no_impact, mixed]
+label_texts: ["[A] positive", "[S] negative", "[D] neither", "[F] mixed"]
+label_option_keys: [A, S, D, F]
+label_confirm_key: SPACE
+
+# Questions
+questions:
+- stem: "How confident are you in your label choice?"
+  options: ["Very confident", "Somewhat confident", "Not confident at all"]
+question_confirm_key: SPACE
+
+# Breaks between items
+breaks_after: 4

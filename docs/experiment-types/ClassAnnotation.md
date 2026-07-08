@@ -82,7 +82,7 @@ questions:
 
 ### Configuration
 
-- `stimulus_area_px` (tuple[int, int])  
+- `stimulus_area_size` (tuple[int, int])  
   Size of the rectangular stimulus area in pixels (width, height). The rectangle will be centered in the screen and all stimuli will be presented inside it. The area needs to be within the trackable range of your eye tracker. The area cannot be larger than the resolution of your monitor.
 - `background_color` (tuple[int, int, int])  
   Color for window and stimulus backgrounds. (red, green, blue) with values from 0 to 255.  
@@ -99,7 +99,7 @@ questions:
   Whether to use a monospaced font for the stimuli. This is recommended when controlling for word length effects.  
   Default: `False`
 - `font_size` (int)  
-  Font size for all text.  
+  Font size in pixels for all text.  
   Default: `25`
 - `line_spacing` (int)  
   Line spacing multiplier for all text.  
@@ -129,3 +129,5 @@ questions:
   Key to use for confirming the selection of an option. If not specified, options are selected immediately when the corresponding option key is pressed.  
   Available key names are listed [here](../keyboard.md).  
   Default: `SPACE`
+
+### [Example](https://github.com/saeub/eidon/tree/main/examples/ClassAnnotation)
