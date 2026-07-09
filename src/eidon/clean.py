@@ -6,7 +6,6 @@ import numpy as np
 import pandas as pd
 import PIL.Image
 import PIL.ImageTk
-import pymovements as pm
 import skimage
 
 
@@ -33,7 +32,7 @@ class RecordingCleaner:
         if corrections_path.exists():
             corrections = json.loads(corrections_path.read_text())
         else:
-            corrections = {stage: {"transform": (None, None), "blinks": []} for stage, _ in stimuli}
+            corrections = {stage: {"transform": (None, None)} for stage, _ in stimuli}
 
         stimulus_index = 0
         while True:
@@ -54,12 +53,11 @@ class RecordingCleaner:
                 stimulus_image,
                 src_points=src_points,
                 dst_points=dst_points,
-                scale=0.5,
+                scale=1.0,
                 vertical=vertical,
                 stage=stage,
             )
             corrections[stage]["transform"] = (app.src_points, app.dst_points)
-            corrections[stage]["blinks"] = app.blinks
             if app.action == "next":
                 stimulus_index += 1
                 if stimulus_index >= len(stimuli):
@@ -84,7 +82,6 @@ class App(tk.Tk):
         image,
         src_points=None,
         dst_points=None,
-        blinks=None,
         margin=100,
         scale=1.0,
         fixation_cross=None,
@@ -127,8 +124,6 @@ class App(tk.Tk):
         self.src_points = src_points
         self.dst_points = dst_points
 
-        self.blinks = blinks or []
-
         self.hover_point_index = None
         self.dragging_point_index = None
         self.history = []
@@ -149,7 +144,6 @@ class App(tk.Tk):
         self.canvas.bind("<Motion>", self._on_left_mouse_move)
         self.canvas.bind("<B1-Motion>", self._on_left_mouse_drag)
         self.bind("<Control-z>", lambda _: self._undo())
-        self.bind("<b>", lambda _: self._detect_blinks())
         self.bind("<Right>", lambda _: self._exit("next"))
         self.bind("<Left>", lambda _: self._exit("previous"))
         self.bind("<Escape>", lambda _: self._exit("exit"))
@@ -233,15 +227,6 @@ class App(tk.Tk):
     def _store_history(self):
         self.history.append((self.src_points.copy(), self.dst_points.copy()))
 
-    def _detect_blinks(self):
-        # TODO: Make reproducible (save blink detection parameters)
-        gaze = pm.gaze.from_pandas(self.gaze)
-        gaze.detect("blink")
-        print(gaze.events)
-        blinks = gaze.events.frame.to_pandas()
-        self.blinks = [(row["onset"] - 10, row["offset"] + 10) for _, row in blinks.iterrows()]
-        self._draw()
-
     def _draw(self):
         self.canvas.delete("all")
 
@@ -282,14 +267,10 @@ class App(tk.Tk):
             next_x = row["next_pixel_x"]
             next_y = row["next_pixel_y"]
             time = row["time"]
-            blinking = any(
-                onset <= time <= offset for onset, offset in (self.blinks or [])
-            )
             self.canvas.create_line(
                 *self._gaze_to_window_coords(x, y),
                 *self._gaze_to_window_coords(next_x, next_y),
                 fill="black",
-                dash=(2, 2) if blinking else None,
                 width=2,
             )
 
