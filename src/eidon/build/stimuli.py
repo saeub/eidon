@@ -6,7 +6,6 @@ import warnings
 from pathlib import Path
 from typing import Any, Generator, Literal
 from collections import defaultdict
-from pprint import pprint
 
 from PIL import Image, ImageDraw, ImageFont
 

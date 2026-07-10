@@ -41,6 +41,12 @@ This will open a window where you can flip through every screen of your experime
 
 You can click and drag the blue dots to move and warp the gaze data on this screen. This applies a [thin-plate spline transformation](https://scikit-image.org/docs/stable/auto_examples/transform/plot_tps_deformation.html) to the gaze coordinates. If the data on a screen is not rescuable, you can exclude it using the <kbd>X</kbd> key -- this will set the gaze coordinates for these samples to `null`.
 
+While correcting drift, it is often useful to visualize areas of interest. After (re-)building your experiment with the [`--area-images` flag](cli/build.md), you can specify the area types to visualize in `eidon clean`. For example, to see word-level areas of interest:
+
+```bash
+eidon clean P1 --vertical --areas word
+```
+
 Note that any corrections you make in the interface are **not** immediately applied to the gaze CSV file. Instead, they are stored in a JSON file in the recording directory:
 
 ```
