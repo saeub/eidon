@@ -69,16 +69,19 @@ class RecordingCleaner:
             if pd.isna(page):
                 page = None
             src_points, dst_points = corrections[stage][page]["transform"]
+            remove = corrections[stage][page]["remove"]
             app = App(
                 stimulus_gaze,
                 stimulus_image,
                 src_points=src_points,
                 dst_points=dst_points,
+                remove=remove,
                 scale=1.0,
                 vertical=vertical,
                 stage=stage,
             )
             corrections[stage][page]["transform"] = (app.src_points, app.dst_points)
+            corrections[stage][page]["remove"] = app.remove
             if app.action == "next":
                 stimulus_index += 1
                 if stimulus_index >= len(stimuli):
@@ -112,11 +115,14 @@ class RecordingCleaner:
                 warnings.warn(f"No corrections file found for {gaze_path}. Skipping.")
                 continue
 
+            print(f"Applying corrections for {recording_name}...")
             self._apply_corrections(
                 gaze_path, corrections_path, gaze_path.with_suffix(".clean.csv")
             )
 
-    def _load_gaze(self, gaze_path: Path) -> tuple[pd.DataFrame, list[tuple[str, str, str]]]:
+    def _load_gaze(
+        self, gaze_path: Path
+    ) -> tuple[pd.DataFrame, list[tuple[str, str, str]]]:
         gaze = pd.read_csv(gaze_path, dtype={"stage": str, "page": str, "imgpath": str})
         gaze["page"] = gaze["page"].replace({np.nan: None})
         stimuli = gaze[["stage", "page", "imgpath"]].drop_duplicates()
@@ -175,8 +181,13 @@ class RecordingCleaner:
                 page = None
             transform_src, transform_dst = corrections[stage][page]["transform"]
             remove = corrections[stage][page]["remove"]
-            if not remove:
-                if transform_src is not None and transform_dst is not None and transform_src != transform_dst:
+            if remove:
+                stimulus_gaze.loc[:, ["pixel_x", "pixel_y", "pupil"]] = np.nan
+            elif (
+                    transform_src is not None
+                    and transform_dst is not None
+                    and transform_src != transform_dst
+                ):
                     transform = get_transform(transform_src, transform_dst)
                     stimulus_gaze.loc[:, ["pixel_x", "pixel_y"]] = transform(
                         stimulus_gaze[["pixel_x", "pixel_y"]]
@@ -202,6 +213,7 @@ class App(tk.Tk):
         image,
         src_points=None,
         dst_points=None,
+        remove=False,
         margin=100,
         scale=1.0,
         fixation_cross=None,
@@ -243,6 +255,7 @@ class App(tk.Tk):
             dst_points = src_points.copy()
         self.src_points = src_points
         self.dst_points = dst_points
+        self.remove = remove
 
         self.hover_point_index = None
         self.dragging_point_index = None
@@ -263,6 +276,7 @@ class App(tk.Tk):
         self.canvas.bind("<ButtonRelease-1>", self._on_left_mouse_up)
         self.canvas.bind("<Motion>", self._on_left_mouse_move)
         self.canvas.bind("<B1-Motion>", self._on_left_mouse_drag)
+        self.bind("<x>", lambda _: self._toggle_remove())
         self.bind("<Control-z>", lambda _: self._undo())
         self.bind("<Right>", lambda _: self._exit("next"))
         self.bind("<Left>", lambda _: self._exit("previous"))
@@ -333,13 +347,25 @@ class App(tk.Tk):
             self.dst_points[self.dragging_point_index] = (x, y)
             self._draw()
 
+    def _toggle_remove(self):
+        self._store_history()
+        self.remove = not self.remove
+        self._draw()
+
     def _undo(self):
         if self.history:
-            self.src_points, self.dst_points = self.history.pop()
+            previous_state = self.history.pop()
+            self.src_points, self.dst_points = previous_state["transform"]
+            self.remove = previous_state["remove"]
             self._draw()
 
     def _store_history(self):
-        self.history.append((self.src_points.copy(), self.dst_points.copy()))
+        self.history.append(
+            {
+                "transform": [self.src_points.copy(), self.dst_points.copy()],
+                "remove": self.remove,
+            }
+        )
 
     def _draw(self):
         self.canvas.delete("all")
@@ -380,12 +406,20 @@ class App(tk.Tk):
             y = row["pixel_y"]
             next_x = row["next_pixel_x"]
             next_y = row["next_pixel_y"]
-            time = row["time"]
             self.canvas.create_line(
                 *self._gaze_to_window_coords(x, y),
                 *self._gaze_to_window_coords(next_x, next_y),
-                fill="black",
+                fill="black" if not self.remove else "red",
                 width=2,
+            )
+        if self.remove:
+            self.canvas.create_text(
+                *self._gaze_to_window_coords(
+                    self.image.width() / 2, self.image.height() / 2
+                ),
+                text="REMOVED",
+                fill="red",
+                font=("sans-serif", 48, "bold"),
             )
 
         for i, ((src_x, src_y), (dst_x, dst_y)) in enumerate(

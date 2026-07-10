@@ -119,6 +119,7 @@ where `my_experiment` is the path to your experiment folder. This will generate 
 ```
 📂 my_experiment
 ├─ config.yaml
+├─ experiment.json
 ├─ 📁 materials
 ├─ 📂 stimuli
 │  ├─ 🖼️ instructions.0.png
@@ -145,9 +146,23 @@ To run a session of your experiment, run:
 eidon run P1 --dummy
 ```
 
-where `P1` is the name of a session file (without `.json`). This will create a recording directory under `my_experiment/recordings` containing the log file (this is where the question responses are) and eye-tracking data (except when in dummy mode).
+where `P1` is the name of a session file (without `.json`).
 
 > **NOTE:** You can abort the experiment using <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Escape</kbd>.
+
+This will create a recording directory under `my_experiment/recordings` containing the log file (this is where the question responses are) and eye-tracking data (except when in dummy mode):
+
+```
+📂 my_experiment
+├─ config.yaml
+├─ experiment.json
+├─ 📁 materials
+├─ 📁 stimuli
+├─ 📁 sessions
+└─ 📂 recordings
+   └─ 📂 my-experiment.P1.20260710-140345
+      └─ 📄 my-experiment.P1.20260710-140345.log
+```
 
 ### Using a real eye tracker
 
@@ -171,6 +186,19 @@ eidon setup
 
 Before each subsequent session, you will be asked to confirm if the previous setup is still accurate. If any of the measurements have changed, you will be prompted to re-enter them.
 
+The setup configurations are stored in the `setups` directory of your experiment:
+
+```
+📂 my_experiment
+├─ config.yaml
+├─ experiment.json
+├─ 📁 materials
+├─ 📁 stimuli
+├─ 📁 sessions
+└─ 📂 setups
+   └─ 📄 setup.20260710-165614.json
+```
+
 #### 3. Running a session
 
 While connected to the eye tracker, navigate to the root directory of your experiment and run:
@@ -187,7 +215,24 @@ After completing a session, the EDF file will automatically be transferred to a 
 eidon convert
 ```
 
-This will convert all `.asc` files to `.csv` files, which can be opened by all major data analysis software packages.
+This will convert all `.asc` files to `.csv` files, which can be opened by all major data analysis software packages. It will also generate a `.json` file containing metadata like calibration errors.
+
+```
+📂 my_experiment
+├─ config.yaml
+├─ experiment.json
+├─ 📁 materials
+├─ 📁 stimuli
+├─ 📁 sessions
+├─ 📁 setups
+└─ 📂 recordings
+   └─ 📂 my-experiment.P1.20260710-172305
+      ├─ 📄 my-experiment.P1.20260710-172305.edf
+      ├─ 📄 my-experiment.P1.20260710-172305.asc
+      ├─ 📄 my-experiment.P1.20260710-172305.json
+      ├─ 📄 my-experiment.P1.20260710-172305.csv
+      └─ 📄 my-experiment.P1.20260710-172305.log
+```
 
 ### Learn more
 
@@ -195,5 +240,6 @@ Congratulations, you've mastered the basics of _eidon_!
 
 As a next step, you can:
 
-- [Create your own experiment type](experiment-types/custom.md) using Python code. This gives you maximum control over the experimental procedure.
+- Learn how to [manually correct recordings](cleaning.md) using `eidon clean`.
+- Learn how to [create your own experiment type](experiment-types/custom.md) using Python code. This gives you maximum control over the experimental procedure.
 - Learn how to [inspect and clean your data](cli/clean.md) after recording.
