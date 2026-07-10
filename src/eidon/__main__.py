@@ -21,9 +21,9 @@ def get_argument_parser() -> argparse.ArgumentParser:
         ),
     )
     build_parser.add_argument(
-        "experiment_path",
+        "--experiment",
+        "-e",
         type=Path,
-        nargs="?",
         default=Path.cwd(),
         help="Path to the experiment directory (must contain config.yaml).",
     )
@@ -39,9 +39,9 @@ def get_argument_parser() -> argparse.ArgumentParser:
         description="Run a session from a built experiment. Collects eye-tracking data and logs.",
     )
     run_parser.add_argument(
-        "experiment_path",
+        "--experiment",
+        "-e",
         type=Path,
-        nargs="?",
         default=Path.cwd(),
         help="Path to the built experiment directory (must contain experiment.json and sessions/).",
     )
@@ -88,9 +88,9 @@ def get_argument_parser() -> argparse.ArgumentParser:
         ),
     )
     setup_parser.add_argument(
-        "experiment_path",
+        "--experiment",
+        "-e",
         type=Path,
-        nargs="?",
         default=Path.cwd(),
         help="Path to the built experiment directory (must contain experiment.json and sessions/).",
     )
@@ -107,11 +107,11 @@ def get_argument_parser() -> argparse.ArgumentParser:
         description="Convert EyeLink recordings (.asc files) to a CSV file and extract metadata into a JSON file.",
     )
     convert_parser.add_argument(
-        "experiment_path",
+        "--experiment",
+        "-e",
         type=Path,
-        nargs="?",
         default=Path.cwd(),
-        help="Path to the experiment directory (must contain recordings/).",
+        help="Path to the experiment directory (must contain experiment.json and recordings/).",
     )
     convert_parser.add_argument(
         "recording_names",
@@ -133,9 +133,11 @@ def get_argument_parser() -> argparse.ArgumentParser:
         ),
     )
     clean_parser.add_argument(
-        "path",
+        "--experiment",
+        "-e",
         type=Path,
-        help="Path to the experiment directory (must contain recordings/).",
+        default=Path.cwd(),
+        help="Path to the experiment directory (must contain experiment.json and recordings/).",
     )
     clean_parser.add_argument(
         "recording_names",
@@ -170,20 +172,24 @@ def main():
     parser = get_argument_parser()
     args = parser.parse_args()
 
+    if not args.experiment.exists():
+        print(f"Experiment folder '{args.experiment}' does not exist.")
+        exit(1)
+
     if args.command == "build":
-        builder = ExperimentBuilder(experiment_path=args.experiment_path)
+        builder = ExperimentBuilder(experiment_path=args.experiment)
         builder.build(generate_area_images=args.area_images)
 
     elif args.command == "setup":
         setup = HardwareSetup(
-            experiment_path=args.experiment_path,
+            experiment_path=args.experiment,
             screen=args.screen,
         )
         setup.setup()
 
     elif args.command == "run":
         runner = ExperimentRunner(
-            experiment_path=args.experiment_path,
+            experiment_path=args.experiment,
             session_name=args.session,
             dummy=args.dummy,
             participant_control=args.participant_control,
@@ -193,11 +199,11 @@ def main():
         runner.run(start_from_stage=args.start_from_stage)
 
     elif args.command == "convert":
-        converter = RecordingConverter(experiment_path=args.experiment_path)
+        converter = RecordingConverter(experiment_path=args.experiment)
         converter.convert(args.recording_names)
 
     elif args.command == "clean":
-        cleaner = RecordingCleaner(experiment_path=args.path)
+        cleaner = RecordingCleaner(experiment_path=args.experiment)
         if args.apply:
             cleaner.apply(recording_names=args.recording_names)
         else:
@@ -205,7 +211,7 @@ def main():
                 print("Please specify a single recording name to clean.")
                 exit(1)
             cleaner.clean(
-                recording_name=args.recording_name,
+                recording_name=args.recording_names[0],
                 area_type=args.areas,
                 vertical=args.vertical,
             )

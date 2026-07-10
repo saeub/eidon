@@ -9,21 +9,23 @@ Run a session from a built experiment. Collects eye-tracking data and logs.
 ### Usage
 
 ```
-eidon run [-h] [--dummy] [--participant-control]
+eidon run [-h] [--experiment EXPERIMENT] [--dummy]
+                       [--participant-control]
                        [--recording-name RECORDING_NAME] [--screen SCREEN]
                        [--start-from-stage START_FROM_STAGE]
-                       [experiment_path] session
+                       session
 
 Run a session from a built experiment. Collects eye-tracking data and logs.
 
 positional arguments:
-  experiment_path       Path to the built experiment directory (must contain
-                        experiment.json and sessions/).
   session               Name of the session to run (without the .json file
                         extension).
 
 options:
   -h, --help            show this help message and exit
+  --experiment, -e EXPERIMENT
+                        Path to the built experiment directory (must contain
+                        experiment.json and sessions/).
   --dummy               Use mouse-based eye tracker for testing.
   --participant-control
                         Allow participant to control calibrations, drift
