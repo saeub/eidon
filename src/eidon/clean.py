@@ -1,12 +1,17 @@
 import json
 import tkinter as tk
+import warnings
+from collections import defaultdict
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import pandas as pd
 import PIL.Image
 import PIL.ImageTk
 import skimage
+
+from eidon.utils import find_recordings
 
 
 class RecordingCleaner:
@@ -17,29 +22,43 @@ class RecordingCleaner:
         )
 
     def clean(self, recording_name: str, area_type: str = None, vertical: bool = False):
+        matching_recording_names = find_recordings(
+            self.experiment_path, self.experiment_definition["name"], [recording_name]
+        )
+        if len(matching_recording_names) > 1:
+            raise ValueError(
+                f"Multiple recordings found for {recording_name}: {matching_recording_names}"
+            )
+        recording_name = matching_recording_names[0]
         gaze_path = (
             self.experiment_path
             / "recordings"
             / recording_name
             / f"{recording_name}.csv"
         )
-        gaze = pd.read_csv(gaze_path)
-        gaze = gaze[gaze["imgpath"].notna()]
-        stimuli = gaze.groupby("stage")["imgpath"].unique().explode().reset_index()
-        stimuli = [(row["stage"], row["imgpath"]) for _, row in stimuli.iterrows()]
+        gaze, stimuli = self._load_gaze(gaze_path)
 
         corrections_path = gaze_path.with_suffix(".corrections.json")
         if corrections_path.exists():
-            corrections = json.loads(corrections_path.read_text())
+            corrections = self._load_corrections(corrections_path)
         else:
-            corrections = {stage: {"transform": (None, None)} for stage, _ in stimuli}
+            corrections = {}
+            for stage, page, imgpath in stimuli:
+                if pd.isna(page):
+                    page = None
+                corrections.setdefault(stage, {})[page] = {
+                    "transform": (None, None),
+                    "remove": [],
+                }
 
         stimulus_index = 0
         while True:
-            stage, imgpath = stimuli[stimulus_index]
-            stimulus_gaze = gaze[
-                (gaze["stage"] == stage) & (gaze["imgpath"] == imgpath)
-            ]
+            stage, page, imgpath = stimuli[stimulus_index]
+            stage_condition = gaze["stage"] == stage
+            page_condition = (
+                gaze["page"] == page if page is not None else gaze["page"].isna()
+            )
+            stimulus_gaze = gaze[stage_condition & page_condition]
             backdrop_path_suffix = ".png"
             if area_type is not None:
                 backdrop_path_suffix = f".{area_type}.png"
@@ -47,7 +66,9 @@ class RecordingCleaner:
                 backdrop_path_suffix
             )
             stimulus_image = PIL.Image.open(backdrop_path)
-            src_points, dst_points = corrections[stage]["transform"]
+            if pd.isna(page):
+                page = None
+            src_points, dst_points = corrections[stage][page]["transform"]
             app = App(
                 stimulus_gaze,
                 stimulus_image,
@@ -57,20 +78,119 @@ class RecordingCleaner:
                 vertical=vertical,
                 stage=stage,
             )
-            corrections[stage]["transform"] = (app.src_points, app.dst_points)
+            corrections[stage][page]["transform"] = (app.src_points, app.dst_points)
             if app.action == "next":
                 stimulus_index += 1
                 if stimulus_index >= len(stimuli):
-                    stimulus_index = 0
+                    # stimulus_index = 0
+                    break
             elif app.action == "previous":
                 stimulus_index -= 1
                 if stimulus_index < 0:
-                    stimulus_index = len(stimuli) - 1
+                    # stimulus_index = len(stimuli) - 1
+                    break
             else:
                 break
 
+        self._save_corrections(corrections, corrections_path)
+
+    def apply(self, recording_names: list[str] | None = None):
+        recording_names = find_recordings(
+            self.experiment_path, self.experiment_definition["name"], recording_names
+        )
+
+        for recording_name in recording_names:
+            gaze_path = (
+                self.experiment_path
+                / "recordings"
+                / recording_name
+                / f"{recording_name}.csv"
+            )
+
+            corrections_path = gaze_path.with_suffix(".corrections.json")
+            if not corrections_path.exists():
+                warnings.warn(f"No corrections file found for {gaze_path}. Skipping.")
+                continue
+
+            self._apply_corrections(
+                gaze_path, corrections_path, gaze_path.with_suffix(".clean.csv")
+            )
+
+    def _load_gaze(self, gaze_path: Path) -> tuple[pd.DataFrame, list[tuple[str, str, str]]]:
+        gaze = pd.read_csv(gaze_path, dtype={"stage": str, "page": str, "imgpath": str})
+        gaze["page"] = gaze["page"].replace({np.nan: None})
+        stimuli = gaze[["stage", "page", "imgpath"]].drop_duplicates()
+        stimuli = stimuli[stimuli["imgpath"].notna()]
+        stimuli = list(stimuli.itertuples(index=False, name=None))
+        return gaze, stimuli
+
+    def _load_corrections(
+        self, corrections_path: Path
+    ) -> dict[str, dict[Any, dict[str, Any]]]:
+        with open(corrections_path) as f:
+            corrections_list = json.load(f)
+        corrections_dict = {}
+        for correction in corrections_list:
+            stage = correction["stage"]
+            page = correction["page"]
+            transform = correction["transform"]
+            remove = correction["remove"]
+            if stage not in corrections_dict:
+                corrections_dict[stage] = {}
+            corrections_dict[stage][page] = {
+                "transform": transform,
+                "remove": remove,
+            }
+        return corrections_dict
+
+    def _save_corrections(self, corrections: dict, corrections_path: Path):
+        corrections_list = []
+        for stage, pages in corrections.items():
+            for page, correction in pages.items():
+                corrections_list.append(
+                    {
+                        "stage": stage,
+                        "page": page,
+                        "transform": correction["transform"],
+                        "remove": correction["remove"],
+                    }
+                )
         with open(corrections_path, "w") as f:
-            json.dump(corrections, f)
+            json.dump(corrections_list, f, indent=4, allow_nan=False)
+
+    def _apply_corrections(
+        self, gaze_path: Path, corrections_path: Path, output_path: Path
+    ):
+        gaze, stimuli = self._load_gaze(gaze_path)
+        corrections = self._load_corrections(corrections_path)
+
+        gaze_corrected = pd.DataFrame()
+        for stage, page, imgpath in stimuli:
+            stage_condition = gaze["stage"] == stage
+            page_condition = (
+                gaze["page"] == page if page is not None else gaze["page"].isna()
+            )
+            stimulus_gaze = gaze[stage_condition & page_condition]
+            if pd.isna(page):
+                page = None
+            transform_src, transform_dst = corrections[stage][page]["transform"]
+            remove = corrections[stage][page]["remove"]
+            if not remove:
+                if transform_src is not None and transform_dst is not None and transform_src != transform_dst:
+                    transform = get_transform(transform_src, transform_dst)
+                    stimulus_gaze.loc[:, ["pixel_x", "pixel_y"]] = transform(
+                        stimulus_gaze[["pixel_x", "pixel_y"]]
+                    )
+            gaze_corrected = pd.concat([gaze_corrected, stimulus_gaze])
+
+        gaze_corrected.to_csv(output_path, index=False)
+
+
+def get_transform(src_points, dst_points):
+    src = np.array(src_points)
+    dst = np.array(dst_points)
+    transform = skimage.transform.ThinPlateSplineTransform.from_estimate(src, dst)
+    return transform
 
 
 class App(tk.Tk):
@@ -154,12 +274,6 @@ class App(tk.Tk):
         self.after(100, self._take_focus)
 
         self.mainloop()
-
-    def get_transform(self):
-        src = np.array(self.src_points)
-        dst = np.array(self.dst_points)
-        transform = skimage.transform.ThinPlateSplineTransform.from_estimate(src, dst)
-        return transform
 
     def _gaze_to_window_coords(self, x, y):
         return x * self.scale + self.margin, y * self.scale + self.margin
@@ -246,7 +360,7 @@ class App(tk.Tk):
         gaze = self.simplified_gaze
         gaze = pd.concat([gaze, gaze.shift(-1).add_prefix("next_")], axis=1)
 
-        transform = self.get_transform()
+        transform = get_transform(self.src_points, self.dst_points)
         transformed_gaze = gaze.copy()
         transformed_gaze[["pixel_x", "pixel_y"]] = transform(
             gaze[["pixel_x", "pixel_y"]]

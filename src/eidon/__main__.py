@@ -137,9 +137,10 @@ def get_argument_parser() -> argparse.ArgumentParser:
         help="Path to the experiment directory (must contain recordings/).",
     )
     clean_parser.add_argument(
-        "recording_name",
+        "recording_names",
         type=str,
-        help="Name of the recording to clean (without a file extension).",
+        nargs="*",
+        help="Names of the recordings or sessions to clean (without a file extension).",
     )
     clean_parser.add_argument(
         "--areas",
@@ -154,6 +155,11 @@ def get_argument_parser() -> argparse.ArgumentParser:
         "--vertical",
         action="store_true",
         help="Restrict corrections to vertical axis only (recommended for reading experiments).",
+    )
+    clean_parser.add_argument(
+        "--apply",
+        action="store_true",
+        help="Apply the corrections to the gaze data and save a new CSV file (no GUI).",
     )
 
     return parser
@@ -191,7 +197,17 @@ def main():
 
     elif args.command == "clean":
         cleaner = RecordingCleaner(experiment_path=args.path)
-        cleaner.clean(recording_name=args.recording_name, area_type=args.areas, vertical=args.vertical)
+        if args.apply:
+            cleaner.apply(recording_names=args.recording_names)
+        else:
+            if not args.recording_names or len(args.recording_names) > 1:
+                print("Please specify a single recording name to clean.")
+                exit(1)
+            cleaner.clean(
+                recording_name=args.recording_name,
+                area_type=args.areas,
+                vertical=args.vertical,
+            )
 
 
 if __name__ == "__main__":
