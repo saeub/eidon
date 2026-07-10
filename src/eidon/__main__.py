@@ -128,7 +128,8 @@ def get_argument_parser() -> argparse.ArgumentParser:
         help="Clean gaze data.",
         description=(
             "Clean gaze data by manually correcting drift or removing bad trials. "
-            "Generates a JSON files with the applied correcions and a new CSV file with the cleaned gaze data."
+            "Saves a JSON files with the applied corrections. "
+            "These corrections can then be used to generate a cleaned gaze CSV file with the `--apply` flag."
         ),
     )
     clean_parser.add_argument(

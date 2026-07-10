@@ -4,15 +4,15 @@ generated: true
 
 ## CLI command: `convert`
 
-Convert eye-tracking recordings to a CSV file and extract metadata into a JSON file.
+Convert EyeLink recordings (.asc files) to a CSV file and extract metadata into a JSON file.
 
 ### Usage
 
 ```
 eidon convert [-h] [experiment_path] [recording_names ...]
 
-Convert eye-tracking recordings to a CSV file and extract metadata into a JSON
-file.
+Convert EyeLink recordings (.asc files) to a CSV file and extract metadata
+into a JSON file.
 
 positional arguments:
   experiment_path  Path to the experiment directory (must contain
