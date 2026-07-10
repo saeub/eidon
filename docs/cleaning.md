@@ -12,8 +12,6 @@ _eidon_ provides a graphical user interface for inspecting and manually correcti
 ├─ 📁 setups
 └─ 📂 recordings
    └─ 📂 my-experiment.P1.20260710-172305
-      ├─ 📄 my-experiment.P1.20260710-172305.edf
-      ├─ 📄 my-experiment.P1.20260710-172305.asc
       ├─ 📄 my-experiment.P1.20260710-172305.csv
       └─ 📄 my-experiment.P1.20260710-172305.log
 ```
