@@ -48,5 +48,5 @@ _eidon_ consists of several components:
 - **`eidon build`** builds your experiment. You provide the stimuli and configure fonts, colors, participant numbers, and other settings, and `eidon build` will turn it into a presentable experiment.
 - **`eidon setup`** records metadata about your hardware setup. This keeps track of settings like the eye-to-screen distance and makes sure that your stimuli are within your eye tracker's trackable range.
 - **`eidon run`** runs your experiment. You provide a session ID, and `eidon run` will present the stimuli, handle participant interaction, and record eye-tracking data.
-- **`eidon correct`** converts your data into easy-to-use CSV files and extracts relevant metadata.
+- **`eidon convert`** converts your data into easy-to-use CSV files and extracts relevant metadata.
 - **`eidon clean`** helps you inspect and clean your eye-tracking data.
