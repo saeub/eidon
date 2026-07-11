@@ -18,15 +18,15 @@ from eidon.run import ExperimentStage
 def generate_experimenttype_index(
     experiment_types: dict[str, type[ExperimentType]],
 ) -> str:
-    markdown = "## Experiment types\n\n"
+    markdown = "# Experiment types\n\n"
     markdown += "| Experiment type | Description |\n"
     markdown += "| --- | --- |\n"
     for name, cls in sorted(experiment_types.items()):
         short_description = docstring_parser.parse(
             cls.__doc__ or "", docstring_parser.DocstringStyle.REST
         ).short_description
-        markdown += f"| [`{name}`]({name}.md) | {short_description} |\n"
-    markdown += "\n> Can't find the experiment type you need? [**Implement your own!**](custom.md)\n"
+        markdown += f"| [`{name}`]({name}) | {short_description} |\n"
+    markdown += "\n> Can't find the experiment type you need? [**Implement your own!**](/guide/custom-experiment-type)\n"
     return markdown
 
 
@@ -50,12 +50,12 @@ def generate_experimenttype_page(
 
     fields = cls.__dataclass_fields__
 
-    markdown = f"## Experiment type: `{name}`\n\n"
+    markdown = f"# Experiment type: `{name}`\n\n"
     markdown += f"{short_description}\n\n"
     if long_description:
-        markdown += "### Description\n\n"
+        markdown += "## Description\n\n"
         markdown += f"{long_description}\n\n"
-    markdown += "### Configuration\n\n"
+    markdown += "## Configuration\n\n"
     for field_name, field in fields.items():
         field_type = field.type
         if isinstance(field_type, type):
@@ -66,29 +66,29 @@ def generate_experimenttype_page(
         if field_description:
             markdown += f"  \n  {field_description}"
         if field_name.endswith(("_key", "_keys")):
-            markdown += "  \n  Available key names are listed [here](../keyboard.md)."
+            markdown += "  \n  Available key names are listed [here](/docs/keyboard)."
         elif field_name == "design":
-            markdown += "  \n  Available designs are documented [here](designs.md)."
+            markdown += "  \n  Available designs are documented [here](/docs/designs)."
         if field_default is not dataclasses.MISSING:
             markdown += f"  \n  Default: `{field_default}`"
         markdown += "\n"
     if (examples_path / name).exists():
-        markdown += f"\n### [Example]({examples_url.format(name)})\n"
+        markdown += f"\n## [Example]({examples_url.format(name)})\n"
     return markdown
 
 
 def generate_experimentstage_index(
     experiment_stages: dict[str, type[ExperimentStage]],
 ) -> str:
-    markdown = "## Experiment stages\n\n"
+    markdown = "# Experiment stages\n\n"
     markdown += "| Experiment stage | Description |\n"
     markdown += "| --- | --- |\n"
     for name, cls in sorted(experiment_stages.items()):
         short_description = docstring_parser.parse(
             cls.__doc__ or "", docstring_parser.DocstringStyle.REST
         ).short_description
-        markdown += f"| [`{name}`]({name}.md) | {short_description} |\n"
-    markdown += "\n> Can't find the experiment stage you need? [**Implement your own!**](custom.md)\n"
+        markdown += f"| [`{name}`]({name}) | {short_description} |\n"
+    markdown += "\n> Can't find the experiment stage you need? [**Implement your own!**](/guide/custom-experiment-stage)\n"
     return markdown
 
 
@@ -108,12 +108,12 @@ def generate_experimentstage_page(name: str, cls: type[ExperimentStage]) -> str:
         for param in parsed_init_docstring.params
     }
 
-    markdown = f"## Experiment stage: `{name}`\n\n"
+    markdown = f"# Experiment stage: `{name}`\n\n"
     markdown += f"{short_description}\n\n"
     if long_description:
-        markdown += "### Description\n\n"
+        markdown += "## Description\n\n"
         markdown += f"{long_description}\n\n"
-    markdown += "### Configuration\n\n"
+    markdown += "## Configuration\n\n"
     if len(signature.parameters) == 1:  # Only self
         markdown += "No configuration parameters.\n"
     for param in signature.parameters.values():
@@ -129,7 +129,7 @@ def generate_experimentstage_page(name: str, cls: type[ExperimentStage]) -> str:
         if param_description:
             markdown += f"  \n  {param_description}"
         if param_name.endswith(("_key", "_keys")):
-            markdown += "  \n  Available key names are listed [here](../keyboard.md)."
+            markdown += "  \n  Available key names are listed [here](/docs/keyboard)."
         if param_default is not None:
             markdown += f"  \n  Default: `{param_default}`"
         markdown += "\n"
@@ -137,7 +137,7 @@ def generate_experimentstage_page(name: str, cls: type[ExperimentStage]) -> str:
 
 
 def generate_designs_page(designs: dict[str, typing.Callable]) -> str:
-    markdown = "## Experiment designs\n\n"
+    markdown = "# Experiment designs\n\n"
     markdown += "| Design | Description |\n"
     markdown += "| --- | --- |\n"
     for name, design in sorted(designs.items()):
@@ -147,7 +147,7 @@ def generate_designs_page(designs: dict[str, typing.Callable]) -> str:
 
 
 def generate_keyboard_page() -> str:
-    markdown = "## Keyboard keys\n\n"
+    markdown = "# Keyboard keys\n\n"
     markdown += "To configure keyboard keys, the following key names can be used.\n\n"
 
     def get_description(key: str) -> str:
@@ -173,12 +173,12 @@ def generate_cli_index(argument_parser: argparse.ArgumentParser) -> str:
         for action in argument_parser._actions[-1]._choices_actions
     }
 
-    markdown = "## Command-line interface\n\n"
+    markdown = "# Command-line interface\n\n"
     markdown += "| Command | Description |\n"
     markdown += "| --- | --- |\n"
     for command in command_helps:
         help = command_helps[command]
-        markdown += f"| [`{command}`]({command}.md) | {help} |\n"
+        markdown += f"| [`{command}`]({command}) | {help} |\n"
     return markdown
 
 
@@ -189,19 +189,30 @@ def generate_cli_page(command: str, subparser: argparse.ArgumentParser) -> str:
     usage = subparser.format_help()
     usage = re.sub(rf"^usage: .+?{command}", f"eidon {command}", usage)
 
-    markdown = f"## CLI command: `{command}`\n\n"
+    markdown = f"# CLI command: `eidon {command}`\n\n"
     if description:
         markdown += f"{description}\n\n"
-    markdown += "### Usage\n\n"
+    markdown += "## Usage\n\n"
     markdown += f"```\n{usage}```\n"
     return markdown
 
 
 def main():
-    docs_path = Path(__file__).parent
+    docs_path = Path(__file__).parent / "docs"
     examples_path = Path(__file__).parent.parent / "examples"
     examples_url = "https://github.com/saeub/eidon/tree/main/examples/{}"
-    generated_prefix = "---\ngenerated: true\n---\n\n"
+    generated_prefix = "---\ngenerated: true"
+
+    def header(title, parent=None, toc=True):
+        text = f"{generated_prefix}\n"
+        text += f"title: {title}\n"
+        if parent:
+            text += f"parent: {parent}\n"
+        text += "layout: default\n"
+        text += "---\n\n"
+        if toc:
+            text += "{% include toc.html %}\n\n"
+        return text
 
     # Delete old generated files
     for path in docs_path.glob("**/*.md"):
@@ -212,43 +223,49 @@ def main():
     experiment_types = ExperimentType.get_subclasses()
     markdown = generate_experimenttype_index(experiment_types)
     (docs_path / "experiment-types" / "index.md").write_text(
-        generated_prefix + markdown
+        header("Experiment types", parent="Documentation", toc=False) + markdown
     )
     for name, cls in experiment_types.items():
         markdown = generate_experimenttype_page(name, cls, examples_path, examples_url)
         (docs_path / "experiment-types" / f"{name}.md").write_text(
-            generated_prefix + markdown
+            header(name, parent="Experiment types") + markdown
         )
 
     # Experiment stages
     experiment_stages = ExperimentStage.get_subclasses()
     markdown = generate_experimentstage_index(experiment_stages)
     (docs_path / "experiment-stages" / "index.md").write_text(
-        generated_prefix + markdown
+        header("Experiment stages", parent="Documentation", toc=False) + markdown
     )
     for name, cls in experiment_stages.items():
         markdown = generate_experimentstage_page(name, cls)
         (docs_path / "experiment-stages" / f"{name}.md").write_text(
-            generated_prefix + markdown
+            header(name, parent="Experiment stages") + markdown
         )
 
     # Experiment designs
     markdown = generate_designs_page(DESIGNS)
-    (docs_path / "experiment-types" / "designs.md").write_text(
-        generated_prefix + markdown
+    (docs_path / "designs.md").write_text(
+        header("Experiment designs", parent="Documentation", toc=False) + markdown
     )
 
     # Keyboard keys
     markdown = generate_keyboard_page()
-    (docs_path / "keyboard.md").write_text(generated_prefix + markdown)
+    (docs_path / "keyboard.md").write_text(
+        header("Keyboard keys", parent="Documentation", toc=False) + markdown
+    )
 
     # CLI
     argument_parser = get_argument_parser()
     markdown = generate_cli_index(argument_parser)
-    (docs_path / "cli" / "index.md").write_text(generated_prefix + markdown)
+    (docs_path / "cli" / "index.md").write_text(
+        header("Command-line interface", parent="Documentation", toc=False) + markdown
+    )
     for command, subparser in argument_parser._actions[-1].choices.items():
         markdown = generate_cli_page(command, subparser)
-        (docs_path / "cli" / f"{command}.md").write_text(generated_prefix + markdown)
+        (docs_path / "cli" / f"{command}.md").write_text(
+            header(f"eidon {command}", parent="Command-line interface") + markdown
+        )
 
 
 if __name__ == "__main__":

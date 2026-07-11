@@ -1,0 +1,12 @@
+title: eidon
+description: A toolkit for implementing eye-tracking experiments
+theme: just-the-docs
+
+url: https://saeub.github.io/eidon
+logo: "/assets/images/logo.svg"
+
+mermaid:
+  version: 11.12.0
+
+aux_links:
+  Source code: https://github.com/saeub/eidon

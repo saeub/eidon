@@ -1,10 +1,12 @@
-# Best Practices
+---
+title: Best practices
+layout: default
+nav_order: 99
+---
 
-On this page we list some eye-tracking best practices and hard constraints that we implement in eidon or recommend to consider. Please note that the explanations are 
-not exhaustive, and we recommend consulting literature on the specific topics if the concept is not clear.
+# Best practices for eye-tracking experiments
 
-The best practices are organized along the parameters that can be chosen for different parts of the experiment. If possible,
-our default values reflect the best practices, and we strongly recommend adhering to them if it is not possible to have a default value.
+This page lists some recommendations and hard constraints for eye-tracking experiments. Note that neither the list nor the explanations are meant to be exhaustive, and consulting the literature on specific topics is always recommended.
 
 | Parameter / Setting    | Explanation                                                                                                                                                                                                                                                                                                                                          | Reading                                                                                                                                                                                                                                                                                                                                                                                                                       |
 |------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

@@ -1,8 +1,14 @@
-## Getting started
+---
+title: Getting started
+layout: default
+nav_order: 1
+---
+
+# Getting started
 
 This page will show you how to set up and run your first eye-tracking experiment with _eidon_.
 
-### Installing the package
+## Installing the package
 
 The easiest way to install _eidon_ is using `pip`:
 
@@ -12,7 +18,7 @@ pip install eidon
 
 > **NOTE:** On Mac, you will first have to install the [portaudio library](https://portaudio.com/). For example, using Homebrew: `brew install portaudio`
 
-### Building and running an example experiment
+## Building and running an example experiment
 
 Download one of the [example experiments](https://github.com/saeub/eidon/tree/main/examples) and place the folder in your working directory. You can use this link to download a ZIP archive of the `SinglePageReading` example:
 
@@ -32,11 +38,11 @@ eidon run P1 --dummy
 
 > Dummy mode means that you won't need an eye tracker to test the experiment.
 
-### Implementing your first experiment
+## Implementing your first experiment
 
-To implement your own experiment, you first need to find the [experiment type](experiment-types/index.md) that matches your use case. For this tutorial, we'll use the [`SinglePageReading`](experiment-types/SinglePageReading.md) experiment type.
+To implement your own experiment, you first need to find the [experiment type](docs/experiment-types) that matches your use case. For this tutorial, we'll use the [`SinglePageReading`](docs/experiment-types/SinglePageReading) experiment type.
 
-#### 1. Creating an experiment folder and a configuration file
+### 1. Create an experiment folder and a configuration file
 
 First, create a folder and a `config.yaml` file for your experiment:
 
@@ -57,15 +63,15 @@ option_keys: [Y, N]
 
 The experiment's `name` will appear, among others, in recordings and metadata files.
 
-`stimulus_area_size` defines the width and height (in pixels) of the area where your stimuli will be presented. It is important that this is within your eye tracker's **trackable area** on the screen you're going to use for the experiment. You can use `eidon setup` to test this -- see [below](#2-recording-the-hardware-setup).
+`stimulus_area_size` defines the width and height (in pixels) of the area where your stimuli will be presented. It is important that this is within your eye tracker's **trackable area** on the screen you're going to use for the experiment. You can use `eidon setup` to test this -- see [below](#2-record-the-hardware-setup).
 
 `option_keys` are the keys on the keyboard that participants are going to use to respond to multiple-choice questions (in this case, we are going to use yes/no questions).
 
-This example is a very bare-bones configuration file. Check the [documentation page for `SinglePageReading`](experiment-types/SinglePageReading.md) for more configuration options.
+This example is a very bare-bones configuration file. Check the [documentation page for `SinglePageReading`](docs/experiment-types/SinglePageReading) for more configuration options.
 
-#### 2. Creating stimuli
+### 2. Create stimuli
 
-The [documentation page for `SinglePageReading`](experiment-types/SinglePageReading.md) tells you the structure and format you need to use for your stimuli:
+The [documentation page for `SinglePageReading`](docs/experiment-types/SinglePageReading) tells you the structure and format you need to use for your stimuli:
 
 ```
 📂 my_experiment
@@ -106,7 +112,7 @@ Here, we have an item in two conditions (`active` and `passive`) with one compre
 
 Check the [example experiment](https://github.com/saeub/eidon/tree/main/examples/SinglePageReading/materials/items) for more examples of item files.
 
-#### 3. Building the experiment
+### 3. Build the experiment
 
 To build your experiment, navigate into the `my_experiment` folder and run:
 
@@ -138,7 +144,7 @@ where `my_experiment` is the path to your experiment folder. This will generate 
    └─ 📄 ...
 ```
 
-#### 4. Running the experiment
+### 4. Run the experiment
 
 To run a session of your experiment, run:
 
@@ -164,9 +170,9 @@ This will create a recording directory under `my_experiment/recordings` containi
       └─ 📄 my-experiment.P1.20260710-140345.log
 ```
 
-### Using a real eye tracker
+## Using a real eye tracker
 
-#### 1. Installing `pylink`
+### 1. Install `pylink`
 
 Currently, only EyeLink devices by SR Research are supported. To connect to an EyeLink eye tracker, you first need to install `pylink`:
 
@@ -176,7 +182,7 @@ pip install sr-research-pylink
 
 > **NOTE:** At the time of writing, `pylink` only supports version Python 3.12. If the installation fails, make sure are using the correct Python version (`python --version`).
 
-#### 2. Recording the hardware setup
+### 2. Record the hardware setup
 
 When you run a session for the first time, you will be required to take a few measurements, including the size of the stimulus area and the eye-to-screen distance. This will make sure that your stimuli are presented within the trackable range of your eye tracker. Running this command from the root directory of your experiment will guide you through all of the settings:
 
@@ -199,7 +205,7 @@ The setup configurations are stored in the `setups` directory of your experiment
    └─ 📄 setup.20260710-165614.json
 ```
 
-#### 3. Running a session
+### 3. Run a session
 
 While connected to the eye tracker, navigate to the root directory of your experiment and run:
 
@@ -207,7 +213,7 @@ While connected to the eye tracker, navigate to the root directory of your exper
 eidon run P1
 ```
 
-#### 4. Convert recordings
+### 4. Convert the recordings
 
 After completing a session, the EDF file will automatically be transferred to a directory under `my_experiment/recordings`. To convert the EDF file to a more interoperable format, use the ["EDF Converter" tool by SR Research](https://www.sr-research.com/support/thread-7674.html). After converting the `.edf` to a `.asc` file, run the following command from the root directory of your experiment:
 
@@ -234,12 +240,12 @@ This will convert all `.asc` files to `.csv` files, which can be opened by all m
       └─ 📄 my-experiment.P1.20260710-172305.log
 ```
 
-### Learn more
+## Learn more
 
 Congratulations, you've mastered the basics of _eidon_!
 
 As a next step, you can:
 
-- Learn how to [manually correct recordings](cleaning.md) using `eidon clean`.
-- Learn how to [create your own experiment type](experiment-types/custom.md) using Python code. This gives you maximum control over the experimental procedure.
-- Learn how to [inspect and clean your data](cli/clean.md) after recording.
+- Learn how to [manually correct recordings](guide/cleaning) using `eidon clean`.
+- Learn how to [create your own experiment type](guide/custom-experiment-type) using Python code. This gives you maximum control over the experimental procedure.
+- Learn how to [inspect and clean your data](docs/cli/clean) after recording.

@@ -1,4 +1,8 @@
-## Contact
+---
+layout: default
+---
+
+# Contact
 
 Development team:
 
