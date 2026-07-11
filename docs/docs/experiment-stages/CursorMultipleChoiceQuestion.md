@@ -21,13 +21,13 @@ Shows an image stimulus and allows selecting a response option by moving a curso
   The diameter of the cursor in pixels.
 - `next_option_key` (str)  
   The key that moves the cursor to the next option.  
-  Available key names are listed [here](/docs/keyboard).
+  Available key names are listed [here](../keyboard).
 - `prev_option_key` (str)  
   The key that moves the cursor to the previous option.  
-  Available key names are listed [here](/docs/keyboard).
+  Available key names are listed [here](../keyboard).
 - `confirm_key` (str)  
   The key that confirms the current selection.  
-  Available key names are listed [here](/docs/keyboard).
+  Available key names are listed [here](../keyboard).
 - `option_values` (list[str] | None)  
   The values for each answer option that will be returned and logged. By default, the option indices are used as values.
 - `correct_option_index` (int | None)  

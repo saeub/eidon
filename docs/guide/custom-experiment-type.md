@@ -68,7 +68,7 @@ Let's look at an excerpt from a session definition:
 
 As you can see, a session essentially consists of a list of stages that will be presented in order. Think of these as "screens" (although some stages like `StimulusMultiPage` can include multiple screens or pages). The parameters starting with `$` can be applied to any stage:
 
-- `"$type"` (required): The stage type that defines what happens in this stage. See [here](/docs/experiment-stages) for an overview of available stage types.
+- `"$type"` (required): The stage type that defines what happens in this stage. See [here](../docs/experiment-stages) for an overview of available stage types.
 - `"$name"`: The name of the stage, which will appear in the `stage` column of recorded gaze files.
 - `"$record_eyes"`: Whether eye-tracking data should be recorded during this stage (default: `false`).
 - `"$record_audio"`: Whether audio should be recorded during this stage (default: `false`).
@@ -114,7 +114,7 @@ Some stages even allow nesting other stages inside of it, like `HostControlled`:
 
 This stage prompts the participant to wait and hands control over to the experimenter (i.e., the host PC). It shows an image on the host PC and runs any stage on the display PC (in this case, a `StimulusPage`). Note that since the `HostControlled` stage prevents user input from the display PC, the `continue_key` parameter in the inner `StimulusPage` stage (`SPACE`) will not have any effect. Instead, the stage waits for the `continue_key` from the outer stage (`ESCAPE`) to continue to the next stage.
 
-Refer to [this page](/docs/experiment-stages) for detailed information on available stage types and parameters.
+Refer to [this page](../docs/experiment-stages) for detailed information on available stage types and parameters.
 
 ## How to implement an experiment type
 

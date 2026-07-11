@@ -8,7 +8,7 @@ nav_order: 1
 
 # Cleaning eye-tracking recordings
 
-_eidon_ provides a graphical user interface for inspecting and manually correcting eye-tracking data. For this guide, we will assume that you have recorded some eye-tracking as described in the [getting started guide](/getting-started). Your experiment folder should look similar to this:
+_eidon_ provides a graphical user interface for inspecting and manually correcting eye-tracking data. For this guide, we will assume that you have recorded some eye-tracking as described in the [getting started guide](../getting-started). Your experiment folder should look similar to this:
 
 ```
 📂 my_experiment
@@ -47,7 +47,7 @@ This will open a window where you can flip through every screen of your experime
 
 You can click and drag the blue dots to move and warp the gaze data on this screen. This applies a [thin-plate spline transformation](https://scikit-image.org/docs/stable/auto_examples/transform/plot_tps_deformation.html) to the gaze coordinates. If the data on a screen is not rescuable, you can exclude it using the <kbd>X</kbd> key -- this will set the gaze coordinates for these samples to `null`.
 
-While correcting drift, it is often useful to visualize areas of interest. After (re-)building your experiment with the [`--area-images` flag](/docs/cli/build), you can specify the area types to visualize in `eidon clean`. For example, to see word-level areas of interest:
+While correcting drift, it is often useful to visualize areas of interest. After (re-)building your experiment with the [`--area-images` flag](../docs/cli/build), you can specify the area types to visualize in `eidon clean`. For example, to see word-level areas of interest:
 
 ```bash
 eidon clean P1 --vertical --areas word

@@ -15,4 +15,4 @@ Shows a blank screen.
 
 - `continue_key` (str)  
   The key to press to continue to the next stage.  
-  Available key names are listed [here](/docs/keyboard).
+  Available key names are listed [here](../keyboard).

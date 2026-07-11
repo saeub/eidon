@@ -27,4 +27,4 @@ layout: default
 | [`StimulusMultiPage`](StimulusMultiPage) | Shows multiple image stimuli that can be navigated. |
 | [`StimulusPage`](StimulusPage) | Shows a single image stimulus. |
 
-> Can't find the experiment stage you need? [**Implement your own!**](/guide/custom-experiment-stage)
+> Can't find the experiment stage you need? [**Implement your own!**](../../guide/custom-experiment-stage)

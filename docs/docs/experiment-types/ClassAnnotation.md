@@ -116,9 +116,9 @@ questions:
   Default: `None`
 - `label_option_keys` (list[str] | None)  
   List of keys to use for selecting a label, in order. For example, `[Y, N]` to use the Y key for the first label and the N key for the second label.  
-  Available key names are listed [here](/docs/keyboard).
+  Available key names are listed [here](../keyboard).
 - `label_confirm_key` (str | None)  
-  Available key names are listed [here](/docs/keyboard).  
+  Available key names are listed [here](../keyboard).  
   Default: `None`
 - `questions` (list[dict[str, typing.Any]] | None)  
   List of multiple-choice questions to present after selecting a label. See [example above](#questions) for details.  
@@ -128,11 +128,11 @@ questions:
   Default: `cursor`
 - `question_option_keys` (list[str] | None)  
   List of keys to use for selecting multiple-choice options, in order. For example, `[Y, N]` to use the Y key for the first option and the N key for the second option. Only required when question layout is `horizontal`.  
-  Available key names are listed [here](/docs/keyboard).  
+  Available key names are listed [here](../keyboard).  
   Default: `None`
 - `question_confirm_key` (str | None)  
   Key to use for confirming the selection of an option. If not specified, options are selected immediately when the corresponding option key is pressed.  
-  Available key names are listed [here](/docs/keyboard).  
+  Available key names are listed [here](../keyboard).  
   Default: `SPACE`
 
 ## [Example](https://github.com/saeub/eidon/tree/main/examples/ClassAnnotation)

@@ -13,4 +13,4 @@ layout: default
 | [`MultiPageReading`](MultiPageReading) | Reading experiment with longer, multi-page text stimuli. |
 | [`SinglePageReading`](SinglePageReading) | Reading experiment with short, single-page text stimuli. |
 
-> Can't find the experiment type you need? [**Implement your own!**](/guide/custom-experiment-type)
+> Can't find the experiment type you need? [**Implement your own!**](../../guide/custom-experiment-type)

@@ -20,6 +20,6 @@ Shows an image stimulus and allows entering a free text response.
 - `font_size` (int)
 - `confirm_key` (str)  
   The key to press to confirm the entered text.  
-  Available key names are listed [here](/docs/keyboard).
+  Available key names are listed [here](../keyboard).
 - `multiline` (bool)  
   Default: `False`

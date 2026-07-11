@@ -26,7 +26,7 @@ def generate_experimenttype_index(
             cls.__doc__ or "", docstring_parser.DocstringStyle.REST
         ).short_description
         markdown += f"| [`{name}`]({name}) | {short_description} |\n"
-    markdown += "\n> Can't find the experiment type you need? [**Implement your own!**](/guide/custom-experiment-type)\n"
+    markdown += "\n> Can't find the experiment type you need? [**Implement your own!**](../../guide/custom-experiment-type)\n"
     return markdown
 
 
@@ -66,9 +66,9 @@ def generate_experimenttype_page(
         if field_description:
             markdown += f"  \n  {field_description}"
         if field_name.endswith(("_key", "_keys")):
-            markdown += "  \n  Available key names are listed [here](/docs/keyboard)."
+            markdown += "  \n  Available key names are listed [here](../keyboard)."
         elif field_name == "design":
-            markdown += "  \n  Available designs are documented [here](/docs/designs)."
+            markdown += "  \n  Available designs are documented [here](../designs)."
         if field_default is not dataclasses.MISSING:
             markdown += f"  \n  Default: `{field_default}`"
         markdown += "\n"
@@ -88,7 +88,7 @@ def generate_experimentstage_index(
             cls.__doc__ or "", docstring_parser.DocstringStyle.REST
         ).short_description
         markdown += f"| [`{name}`]({name}) | {short_description} |\n"
-    markdown += "\n> Can't find the experiment stage you need? [**Implement your own!**](/guide/custom-experiment-stage)\n"
+    markdown += "\n> Can't find the experiment stage you need? [**Implement your own!**](../../guide/custom-experiment-stage)\n"
     return markdown
 
 
@@ -129,7 +129,7 @@ def generate_experimentstage_page(name: str, cls: type[ExperimentStage]) -> str:
         if param_description:
             markdown += f"  \n  {param_description}"
         if param_name.endswith(("_key", "_keys")):
-            markdown += "  \n  Available key names are listed [here](/docs/keyboard)."
+            markdown += "  \n  Available key names are listed [here](../keyboard)."
         if param_default is not None:
             markdown += f"  \n  Default: `{param_default}`"
         markdown += "\n"

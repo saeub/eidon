@@ -146,7 +146,7 @@ using multiple tags with the same area name.
   Default: `None`
 - `design` (str)  
   Name of the design to use for assigning items to participants.  
-  Available designs are documented [here](/docs/designs).  
+  Available designs are documented [here](../designs).  
   Default: `latin_square`
 - `breaks_after` (int | None)  
   Insert a break after every N items.  
@@ -168,11 +168,11 @@ using multiple tags with the same area name.
   Default: `horizontal`
 - `option_keys` (list[str] | None)  
   List of keys to use for selecting multiple-choice options, in order. For example, `[Y, N]` to use the Y key for the first option and the N key for the second option. Only required when question layout is `horizontal`.  
-  Available key names are listed [here](/docs/keyboard).  
+  Available key names are listed [here](../keyboard).  
   Default: `None`
 - `confirm_key` (str | None)  
   Key to use for confirming the selection of an option. If not specified, options are selected immediately when the corresponding option key is pressed.  
-  Available key names are listed [here](/docs/keyboard).  
+  Available key names are listed [here](../keyboard).  
   Default: `None`
 
 ## [Example](https://github.com/saeub/eidon/tree/main/examples/SinglePageReading)
