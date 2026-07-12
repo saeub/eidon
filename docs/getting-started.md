@@ -246,6 +246,5 @@ Congratulations, you've mastered the basics of _eidon_!
 
 As a next step, you can:
 
-- Learn how to [manually correct recordings](guide/cleaning) using `eidon clean`.
+- Learn how to [inspect and manually correct recordings](guide/cleaning) using `eidon clean`.
 - Learn how to [create your own experiment type](guide/custom-experiment-type) using Python code. This gives you maximum control over the experimental procedure.
-- Learn how to [inspect and clean your data](docs/cli/clean) after recording.
