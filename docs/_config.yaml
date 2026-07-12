@@ -5,6 +5,7 @@ description: A toolkit for implementing eye-tracking experiments
 url: https://saeub.github.io
 baseurl: /eidon
 logo: "/assets/images/logo.svg"
+favicon_ico: "/assets/images/favicon.png"
 
 mermaid:
   version: 11.12.0
