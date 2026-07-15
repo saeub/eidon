@@ -4,6 +4,7 @@ parent: User guide
 layout: default
 nav_order: 1
 ---
+
 {% include toc.html %}
 
 # Cleaning eye-tracking recordings
@@ -29,10 +30,8 @@ _eidon_ provides a graphical user interface for inspecting and manually correcti
 From the root directory of your experiment, run:
 
 ```bash
-eidon clean P1 --vertical
+eidon clean P1
 ```
-
-The `--vertical` flag means that you'll only be able to do vertical drift corrections. This is highly recommended for reading experiments, as judging horizontal drift visually is not feasible.
 
 This will open a window where you can flip through every screen of your experiment and inspect the data. Use these keys to navigate and edit:
 
@@ -41,11 +40,15 @@ This will open a window where you can flip through every screen of your experime
 | <kbd>→</kbd> (right arrow key) | Go to the next screen        |
 | <kbd>←</kbd> (left arrow key)  | Go to the previous screen    |
 | <kbd>←</kbd> (left arrow key)  | Go to the previous screen    |
+| <kbd>Home</kbd>                | Go to the first screen       |
+| <kbd>End</kbd>                 | Go to the last screen        |
 | <kbd>X</kbd>                   | Remove data from this screen |
 | <kbd>Ctrl</kbd>+<kbd>Z</kbd>   | Undo                         |
 | <kbd>ESCAPE</kbd>              | Save and exit                |
 
 You can click and drag the blue dots to move and warp the gaze data on this screen. This applies a [thin-plate spline transformation](https://scikit-image.org/docs/stable/auto_examples/transform/plot_tps_deformation.html) to the gaze coordinates. If the data on a screen is not rescuable, you can exclude it using the <kbd>X</kbd> key -- this will set the gaze coordinates for these samples to `null`.
+
+> **NOTE:** For reading experiments, it is recommended to only apply vertical drift correction, as judging horizontal drift visually is not feasible. You can restrict your edits to the vertical axis by checking `Edit > Vertical correction only` in the menu.
 
 While correcting drift, it is often useful to visualize areas of interest. After (re-)building your experiment with the [`--area-images` flag](../docs/cli/build), you can specify the area types to visualize in `eidon clean`. For example, to see word-level areas of interest:
 

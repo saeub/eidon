@@ -1,7 +1,6 @@
 import json
 import tkinter as tk
 import warnings
-from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
@@ -21,7 +20,7 @@ class RecordingCleaner:
             (self.experiment_path / "experiment.json").read_text()
         )
 
-    def clean(self, recording_name: str, area_type: str = None, vertical: bool = False):
+    def clean(self, recording_name: str, area_type: str = None):
         matching_recording_names = find_recordings(
             self.experiment_path, self.experiment_definition["name"], [recording_name]
         )
@@ -48,10 +47,11 @@ class RecordingCleaner:
                     page = None
                 corrections.setdefault(stage, {})[page] = {
                     "transform": (None, None),
-                    "remove": [],
+                    "remove": False,
                 }
 
         stimulus_index = 0
+        app = None
         while True:
             stage, page, imgpath = stimuli[stimulus_index]
             stage_condition = gaze["stage"] == stage
@@ -65,37 +65,56 @@ class RecordingCleaner:
             backdrop_path = (self.experiment_path / imgpath).with_suffix(
                 backdrop_path_suffix
             )
+            if not backdrop_path.exists():
+                if area_type is not None:
+                    warnings.warn(
+                        f"Stimulus image with {area_type} areas not found: {backdrop_path}. "
+                        "Using image without areas instead."
+                    )
+                    backdrop_path = (self.experiment_path / imgpath).with_suffix(".png")
+                else:
+                    raise ValueError(
+                        f"Stimulus image not found: {backdrop_path}. "
+                        "Make sure the experiment has been built correctly."
+                    )
             stimulus_image = PIL.Image.open(backdrop_path)
             if pd.isna(page):
                 page = None
             src_points, dst_points = corrections[stage][page]["transform"]
             remove = corrections[stage][page]["remove"]
+            settings = {}
+            if app is not None:
+                # Transfer settings from previous app instance
+                settings["scale"] = app.scale.get()
+                settings["simplification"] = app.simplification.get()
+                settings["line_width"] = app.line_width.get()
+                settings["vertical"] = app.vertical.get()
             app = App(
                 stimulus_gaze,
                 stimulus_image,
                 src_points=src_points,
                 dst_points=dst_points,
                 remove=remove,
-                scale=1.0,
-                vertical=vertical,
                 stage=stage,
+                **settings,
             )
             corrections[stage][page]["transform"] = (app.src_points, app.dst_points)
-            corrections[stage][page]["remove"] = app.remove
+            corrections[stage][page]["remove"] = app.remove.get()
+            self._save_corrections(corrections, corrections_path)
             if app.action == "next":
                 stimulus_index += 1
                 if stimulus_index >= len(stimuli):
-                    # stimulus_index = 0
-                    break
+                    stimulus_index = len(stimuli) - 1
             elif app.action == "previous":
                 stimulus_index -= 1
                 if stimulus_index < 0:
-                    # stimulus_index = len(stimuli) - 1
-                    break
+                    stimulus_index = 0
+            elif app.action == "first":
+                stimulus_index = 0
+            elif app.action == "last":
+                stimulus_index = len(stimuli) - 1
             else:
                 break
-
-        self._save_corrections(corrections, corrections_path)
 
     def apply(self, recording_names: list[str] | None = None):
         recording_names = find_recordings(
@@ -184,14 +203,14 @@ class RecordingCleaner:
             if remove:
                 stimulus_gaze.loc[:, ["pixel_x", "pixel_y", "pupil"]] = np.nan
             elif (
-                    transform_src is not None
-                    and transform_dst is not None
-                    and transform_src != transform_dst
-                ):
-                    transform = get_transform(transform_src, transform_dst)
-                    stimulus_gaze.loc[:, ["pixel_x", "pixel_y"]] = transform(
-                        stimulus_gaze[["pixel_x", "pixel_y"]]
-                    )
+                transform_src is not None
+                and transform_dst is not None
+                and transform_src != transform_dst
+            ):
+                transform = get_transform(transform_src, transform_dst)
+                stimulus_gaze.loc[:, ["pixel_x", "pixel_y"]] = transform(
+                    stimulus_gaze[["pixel_x", "pixel_y"]]
+                )
             gaze_corrected = pd.concat([gaze_corrected, stimulus_gaze])
 
         gaze_corrected.to_csv(output_path, index=False)
@@ -214,10 +233,12 @@ class App(tk.Tk):
         src_points=None,
         dst_points=None,
         remove=False,
+        fixation_cross=None,
         margin=100,
         scale=1.0,
-        fixation_cross=None,
+        simplification=10,
         vertical=False,
+        line_width=2,
         stage=None,
     ):
         super().__init__()
@@ -228,48 +249,82 @@ class App(tk.Tk):
             self.title("eidon clean")
 
         self.gaze = gaze
-        self.image = PIL.ImageTk.PhotoImage(
-            image.resize((round(image.width * scale), round(image.height * scale)))
-        )
+        self.image = image
 
         self.margin = margin
-        self.scale = scale
         self.fixation_cross = fixation_cross
-        self.vertical = vertical
 
-        self.simplified_gaze = self._simplify_gaze(10)
+        # Variables for "Edit" menu
+        self.remove = tk.BooleanVar(value=remove)
+        self.remove.trace_add("write", lambda *_: self._update_remove())
+        self.vertical = tk.BooleanVar(value=vertical)
+        self.vertical.trace_add("write", lambda *_: self._draw())
 
-        if src_points is None:
-            src_points = [
-                (0, 0),
-                (image.width / 2, 0),
-                (image.width, 0),
-                # (0, image.height / 2),
-                # (image.width / 2, image.height / 2),
-                # (image.width, image.height / 2),
-                (0, image.height),
-                (image.width / 2, image.height),
-                (image.width, image.height),
-            ]
-        if dst_points is None:
-            dst_points = src_points.copy()
-        self.src_points = src_points
-        self.dst_points = dst_points
-        self.remove = remove
+        # Variables for "View" menu
+        self.scale = tk.DoubleVar(value=scale)
+        self.scale.trace_add("write", lambda *_: self._update_scale())
+        self.simplification = tk.IntVar(value=simplification)
+        self.simplification.trace_add("write", lambda *_: self._update_simplification())
+        self.line_width = tk.IntVar(value=line_width)
+        self.line_width.trace_add("write", lambda *_: self._draw())
 
         self.hover_point_index = None
         self.dragging_point_index = None
-        self.history = []
         self.action = None
 
         self.resizable(False, False)
         self.canvas = tk.Canvas(
             self,
-            width=self.image.width() + 2 * self.margin,
-            height=self.image.height() + 2 * self.margin,
             background="white",
         )
         self.canvas.pack()
+
+        menu = tk.Menu(self)
+        self.config(menu=menu)
+
+        edit_menu = tk.Menu(menu, tearoff=0)
+        edit_menu.add_command(label="Undo (Ctrl+Z)", command=self._undo)
+        edit_menu.add_separator()
+        edit_menu.add_command(label="Reset corrections", command=self._reset_points)
+        edit_menu.add_checkbutton(
+            label="Mark data as removed (X)",
+            variable=self.remove,
+            command=self._update_remove,
+        )
+        edit_menu.add_separator()
+        edit_menu.add_checkbutton(
+            label="Vertical correction only", variable=self.vertical
+        )
+        menu.add_cascade(label="Edit", menu=edit_menu)
+
+        view_menu = tk.Menu(menu, tearoff=0)
+        view_menu.add_radiobutton(label="Scale: 100%", variable=self.scale, value=1.0)
+        view_menu.add_radiobutton(label="Scale: 75%", variable=self.scale, value=0.75)
+        view_menu.add_radiobutton(label="Scale: 50%", variable=self.scale, value=0.5)
+        view_menu.add_separator()
+        view_menu.add_radiobutton(
+            label="Gaze resolution: 100% (slow!)", variable=self.simplification, value=1
+        )
+        view_menu.add_radiobutton(
+            label="Gaze resolution: 10%", variable=self.simplification, value=10
+        )
+        view_menu.add_radiobutton(
+            label="Gaze resolution: 5%", variable=self.simplification, value=20
+        )
+        view_menu.add_radiobutton(
+            label="Gaze resolution: 1%", variable=self.simplification, value=100
+        )
+        view_menu.add_separator()
+        view_menu.add_radiobutton(
+            label="Line width: 1", variable=self.line_width, value=1
+        )
+        view_menu.add_radiobutton(
+            label="Line width: 2", variable=self.line_width, value=2
+        )
+        view_menu.add_radiobutton(
+            label="Line width: 3", variable=self.line_width, value=3
+        )
+        menu.add_cascade(label="View", menu=view_menu)
 
         self.canvas.bind("<Button-1>", self._on_left_mouse_down)
         self.canvas.bind("<Button-3>", self._on_right_mouse_down)
@@ -280,7 +335,20 @@ class App(tk.Tk):
         self.bind("<Control-z>", lambda _: self._undo())
         self.bind("<Right>", lambda _: self._exit("next"))
         self.bind("<Left>", lambda _: self._exit("previous"))
+        self.bind("<Home>", lambda _: self._exit("first"))
+        self.bind("<End>", lambda _: self._exit("last"))
         self.bind("<Escape>", lambda _: self._exit("exit"))
+
+        self._update_scale(draw=False)
+        self._update_simplification(draw=False)
+
+        self.history = []
+        if src_points is None:
+            self._reset_points(draw=False)
+        else:
+            self.src_points = src_points
+            self.dst_points = dst_points
+            self._store_history()
 
         self._draw()
 
@@ -290,38 +358,82 @@ class App(tk.Tk):
         self.mainloop()
 
     def _gaze_to_window_coords(self, x, y):
-        return x * self.scale + self.margin, y * self.scale + self.margin
+        scale = self.scale.get()
+        return x * scale + self.margin, y * scale + self.margin
 
     def _window_to_gaze_coords(self, x, y):
-        return (x - self.margin) / self.scale, (y - self.margin) / self.scale
+        scale = self.scale.get()
+        return (x - self.margin) / scale, (y - self.margin) / scale
 
-    def _simplify_gaze(self, n=10):
+    def _update_scale(self, draw=True):
+        scale = self.scale.get()
+        self.scaled_image = PIL.ImageTk.PhotoImage(
+            self.image.resize(
+                (
+                    round(self.image.width * scale),
+                    round(self.image.height * scale),
+                )
+            )
+        )
+        self.canvas.config(
+            width=self.scaled_image.width() + 2 * self.margin,
+            height=self.scaled_image.height() + 2 * self.margin,
+        )
+        if draw:
+            self._draw()
+
+    def _update_simplification(self, draw=True):
+        n = self.simplification.get()
         gaze = self.gaze[["time", "pixel_x", "pixel_y"]]
         gaze = gaze.groupby(gaze.index // n).mean().reset_index(drop=True)
-        return gaze
+        self.simplified_gaze = gaze
+        if draw:
+            self._draw()
+
+    def _toggle_remove(self):
+        self.remove.set(not self.remove.get())
+
+    def _update_remove(self):
+        self._store_history()
+        self._draw()
+
+    def _reset_points(self, draw=True):
+        self.src_points = [
+            (0, 0),
+            (self.image.width / 2, 0),
+            (self.image.width, 0),
+            (0, self.image.height),
+            (self.image.width / 2, self.image.height),
+            (self.image.width, self.image.height),
+        ]
+        self.dst_points = self.src_points.copy()
+        self._store_history()
+        if draw:
+            self._draw()
 
     def _on_left_mouse_down(self, event):
         if self.hover_point_index is not None:
-            self._store_history()
             self.dragging_point_index = self.hover_point_index
         else:
-            self._store_history()
-            self.src_points.append(self._window_to_gaze_coords(event.x, event.y))
-            self.dst_points.append(self._window_to_gaze_coords(event.x, event.y))
+            self.src_points.append([*self._window_to_gaze_coords(event.x, event.y)])
+            self.dst_points.append([*self._window_to_gaze_coords(event.x, event.y)])
             self.dragging_point_index = len(self.dst_points) - 1
         self._draw()
 
     def _on_right_mouse_down(self, event):
         if self.hover_point_index is not None:
-            self._store_history()
             del self.src_points[self.hover_point_index]
             del self.dst_points[self.hover_point_index]
             self.dragging_point_index = None
-        self._draw()
+            self._store_history()
+            self._draw()
 
     def _on_left_mouse_up(self, event):
-        self.dragging_point_index = None
-        self._draw()
+        if self.dragging_point_index is not None:
+            self.hover_point_index = self.dragging_point_index
+            self.dragging_point_index = None
+            self._store_history()
+            self._draw()
 
     def _on_left_mouse_move(self, event):
         hover_point_index_before = self.hover_point_index
@@ -342,36 +454,35 @@ class App(tk.Tk):
         if self.dragging_point_index is not None:
             self.hover_point_index = None
             x, y = self._window_to_gaze_coords(event.x, event.y)
-            if self.vertical:
+            if self.vertical.get():
                 x = self.dst_points[self.dragging_point_index][0]
-            self.dst_points[self.dragging_point_index] = (x, y)
+            self.dst_points[self.dragging_point_index] = [x, y]
             self._draw()
 
-    def _toggle_remove(self):
-        self._store_history()
-        self.remove = not self.remove
-        self._draw()
-
     def _undo(self):
-        if self.history:
-            previous_state = self.history.pop()
-            self.src_points, self.dst_points = previous_state["transform"]
-            self.remove = previous_state["remove"]
+        if len(self.history) > 1:
+            self.history.pop()
+            previous_state = self.history[-1]
+            self.src_points, self.dst_points = [
+                previous_state["transform"][0].copy(),
+                previous_state["transform"][1].copy(),
+            ]
+            self.remove.set(previous_state["remove"])
             self._draw()
 
     def _store_history(self):
-        self.history.append(
-            {
-                "transform": [self.src_points.copy(), self.dst_points.copy()],
-                "remove": self.remove,
-            }
-        )
+        new_state = {
+            "transform": [self.src_points.copy(), self.dst_points.copy()],
+            "remove": self.remove.get(),
+        }
+        previous_state = self.history[-1] if self.history else None
+        if new_state != previous_state:
+            self.history.append(new_state)
 
     def _draw(self):
         self.canvas.delete("all")
-
         self.canvas.create_image(
-            *self._gaze_to_window_coords(0, 0), anchor=tk.NW, image=self.image
+            *self._gaze_to_window_coords(0, 0), anchor=tk.NW, image=self.scaled_image
         )
 
         if self.fixation_cross:
@@ -401,6 +512,7 @@ class App(tk.Tk):
         transformed_gaze.loc[gaze["next_pixel_x"].isna(), "next_pixel_x"] = None
         transformed_gaze.loc[gaze["next_pixel_y"].isna(), "next_pixel_y"] = None
 
+        remove = self.remove.get()
         for _, row in transformed_gaze.iterrows():
             x = row["pixel_x"]
             y = row["pixel_y"]
@@ -409,13 +521,13 @@ class App(tk.Tk):
             self.canvas.create_line(
                 *self._gaze_to_window_coords(x, y),
                 *self._gaze_to_window_coords(next_x, next_y),
-                fill="black" if not self.remove else "red",
-                width=2,
+                fill="black" if not remove else "red",
+                width=self.line_width.get(),
             )
-        if self.remove:
+        if remove:
             self.canvas.create_text(
                 *self._gaze_to_window_coords(
-                    self.image.width() / 2, self.image.height() / 2
+                    self.image.width / 2, self.image.height / 2
                 ),
                 text="REMOVED",
                 fill="red",
@@ -432,15 +544,15 @@ class App(tk.Tk):
                 src_y - self.POINT_RADIUS,
                 src_x + self.POINT_RADIUS,
                 src_y + self.POINT_RADIUS,
-                fill="lightblue",
-                outline="lightblue",
+                fill="turquoise",
+                outline="turquoise",
             )
             self.canvas.create_line(
                 src_x,
                 src_y,
                 dst_x,
                 dst_y,
-                fill="lightblue",
+                fill="turquoise",
             )
             self.canvas.create_oval(
                 dst_x - self.POINT_RADIUS,

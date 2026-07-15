@@ -15,7 +15,7 @@ Clean gaze data by manually correcting drift or removing bad trials. Saves a JSO
 
 ```
 eidon clean [-h] [--experiment EXPERIMENT] [--areas AREAS]
-                         [--vertical] [--apply]
+                         [--apply]
                          [recording_names ...]
 
 Clean gaze data by manually correcting drift or removing bad trials. Saves a
@@ -33,8 +33,6 @@ options:
                         experiment.json and recordings/).
   --areas AREAS         Area types to display as a backdrop (e.g., 'word').
                         Requires building the experiment with --area-images.
-  --vertical            Restrict corrections to vertical axis only
-                        (recommended for reading experiments).
   --apply               Apply the corrections to the gaze data and save a new
                         CSV file (no GUI).
 ```

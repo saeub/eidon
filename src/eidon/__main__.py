@@ -155,11 +155,6 @@ def get_argument_parser() -> argparse.ArgumentParser:
         ),
     )
     clean_parser.add_argument(
-        "--vertical",
-        action="store_true",
-        help="Restrict corrections to vertical axis only (recommended for reading experiments).",
-    )
-    clean_parser.add_argument(
         "--apply",
         action="store_true",
         help="Apply the corrections to the gaze data and save a new CSV file (no GUI).",
@@ -213,7 +208,6 @@ def main():
             cleaner.clean(
                 recording_name=args.recording_names[0],
                 area_type=args.areas,
-                vertical=args.vertical,
             )
 
 
