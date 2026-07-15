@@ -50,6 +50,10 @@ class RecordingCleaner:
                     "remove": False,
                 }
 
+        stimulus_labels = [
+            f"{stage}: {page}" if page is not None else stage
+            for stage, page, imgpath in stimuli
+        ]
         stimulus_index = 0
         app = None
         while True:
@@ -95,7 +99,8 @@ class RecordingCleaner:
                 src_points=src_points,
                 dst_points=dst_points,
                 remove=remove,
-                stage=stage,
+                stimulus_index=stimulus_index,
+                stimulus_labels=stimulus_labels,
                 **settings,
             )
             corrections[stage][page]["transform"] = (app.src_points, app.dst_points)
@@ -113,6 +118,8 @@ class RecordingCleaner:
                 stimulus_index = 0
             elif app.action == "last":
                 stimulus_index = len(stimuli) - 1
+            elif app.action.startswith("goto:"):
+                stimulus_index = int(app.action.split(":")[1])
             else:
                 break
 
@@ -239,12 +246,15 @@ class App(tk.Tk):
         simplification=10,
         vertical=False,
         line_width=2,
-        stage=None,
+        stimulus_index=None,
+        stimulus_labels=None,
     ):
         super().__init__()
 
-        if stage is not None:
-            self.title(f"{stage} | eidon clean")
+        if stimulus_labels is not None and stimulus_index is not None:
+            self.title(f"{stimulus_labels[stimulus_index]} | eidon clean")
+        elif stimulus_index is not None:
+            self.title(f"{stimulus_index} | eidon clean")
         else:
             self.title("eidon clean")
 
@@ -278,6 +288,20 @@ class App(tk.Tk):
             background="white",
         )
         self.canvas.pack()
+
+        if stimulus_labels is not None and stimulus_index is not None:
+            self.stimulus_slider = tk.Scale(
+                self,
+                from_=0,
+                to=len(stimulus_labels) - 1,
+                orient=tk.HORIZONTAL,
+                showvalue=False,
+                label=stimulus_labels[stimulus_index],
+                command=lambda value: self.stimulus_slider.config(label=stimulus_labels[int(value)]),
+            )
+            self.stimulus_slider.pack(side=tk.BOTTOM, fill=tk.X)
+            self.stimulus_slider.set(stimulus_index)
+            self.stimulus_slider.bind("<ButtonRelease-1>", lambda _: self._exit(f"goto:{self.stimulus_slider.get()}"))
 
         menu = tk.Menu(self)
         self.config(menu=menu)
