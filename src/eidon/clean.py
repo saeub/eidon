@@ -92,6 +92,7 @@ class RecordingCleaner:
                 # Transfer settings from previous app instance
                 settings["scale"] = app.scale.get()
                 settings["simplification"] = app.simplification.get()
+                settings["velocity_threshold"] = app.velocity_threshold.get()
                 settings["line_width"] = app.line_width.get()
                 settings["vertical"] = app.vertical.get()
             app = App(
@@ -245,6 +246,7 @@ class App(tk.Tk):
         margin=100,
         scale=1.0,
         simplification=10,
+        velocity_threshold=10.0,
         vertical=True,
         line_width=2,
         stimulus_index=None,
@@ -276,6 +278,8 @@ class App(tk.Tk):
         self.scale.trace_add("write", lambda *_: self._update_scale())
         self.simplification = tk.IntVar(value=simplification)
         self.simplification.trace_add("write", lambda *_: self._update_simplification())
+        self.velocity_threshold = tk.DoubleVar(value=velocity_threshold)
+        self.velocity_threshold.trace_add("write", lambda *_: self._update_simplification())
         self.line_width = tk.IntVar(value=line_width)
         self.line_width.trace_add("write", lambda *_: self._draw())
 
@@ -338,6 +342,22 @@ class App(tk.Tk):
         )
         view_menu.add_radiobutton(
             label="Gaze resolution: 1%", variable=self.simplification, value=100
+        )
+        view_menu.add_separator()
+        view_menu.add_radiobutton(
+            label="Velocity filter: none", variable=self.velocity_threshold, value=-1.0
+        )
+        view_menu.add_radiobutton(
+            label="Velocity filter: 20 px/ms", variable=self.velocity_threshold, value=20.0
+        )
+        view_menu.add_radiobutton(
+            label="Velocity filter: 10 px/ms", variable=self.velocity_threshold, value=10.0
+        )
+        view_menu.add_radiobutton(
+            label="Velocity filter: 5 px/ms", variable=self.velocity_threshold, value=5.0
+        )
+        view_menu.add_radiobutton(
+            label="Velocity filter: 2 px/ms", variable=self.velocity_threshold, value=2.0
         )
         view_menu.add_separator()
         view_menu.add_radiobutton(
@@ -408,10 +428,26 @@ class App(tk.Tk):
             self._draw()
 
     def _update_simplification(self, draw=True):
-        n = self.simplification.get()
+        # Reduce gaze resolution
+        n = self.simplification.get()  # Average over n adjacent samples
         gaze = self.gaze[["time", "pixel_x", "pixel_y"]]
         gaze = gaze.groupby(gaze.index // n).mean().reset_index(drop=True)
-        self.simplified_gaze = gaze
+
+        # Filter out fast movements
+        velocity_threshold = self.velocity_threshold.get()  # px/ms
+        if velocity_threshold > 0:
+            # TODO: Use actual sample rate instead of assuming 1000 Hz
+            velocity_threshold = velocity_threshold * n  # Convert to pixels per n samples
+            gaze["next_pixel_x"] = gaze["pixel_x"].shift(-1)
+            gaze["next_pixel_y"] = gaze["pixel_y"].shift(-1)
+            gaze["velocity"] = np.sqrt(
+                (gaze["next_pixel_x"] - gaze["pixel_x"]) ** 2
+                + (gaze["next_pixel_y"] - gaze["pixel_y"]) ** 2
+            )
+            # Filter out points with velocity above the threshold
+            gaze.loc[gaze["velocity"] > velocity_threshold, ["pixel_x", "pixel_y"]] = np.nan
+
+        self.simplified_gaze = gaze[["time", "pixel_x", "pixel_y"]]
         if draw:
             self._draw()
 
