@@ -1,7 +1,7 @@
 ---
 generated: true
 title: Experiment stages
-parent: Documentation
+parent: Reference
 layout: default
 ---
 

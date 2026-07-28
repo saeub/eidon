@@ -4,6 +4,8 @@ layout: default
 nav_order: 1
 ---
 
+{% include toc.html %}
+
 # Getting started
 
 This page will show you how to set up and run your first eye-tracking experiment with _eidon_.
@@ -40,7 +42,7 @@ eidon run P1 --dummy
 
 ## Implementing your first experiment
 
-To implement your own experiment, you first need to find the [experiment type](docs/experiment-types) that matches your use case. For this tutorial, we'll use the [`SinglePageReading`](docs/experiment-types/SinglePageReading) experiment type.
+To implement your own experiment, you first need to find the [experiment type](reference/experiment-types) that matches your use case. For this tutorial, we'll use the [`SinglePageReading`](reference/experiment-types/SinglePageReading) experiment type.
 
 ### 1. Create an experiment folder and a configuration file
 
@@ -67,11 +69,11 @@ The experiment's `name` will appear, among others, in recordings and metadata fi
 
 `option_keys` are the keys on the keyboard that participants are going to use to respond to multiple-choice questions (in this case, we are going to use yes/no questions).
 
-This example is a very bare-bones configuration file. Check the [documentation page for `SinglePageReading`](docs/experiment-types/SinglePageReading) for more configuration options.
+This example is a very bare-bones configuration file. Check the [documentation page for `SinglePageReading`](reference/experiment-types/SinglePageReading) for more configuration options.
 
 ### 2. Create stimuli
 
-The [documentation page for `SinglePageReading`](docs/experiment-types/SinglePageReading) tells you the structure and format you need to use for your stimuli:
+The [documentation page for `SinglePageReading`](reference/experiment-types/SinglePageReading) tells you the structure and format you need to use for your stimuli:
 
 ```
 📂 my_experiment

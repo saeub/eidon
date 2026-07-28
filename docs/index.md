@@ -20,7 +20,7 @@ _eidon_ is designed to be both **easy to use** and **easy to customize**, depend
 
 _eidon_ is for researchers who use in-lab eye-tracking methods, in particular:
 
-- **Language researchers:** _eidon_ provides implementations for a range of [experiment types](docs/experiment-types) common in psycholinguistics. These implementations are easy to configure and modify with custom code to suit your needs.
+- **Language researchers:** _eidon_ provides implementations for a range of [experiment types](reference/experiment-types) common in psycholinguistics. These implementations are easy to configure and modify with custom code to suit your needs.
 - **NLP researchers:** Want to collect eye-tracking data for your dataset, or see what your annotators are paying attention to? _eidon_ is for you.
 - **Students:** If you are just getting started with eye tracking, _eidon_ makes it easy for you to [implement your first experiment](getting-started) while following best practices. No coding required.
 

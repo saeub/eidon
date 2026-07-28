@@ -39,15 +39,15 @@ Don't worry – you won't have to create all those files yourself. Most of the f
 
 _eidon_ supports various **types of experiments** out of the box. For example, a reading experiment with a Latin square design. The experiment type determines what kinds of materials you will need to build an experiment (e.g., texts and comprehension questions) and what the rough procedure will be when you run it (e.g., how the stimuli will be presented).
 
-You can find an overview of all the experiment types that are currently supported [here](../docs/experiment-types). If none of the pre-implemented ones match your needs, you can always [create your own experiment type](custom-experiment-type).
+You can find an overview of all the experiment types that are currently supported [here](../reference/experiment-types). If none of the pre-implemented ones match your needs, you can always [create your own experiment type](custom-experiment-type).
 
 ## Experiment session
 
-A **session** is a single run of your experiment. It defines precisely what trials are presented in what order, during which parts eye movements are recorded, and what interactions (key presses, etc.) are possible. All of this is defined in a JSON file in the experiment folder. In a typical single-session experiment, there will be one of these session files for each participant. If you are using one of the existing [experiment types](../docs/experiment-types), _eidon_ will generate them for you. But if you want to have full control over every detail in your experiment, you are free to create or generate these session files yourself.
+A **session** is a single run of your experiment. It defines precisely what trials are presented in what order, during which parts eye movements are recorded, and what interactions (key presses, etc.) are possible. All of this is defined in a JSON file in the experiment folder. In a typical single-session experiment, there will be one of these session files for each participant. If you are using one of the existing [experiment types](../reference/experiment-types), _eidon_ will generate them for you. But if you want to have full control over every detail in your experiment, you are free to create or generate these session files yourself.
 
 ## Experiment stage
 
-Each session consists of a sequence of **stages**. A stage is typically just a single screen where a stimulus is displayed or some interaction happens (e.g., answering a question, performing calibration, etc.). If you are using one of the existing [experiment types](../docs/experiment-types), you will not have to configure these stages yourself.
+Each session consists of a sequence of **stages**. A stage is typically just a single screen where a stimulus is displayed or some interaction happens (e.g., answering a question, performing calibration, etc.). If you are using one of the existing [experiment types](../reference/experiment-types), you will not have to configure these stages yourself.
 
 ```mermaid
 block

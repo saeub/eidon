@@ -50,10 +50,10 @@ You can click and drag the blue dots to move and warp the gaze data on this scre
 
 > **NOTE:** For reading experiments, it is recommended to only apply vertical drift correction, as judging horizontal drift visually is not feasible. You can restrict your edits to the vertical axis by checking `Edit > Vertical correction only` in the menu.
 
-While correcting drift, it is often useful to visualize areas of interest. After (re-)building your experiment with the [`--area-images` flag](../docs/cli/build), you can specify the area types to visualize in `eidon clean`. For example, to see word-level areas of interest:
+While correcting drift, it is often useful to visualize areas of interest. After (re-)building your experiment with the [`--area-images` flag](../reference/cli/build), you can specify the area types to visualize in `eidon clean`. For example, to see word-level areas of interest:
 
 ```bash
-eidon clean P1 --vertical --areas word
+eidon clean P1 --areas word
 ```
 
 Note that any corrections you make in the interface are **not** immediately applied to the gaze CSV file. Instead, they are stored in a JSON file in the recording directory:

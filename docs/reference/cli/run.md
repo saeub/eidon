@@ -15,8 +15,7 @@ Run a session from a built experiment. Collects eye-tracking data and logs.
 
 ```
 eidon run [-h] [--experiment EXPERIMENT] [--dummy]
-                       [--participant-control]
-                       [--recording-name RECORDING_NAME] [--screen SCREEN]
+                       [--participant-control] [--screen SCREEN]
                        [--start-from-stage START_FROM_STAGE]
                        session
 
@@ -35,8 +34,6 @@ options:
   --participant-control
                         Allow participant to control calibrations, drift
                         corrects, etc. (useful for testing).
-  --recording-name RECORDING_NAME
-                        Name for recording and log files.
   --screen SCREEN       Screen index to use for the experiment window.
   --start-from-stage START_FROM_STAGE
                         Start the session from the stage with the specified

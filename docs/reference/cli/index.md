@@ -1,7 +1,7 @@
 ---
 generated: true
 title: Command-line interface
-parent: Documentation
+parent: Reference
 layout: default
 ---
 

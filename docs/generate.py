@@ -198,7 +198,7 @@ def generate_cli_page(command: str, subparser: argparse.ArgumentParser) -> str:
 
 
 def main():
-    docs_path = Path(__file__).parent / "docs"
+    reference_path = Path(__file__).parent / "reference"
     examples_path = Path(__file__).parent.parent / "examples"
     examples_url = "https://github.com/saeub/eidon/tree/main/examples/{}"
     generated_prefix = "---\ngenerated: true"
@@ -215,55 +215,55 @@ def main():
         return text
 
     # Delete old generated files
-    for path in docs_path.glob("**/*.md"):
+    for path in reference_path.glob("**/*.md"):
         if path.read_text().startswith(generated_prefix):
             path.unlink()
 
     # Experiment types
     experiment_types = ExperimentType.get_subclasses()
     markdown = generate_experimenttype_index(experiment_types)
-    (docs_path / "experiment-types" / "index.md").write_text(
-        header("Experiment types", parent="Documentation", toc=False) + markdown
+    (reference_path / "experiment-types" / "index.md").write_text(
+        header("Experiment types", parent="Reference", toc=False) + markdown
     )
     for name, cls in experiment_types.items():
         markdown = generate_experimenttype_page(name, cls, examples_path, examples_url)
-        (docs_path / "experiment-types" / f"{name}.md").write_text(
+        (reference_path / "experiment-types" / f"{name}.md").write_text(
             header(name, parent="Experiment types") + markdown
         )
 
     # Experiment stages
     experiment_stages = ExperimentStage.get_subclasses()
     markdown = generate_experimentstage_index(experiment_stages)
-    (docs_path / "experiment-stages" / "index.md").write_text(
-        header("Experiment stages", parent="Documentation", toc=False) + markdown
+    (reference_path / "experiment-stages" / "index.md").write_text(
+        header("Experiment stages", parent="Reference", toc=False) + markdown
     )
     for name, cls in experiment_stages.items():
         markdown = generate_experimentstage_page(name, cls)
-        (docs_path / "experiment-stages" / f"{name}.md").write_text(
+        (reference_path / "experiment-stages" / f"{name}.md").write_text(
             header(name, parent="Experiment stages") + markdown
         )
 
     # Experiment designs
     markdown = generate_designs_page(DESIGNS)
-    (docs_path / "designs.md").write_text(
-        header("Experiment designs", parent="Documentation", toc=False) + markdown
+    (reference_path / "designs.md").write_text(
+        header("Experiment designs", parent="Reference", toc=False) + markdown
     )
 
     # Keyboard keys
     markdown = generate_keyboard_page()
-    (docs_path / "keyboard.md").write_text(
-        header("Keyboard keys", parent="Documentation", toc=False) + markdown
+    (reference_path / "keyboard.md").write_text(
+        header("Keyboard keys", parent="Reference", toc=False) + markdown
     )
 
     # CLI
     argument_parser = get_argument_parser()
     markdown = generate_cli_index(argument_parser)
-    (docs_path / "cli" / "index.md").write_text(
-        header("Command-line interface", parent="Documentation", toc=False) + markdown
+    (reference_path / "cli" / "index.md").write_text(
+        header("Command-line interface", parent="Reference", toc=False) + markdown
     )
     for command, subparser in argument_parser._actions[-1].choices.items():
         markdown = generate_cli_page(command, subparser)
-        (docs_path / "cli" / f"{command}.md").write_text(
+        (reference_path / "cli" / f"{command}.md").write_text(
             header(f"eidon {command}", parent="Command-line interface") + markdown
         )
 

@@ -1,7 +1,7 @@
 ---
 generated: true
 title: Experiment types
-parent: Documentation
+parent: Reference
 layout: default
 ---
 

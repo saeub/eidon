@@ -1,7 +1,7 @@
 ---
 generated: true
 title: Keyboard keys
-parent: Documentation
+parent: Reference
 layout: default
 ---
 

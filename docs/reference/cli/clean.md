@@ -15,7 +15,7 @@ Clean gaze data by manually correcting drift or removing bad trials. Saves a JSO
 
 ```
 eidon clean [-h] [--experiment EXPERIMENT] [--areas AREAS]
-                         [--apply]
+                         [--stage-pattern STAGE_PATTERN] [--apply]
                          [recording_names ...]
 
 Clean gaze data by manually correcting drift or removing bad trials. Saves a
@@ -33,6 +33,10 @@ options:
                         experiment.json and recordings/).
   --areas AREAS         Area types to display as a backdrop (e.g., 'word').
                         Requires building the experiment with --area-images.
+  --stage-pattern STAGE_PATTERN
+                        Regex pattern to select stages to correct (e.g.,
+                        'trial_*'). If not provided, all stages will be
+                        displayed.
   --apply               Apply the corrections to the gaze data and save a new
                         CSV file (no GUI).
 ```
