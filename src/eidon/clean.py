@@ -1,4 +1,5 @@
 import json
+import random
 import tkinter as tk
 import warnings
 from pathlib import Path
@@ -244,7 +245,7 @@ class App(tk.Tk):
         margin=100,
         scale=1.0,
         simplification=10,
-        vertical=False,
+        vertical=True,
         line_width=2,
         stimulus_index=None,
         stimulus_labels=None,
@@ -536,18 +537,27 @@ class App(tk.Tk):
         transformed_gaze.loc[gaze["next_pixel_x"].isna(), "next_pixel_x"] = None
         transformed_gaze.loc[gaze["next_pixel_y"].isna(), "next_pixel_y"] = None
 
+        # Draw gaze data
         remove = self.remove.get()
         for _, row in transformed_gaze.iterrows():
-            x = row["pixel_x"]
-            y = row["pixel_y"]
-            next_x = row["next_pixel_x"]
-            next_y = row["next_pixel_y"]
+            x, y = self._gaze_to_window_coords(row["pixel_x"], row["pixel_y"])
+            next_x, next_y = self._gaze_to_window_coords(row["next_pixel_x"], row["next_pixel_y"])
             self.canvas.create_line(
-                *self._gaze_to_window_coords(x, y),
-                *self._gaze_to_window_coords(next_x, next_y),
+                x, y,
+                next_x, next_y,
                 fill="black" if not remove else "red",
                 width=self.line_width.get(),
             )
+            # Draw scattered dots
+            dot_x = random.randint(0, 10)
+            self.canvas.create_line(
+                dot_x, y,
+                dot_x + 1, y,
+                fill="black" if not remove else "red",
+                width=1,
+            )
+
+        # Draw remove label
         if remove:
             self.canvas.create_text(
                 *self._gaze_to_window_coords(
@@ -558,6 +568,7 @@ class App(tk.Tk):
                 font=("sans-serif", 48, "bold"),
             )
 
+        # Draw transform points
         for i, ((src_x, src_y), (dst_x, dst_y)) in enumerate(
             zip(self.src_points, self.dst_points)
         ):
