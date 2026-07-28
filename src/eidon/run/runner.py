@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import atexit
 import json
-import shutil
 import time
 import warnings
 from datetime import datetime
@@ -26,7 +25,6 @@ class ExperimentRunner:
         session_name: str,
         dummy: bool = False,
         participant_control: bool = False,
-        recording_name: str | None = None,
         screen: int = 0,
     ):
         self.experiment_path = Path(experiment_path).absolute()
@@ -60,23 +58,21 @@ class ExperimentRunner:
         background_color = tuple([c / 0xFF for c in background_color] + [1.0])
 
         timestamp = time.strftime("%Y%m%d-%H%M%S")
-        if recording_name is None:
-            recording_name = (
-                f"{experiment_definition['name']}.{session_name}.{timestamp}"
-            )
-        self.recording_name = recording_name
+        self.recording_name = (
+            f"{experiment_definition['name']}.{session_name}.{timestamp}"
+        )
         self.recording_path = (
-            self.experiment_path / "recordings" / recording_name
+            self.experiment_path / "recordings" / self.recording_name
         ).absolute()
         self.recording_path.mkdir(parents=True, exist_ok=True)
 
         self.logfile = open(
-            self.recording_path / f"{recording_name}.log", "w", encoding="utf-8"
+            self.recording_path / f"{self.recording_name}.log", "w", encoding="utf-8"
         )
 
         if not dummy:
             # Copy hardware setup to recording folder
-            setup_path = self.recording_path / f"{recording_name}.setup.json"
+            setup_path = self.recording_path / f"{self.recording_name}.setup.json"
             setup_path.write_text(
                 json.dumps(setup.latest_setup, indent=4), encoding="utf-8"
             )
@@ -145,7 +141,7 @@ class ExperimentRunner:
                 origin_y=(self.window.height - self.stimulus_area_height) // 2,
             )
         else:
-            edf_path = self.recording_path / f"{recording_name}.edf"
+            edf_path = self.recording_path / f"{self.recording_name}.edf"
             eyelink_settings = experiment_definition.get("eyelink_settings")
             self.eyetracker = EyeLink(
                 edf_path,

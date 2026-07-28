@@ -61,12 +61,6 @@ def get_argument_parser() -> argparse.ArgumentParser:
         help="Allow participant to control calibrations, drift corrects, etc. (useful for testing).",
     )
     run_parser.add_argument(
-        "--recording-name",
-        type=str,
-        default=None,
-        help="Name for recording and log files.",
-    )
-    run_parser.add_argument(
         "--screen",
         type=int,
         default=0,
@@ -188,7 +182,6 @@ def main():
             session_name=args.session,
             dummy=args.dummy,
             participant_control=args.participant_control,
-            recording_name=args.recording_name,
             screen=args.screen,
         )
         runner.run(start_from_stage=args.start_from_stage)
