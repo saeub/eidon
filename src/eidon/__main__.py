@@ -149,6 +149,15 @@ def get_argument_parser() -> argparse.ArgumentParser:
         ),
     )
     clean_parser.add_argument(
+        "--stage-pattern",
+        type=str,
+        default=None,
+        help=(
+            "Regex pattern to select stages to correct (e.g., 'trial_*'). "
+            "If not provided, all stages will be displayed. "
+        ),
+    )
+    clean_parser.add_argument(
         "--apply",
         action="store_true",
         help="Apply the corrections to the gaze data and save a new CSV file (no GUI).",
@@ -201,6 +210,7 @@ def main():
             cleaner.clean(
                 recording_name=args.recording_names[0],
                 area_type=args.areas,
+                stage_pattern=args.stage_pattern,
             )
 
 

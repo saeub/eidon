@@ -21,7 +21,7 @@ class RecordingCleaner:
             (self.experiment_path / "experiment.json").read_text()
         )
 
-    def clean(self, recording_name: str, area_type: str = None):
+    def clean(self, recording_name: str, area_type: str = None, stage_pattern: str = None):
         matching_recording_names = find_recordings(
             self.experiment_path, self.experiment_definition["name"], [recording_name]
         )
@@ -36,7 +36,7 @@ class RecordingCleaner:
             / recording_name
             / f"{recording_name}.csv"
         )
-        gaze, stimuli = self._load_gaze(gaze_path)
+        gaze, stimuli = self._load_gaze(gaze_path, stage_pattern=stage_pattern)
 
         corrections_path = gaze_path.with_suffix(".corrections.json")
         if corrections_path.exists():
@@ -149,9 +149,11 @@ class RecordingCleaner:
             )
 
     def _load_gaze(
-        self, gaze_path: Path
+        self, gaze_path: Path, stage_pattern: str = None
     ) -> tuple[pd.DataFrame, list[tuple[str, str, str]]]:
         gaze = pd.read_csv(gaze_path, dtype={"stage": str, "page": str, "imgpath": str})
+        if stage_pattern is not None:
+            gaze = gaze[gaze["stage"].str.match(stage_pattern)]
         gaze["page"] = gaze["page"].replace({np.nan: None})
         stimuli = gaze[["stage", "page", "imgpath"]].drop_duplicates()
         stimuli = stimuli[stimuli["imgpath"].notna()]
