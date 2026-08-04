@@ -1,6 +1,8 @@
-import importlib.util
 import importlib.metadata
+import importlib.util
 from pathlib import Path
+
+__custom_code_modules = []
 
 
 def import_custom_code(experiment_path: Path):
@@ -9,6 +11,8 @@ def import_custom_code(experiment_path: Path):
         spec = importlib.util.spec_from_file_location("custom_code", filename)
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
+        # Store module variable to prevent it from being garbage collected
+        __custom_code_modules.append(module)
 
 
 def get_package_version() -> str:
@@ -27,16 +31,23 @@ def ask_user_yes_no(question: str) -> bool:
         else:
             print("Please enter 'y' or 'n'.")
 
+
 def get_session_name(recording_name: str, experiment_name: str) -> str:
     """Extract the session name from a recording name."""
     session_name = recording_name.removeprefix(experiment_name + ".")
     session_name = "".join(session_name.split(".")[:-1])
     return session_name
 
-def find_recordings(experiment_path: Path, experiment_name: str, recording_or_session_names: list[str] | None = None) -> list[str]:
+
+def find_recordings(
+    experiment_path: Path,
+    experiment_name: str,
+    recording_or_session_names: list[str] | None = None,
+) -> list[str]:
     """Find names of existing recordings that match the given recording or session names."""
     all_recording_names = [
-        path.name for path in (experiment_path / "recordings").glob("*")
+        path.name
+        for path in (experiment_path / "recordings").glob("*")
         if path.name.startswith(experiment_name + ".")
     ]
     if recording_or_session_names is None:
@@ -54,9 +65,7 @@ def find_recordings(experiment_path: Path, experiment_name: str, recording_or_se
                     other_recording_name, experiment_name
                 )
                 if name == other_session_name:
-                    matching_recording_names.append(
-                        other_recording_name
-                    )
+                    matching_recording_names.append(other_recording_name)
                     found = True
             if not found:
                 raise ValueError(
