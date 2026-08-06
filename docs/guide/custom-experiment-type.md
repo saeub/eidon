@@ -123,6 +123,8 @@ An experiment type is defined as a Python data class with attributes for configu
 ```python
 from dataclasses import dataclass
 from eidon.build import ExperimentType
+from pathlib import Path
+from typing import Any
 
 @dataclass(kw_only=True)
 class MyExperimentType(ExperimentType):

@@ -182,8 +182,6 @@ Currently, only EyeLink devices by SR Research are supported. To connect to an E
 pip install sr-research-pylink
 ```
 
-> **NOTE:** At the time of writing, `pylink` only supports version Python 3.12. If the installation fails, make sure are using the correct Python version (`python --version`).
-
 ### 2. Record the hardware setup
 
 When you run a session for the first time, you will be required to take a few measurements, including the size of the stimulus area and the eye-to-screen distance. This will make sure that your stimuli are presented within the trackable range of your eye tracker. Running this command from the root directory of your experiment will guide you through all of the settings:

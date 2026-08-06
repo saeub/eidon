@@ -15,7 +15,7 @@ layout: default
 | [`DriftCorrect`](DriftCorrect) | Starts the eye tracker's drift correction procedure (device-dependent). |
 | [`EyeLinkDriftCorrect`](EyeLinkDriftCorrect) | Do not use this stage directly. Use DriftCorrect instead. |
 | [`EyeLinkSetup`](EyeLinkSetup) | Do not use this stage directly. Use Setup instead. |
-| [`FixationCross`](FixationCross) | Shows a fixation cross/trigger. |
+| [`FixationTarget`](FixationTarget) | Shows a fixation target/trigger. |
 | [`FreeTextQuestion`](FreeTextQuestion) | Shows an image stimulus and allows entering a free text response. |
 | [`HostControlled`](HostControlled) | Disables interaction on the display PC and waits for commands from the host PC. |
 | [`LabelAnnotation`](LabelAnnotation) | Shows an image stimulus and allows selecting a label. |

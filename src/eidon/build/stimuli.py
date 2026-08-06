@@ -553,7 +553,7 @@ def generate_mcq_page(
     background_color: tuple[int, int, int] = (255, 255, 255),
     text_color: tuple[int, int, int] = (0, 0, 0),
     extend_word_areas: bool = True,
-    option_layout: Literal["horizontal", "vertical", "diamond"] = "horizontal",
+    option_layout: Literal["horizontal", "diamond"] = "horizontal",
 ) -> tuple[TextImage, list[tuple[float, float, float, float]]]:
     """Generate stimulus image for a MultipleChoiceQuestion stage listing answer options horizontally.
 

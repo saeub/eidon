@@ -969,11 +969,11 @@ class FixationTarget(ExperimentStage):
     ):
         """
         :param location:
-            The (x, y) location of the fixation cross in pixels. (0, 0) = top left.
+            The (x, y) location of the fixation target in pixels. (0, 0) = top left.
         :param fixation_trigger:
-            Whether to wait for the participant to fixate on the cross before continuing.
+            Whether to wait for the participant to fixate on the target before continuing.
         :param tolerance:
-            The radius in pixels around the fixation cross that counts as a fixation.
+            The radius in pixels around the fixation target that counts as a fixation.
             Default is 20 pixels.
         :param timeout:
             Maximum time in seconds to wait for fixation before continuing anyway.
