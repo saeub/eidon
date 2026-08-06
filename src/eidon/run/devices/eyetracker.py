@@ -6,6 +6,8 @@ from typing import TYPE_CHECKING, Any
 import numpy as np
 import pyglet
 
+from eidon.run import graphics
+
 try:
     import pylink
 
@@ -13,8 +15,8 @@ try:
 except ImportError:
     PYLINK_AVAILABLE = False
 
-from eidon.run.stages import Backdrop, DriftCorrect, Setup
 from eidon.run.events import Event
+from eidon.run.stages import Backdrop, DriftCorrect, Setup
 
 if TYPE_CHECKING:
     from eidon.run import ExperimentRunner
@@ -127,24 +129,9 @@ class MouseTracker(EyeTracker):
             self.finished = False
 
             self.runner.window.clear()
-            cross_x, cross_y = self.location
-            cross_y = self.runner.stimulus_area_height - cross_y  # Invert y-axis
-            hline = pyglet.shapes.Line(
-                cross_x - 10,
-                cross_y,
-                cross_x + 10,
-                cross_y,
-                thickness=2,
-                color=(0, 0, 0),
-            )
-            vline = pyglet.shapes.Line(
-                cross_x,
-                cross_y - 10,
-                cross_x,
-                cross_y + 10,
-                thickness=2,
-                color=(0, 0, 0),
-            )
+            x, y = self.location
+            y = self.runner.stimulus_area_height - y  # Invert y-axis
+            target = graphics.FixationTarget(x, y)  # TODO: Make configurable
             label = pyglet.text.Label(
                 "Drift correct\n[SPACE] to continue",
                 color=(0, 0, 0, 255),
@@ -156,8 +143,7 @@ class MouseTracker(EyeTracker):
                 width=self.runner.stimulus_area_width,
                 align="center",
             )
-            hline.draw()
-            vline.draw()
+            target.draw()
             label.draw()
             self.runner.window.flip()
 
@@ -222,7 +208,7 @@ class EyeLink(EyeTracker):
 
         # pylink.beginRealTimeMode(100)
 
-        self.graphics = _EyeLinkGraphics(self.runner, participant_control)
+        self.graphics = _EyeLinkGraphics(self.runner)
         pylink.openGraphicsEx(self.graphics)
 
         edf_path = Path(edf_path)
@@ -234,9 +220,7 @@ class EyeLink(EyeTracker):
         )
         self.eyelink.openDataFile(self.host_filename)
 
-        display_coords = (
-            f"0 0 {self.runner.stimulus_area_width - 1} {self.runner.stimulus_area_height - 1}"
-        )
+        display_coords = f"0 0 {self.runner.stimulus_area_width - 1} {self.runner.stimulus_area_height - 1}"
         self.eyelink.sendMessage(f"DISPLAY_COORDS {display_coords}")
         self.eyelink.sendCommand(f"screen_pixel_coords = {display_coords}")
 
@@ -414,10 +398,7 @@ if PYLINK_AVAILABLE:
             self.runner = runner
             self.accept_keys = self.runner.participant_control
 
-            self.calibration_target = [
-                pyglet.shapes.Circle(0, 0, 8, color=(0, 0, 0)),
-                pyglet.shapes.Circle(0, 0, 2, color=(255, 255, 255)),
-            ]
+            self.target = graphics.FixationTarget(0, 0)  # TODO: Make configurable
 
             self.camera_image_title = pyglet.text.Label(
                 "",
@@ -526,9 +507,8 @@ if PYLINK_AVAILABLE:
 
             self.runner.window.clear()
             y = self.runner.stimulus_area_height - y
-            for shape in self.calibration_target:
-                shape.x, shape.y = x, y
-                shape.draw()
+            self.target.move(x, y)
+            self.target.draw()
             self.runner.window.flip()
 
         def play_beep(self, beepid):

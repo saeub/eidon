@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, Any
 import pyglet
 
 from eidon.run.events import Event
+from eidon.run import graphics
 
 if TYPE_CHECKING:
     from eidon.run.runner import ExperimentRunner
@@ -272,7 +273,9 @@ class HostControlled(ExperimentStage):
             host_imgpath = (self.runner.experiment_path / host_imgpath).absolute()
             img = pyglet.image.load(host_imgpath)
             self._backdrop = Backdrop(
-                pyglet.sprite.Sprite(img, x=0, y=self.runner.stimulus_area_height - img.height),
+                pyglet.sprite.Sprite(
+                    img, x=0, y=self.runner.stimulus_area_height - img.height
+                ),
                 host_imgpath,
             )
         else:
@@ -406,7 +409,9 @@ class StimulusMultiPage(ExperimentStage):
         ]
         imgs = [pyglet.image.load(imgpath) for imgpath in imgpaths]
         self.stimuli = [
-            pyglet.sprite.Sprite(img, x=0, y=self.runner.stimulus_area_height - img.height)
+            pyglet.sprite.Sprite(
+                img, x=0, y=self.runner.stimulus_area_height - img.height
+            )
             for img in imgs
         ]
         self.page_index = 0
@@ -502,7 +507,9 @@ class MultipleChoiceQuestion(ExperimentStage):
         """
         imgpath = (self.runner.experiment_path / imgpath).absolute()
         img = pyglet.image.load(imgpath)
-        self.stimulus = pyglet.sprite.Sprite(img, x=0, y=self.runner.stimulus_area_height - img.height)
+        self.stimulus = pyglet.sprite.Sprite(
+            img, x=0, y=self.runner.stimulus_area_height - img.height
+        )
 
         self._backdrop = Backdrop(self.stimulus, imgpath)
 
@@ -520,14 +527,21 @@ class MultipleChoiceQuestion(ExperimentStage):
                 0 <= self.correct_option_index < len(self.option_keys)
             ), "correct_option_index must be a valid index in option_keys"
         if self.confirm_key is not None:
-            assert option_boxes is not None, "option_boxes must be defined if confirm_key is used"
+            assert (
+                option_boxes is not None
+            ), "option_boxes must be defined if confirm_key is used"
             assert len(option_boxes) == len(
                 self.option_keys
             ), "option_boxes must have the same length as option_keys"
             # TODO: Make configurable
             self.option_boxes = [
                 pyglet.shapes.Box(
-                    x, self.runner.stimulus_area_height - y - height, width, height, color=(0, 0, 0), thickness=2
+                    x,
+                    self.runner.stimulus_area_height - y - height,
+                    width,
+                    height,
+                    color=(0, 0, 0),
+                    thickness=2,
                 )
                 for x, y, width, height in option_boxes
             ]
@@ -616,7 +630,9 @@ class CursorMultipleChoiceQuestion(ExperimentStage):
         """
         imgpath = (self.runner.experiment_path / imgpath).absolute()
         img = pyglet.image.load(imgpath)
-        self.stimulus = pyglet.sprite.Sprite(img, x=0, y=self.runner.stimulus_area_height - img.height)
+        self.stimulus = pyglet.sprite.Sprite(
+            img, x=0, y=self.runner.stimulus_area_height - img.height
+        )
 
         self._backdrop = Backdrop(self.stimulus, imgpath)
 
@@ -721,7 +737,9 @@ class FreeTextQuestion(ExperimentStage):
         """
         imgpath = (self.runner.experiment_path / imgpath).absolute()
         img = pyglet.image.load(imgpath)
-        self.stimulus = pyglet.sprite.Sprite(img, x=0, y=self.runner.stimulus_area_height - img.height)
+        self.stimulus = pyglet.sprite.Sprite(
+            img, x=0, y=self.runner.stimulus_area_height - img.height
+        )
         self._backdrop = Backdrop(self.stimulus, imgpath)
 
         self.confirm_key = confirm_key
@@ -810,7 +828,9 @@ class LabelAnnotation(ExperimentStage):
         """
         imgpath = (self.runner.experiment_path / imgpath).absolute()
         img = pyglet.image.load(imgpath)
-        self.stimulus = pyglet.sprite.Sprite(img, x=0, y=self.runner.stimulus_area_height - img.height)
+        self.stimulus = pyglet.sprite.Sprite(
+            img, x=0, y=self.runner.stimulus_area_height - img.height
+        )
         self._backdrop = Backdrop(self.stimulus, imgpath)
 
         self.label_keys = label_keys
@@ -937,8 +957,8 @@ class QuestionTree(ExperimentStage):
             return {"results": self.results}
 
 
-class FixationCross(ExperimentStage):
-    """Shows a fixation cross/trigger."""
+class FixationTarget(ExperimentStage):
+    """Shows a fixation target/trigger."""
 
     def init(
         self,
@@ -963,24 +983,9 @@ class FixationCross(ExperimentStage):
         self.fixation_trigger = fixation_trigger
         self.tolerance = tolerance
         self.timeout = timeout
-        cross_x = self.x
-        cross_y = self.runner.stimulus_area_height - self.y  # Invert y-axis
-        self.hline = pyglet.shapes.Line(
-            cross_x - 10,
-            cross_y,
-            cross_x + 10,
-            cross_y,
-            thickness=2,
-            color=(0, 0, 0),
-        )
-        self.vline = pyglet.shapes.Line(
-            cross_x,
-            cross_y - 10,
-            cross_x,
-            cross_y + 10,
-            thickness=2,
-            color=(0, 0, 0),
-        )
+        x = self.x
+        y = self.runner.stimulus_area_height - self.y  # Invert y-axis
+        self.target = graphics.FixationTarget(x, y)  # TODO: Make configurable
 
     def start(self):
         self.finished = False
@@ -988,8 +993,7 @@ class FixationCross(ExperimentStage):
         self.start_time = self.runner.clock.time()
 
         self.runner.window.clear()
-        self.hline.draw()
-        self.vline.draw()
+        self.target.draw()
         self.runner.window.flip()
 
     def on_event(self, event: Event):
@@ -1000,7 +1004,7 @@ class FixationCross(ExperimentStage):
         gaze_y = event.data["y"]
         if (gaze_x - self.x) ** 2 + (gaze_y - self.y) ** 2 <= self.tolerance**2:
             self.finished = True
-            self.fixaiton_location = (gaze_x, gaze_y)
+            self.fixation_location = (gaze_x, gaze_y)
 
     def update(self) -> dict[str, Any] | None:
         # FIXME
