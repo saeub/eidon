@@ -29,6 +29,7 @@ class ExperimentRunner:
     ):
         self.experiment_path = Path(experiment_path).absolute()
         self.dummy = dummy
+        self.participant_control = participant_control or dummy
 
         with open(self.experiment_path / "experiment.json") as f:
             experiment_definition = json.load(f)

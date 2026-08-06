@@ -282,8 +282,8 @@ class HostControlled(ExperimentStage):
 
     def start(self):
         self.finished = False
-        if self.runner.dummy and self._backdrop is not None:
-            # In dummy mode, prefer drawing host image
+        # When participant control is enabled (e.g., in dummy mode), prefer drawing host image
+        if self.runner.participant_control and self._backdrop is not None:
             self.runner.window.clear()
             self._backdrop.sprite.draw()
             self.runner.window.flip()
@@ -295,9 +295,9 @@ class HostControlled(ExperimentStage):
             self._setup_stage.on_event(event)
             return
 
-        if (self.runner.dummy and event.type == "key") or (
-            not self.runner.dummy and event.type == "hostkey"
-        ):
+        if (
+            self.runner.participant_control and event.type == "key"
+        ) or event.type == "hostkey":
             if event.data["symbol"] == self.continue_key:
                 self.finished = True
             elif event.data["symbol"] == self.setup_key:
@@ -305,7 +305,7 @@ class HostControlled(ExperimentStage):
                 self._setup_stage.start()
 
     def update(self) -> dict[str, Any] | None:
-        if not self.runner.dummy or self._backdrop is None:
+        if not self.runner.participant_control or self._backdrop is None:
             self.stage.update()
 
         if self.finished:
@@ -315,8 +315,8 @@ class HostControlled(ExperimentStage):
             setup_done = self._setup_stage.update() is not None
             if setup_done:
                 self._setup_stage = None
-                if self.runner.dummy and self._backdrop is not None:
-                    # In dummy mode, prefer drawing host image
+                # When participant control is enabled (e.g., in dummy mode), prefer drawing host image
+                if self.runner.participant_control and self._backdrop is not None:
                     self.runner.window.clear()
                     self._backdrop.sprite.draw()
                     self.runner.window.flip()

@@ -409,10 +409,10 @@ class EyeLink(EyeTracker):
 if PYLINK_AVAILABLE:
 
     class _EyeLinkGraphics(pylink.EyeLinkCustomDisplay):
-        def __init__(self, runner: "ExperimentRunner", accept_keys: bool):
+        def __init__(self, runner: "ExperimentRunner"):
             super().__init__()
             self.runner = runner
-            self.accept_keys = accept_keys
+            self.accept_keys = self.runner.participant_control
 
             self.calibration_target = [
                 pyglet.shapes.Circle(0, 0, 8, color=(0, 0, 0)),
