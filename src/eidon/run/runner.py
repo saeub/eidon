@@ -82,7 +82,6 @@ class ExperimentRunner:
         screen = pyglet.display.get_display().get_screens()[screen]
         self.screen_scale = screen.get_scale()
         self.window = pyglet.window.Window(fullscreen=True, screen=screen)
-        self.window.set_mouse_visible(False)
 
         def on_resize(width, height):
             # Set viewport to use display coordinates (centered in the window)
@@ -206,6 +205,9 @@ class ExperimentRunner:
             self.event_queue.clear()
             self.eyetracker.poll_events()
             self.eyetracker.poll_host_events()
+
+            # Stages that require a mouse cursor should set it visible in start()
+            self.window.set_mouse_visible(False)
 
             start_time = datetime.now()
 
