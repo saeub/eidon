@@ -480,7 +480,7 @@ class MultipleChoiceQuestion(ExperimentStage):
         self,
         imgpath: str,
         option_keys: list[str],
-        option_values: list[str] | None = None,
+        option_values: list[Any] | None = None,
         correct_option_index: int | None = None,
         option_boxes: list[tuple[float, float, float, float]] | None = None,
         confirm_key: str | None = None,
@@ -605,7 +605,7 @@ class CursorMultipleChoiceQuestion(ExperimentStage):
         next_option_key: str,
         prev_option_key: str,
         confirm_key: str,
-        option_values: list[str] | None = None,
+        option_values: list[Any] | None = None,
         correct_option_index: int | None = None,
     ):
         """
