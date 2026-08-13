@@ -21,7 +21,9 @@ class RecordingCleaner:
             (self.experiment_path / "experiment.json").read_text()
         )
 
-    def clean(self, recording_name: str, area_type: str = None, stage_pattern: str = None):
+    def clean(
+        self, recording_name: str, area_type: str = None, stage_pattern: str = None
+    ):
         matching_recording_names = find_recordings(
             self.experiment_path, self.experiment_definition["name"], [recording_name]
         )
@@ -90,11 +92,7 @@ class RecordingCleaner:
             settings = {}
             if app is not None:
                 # Transfer settings from previous app instance
-                settings["scale"] = app.scale.get()
-                settings["simplification"] = app.simplification.get()
-                settings["velocity_threshold"] = app.velocity_threshold.get()
-                settings["line_width"] = app.line_width.get()
-                settings["vertical"] = app.vertical.get()
+                settings = app.get_settings()
             app = App(
                 stimulus_gaze,
                 stimulus_image,
@@ -249,6 +247,7 @@ class App(tk.Tk):
         scale=1.0,
         simplification=10,
         velocity_threshold=10.0,
+        horizontal=False,
         vertical=True,
         line_width=2,
         stimulus_index=None,
@@ -272,6 +271,8 @@ class App(tk.Tk):
         # Variables for "Edit" menu
         self.remove = tk.BooleanVar(value=remove)
         self.remove.trace_add("write", lambda *_: self._update_remove())
+        self.horizontal = tk.BooleanVar(value=horizontal)
+        self.horizontal.trace_add("write", lambda *_: self._draw())
         self.vertical = tk.BooleanVar(value=vertical)
         self.vertical.trace_add("write", lambda *_: self._draw())
 
@@ -281,7 +282,9 @@ class App(tk.Tk):
         self.simplification = tk.IntVar(value=simplification)
         self.simplification.trace_add("write", lambda *_: self._update_simplification())
         self.velocity_threshold = tk.DoubleVar(value=velocity_threshold)
-        self.velocity_threshold.trace_add("write", lambda *_: self._update_simplification())
+        self.velocity_threshold.trace_add(
+            "write", lambda *_: self._update_simplification()
+        )
         self.line_width = tk.IntVar(value=line_width)
         self.line_width.trace_add("write", lambda *_: self._draw())
 
@@ -304,11 +307,16 @@ class App(tk.Tk):
                 orient=tk.HORIZONTAL,
                 showvalue=False,
                 label=stimulus_labels[stimulus_index],
-                command=lambda value: self.stimulus_slider.config(label=stimulus_labels[int(value)]),
+                command=lambda value: self.stimulus_slider.config(
+                    label=stimulus_labels[int(value)]
+                ),
             )
             self.stimulus_slider.pack(side=tk.BOTTOM, fill=tk.X)
             self.stimulus_slider.set(stimulus_index)
-            self.stimulus_slider.bind("<ButtonRelease-1>", lambda _: self._exit(f"goto:{self.stimulus_slider.get()}"))
+            self.stimulus_slider.bind(
+                "<ButtonRelease-1>",
+                lambda _: self._exit(f"goto:{self.stimulus_slider.get()}"),
+            )
 
         menu = tk.Menu(self)
         self.config(menu=menu)
@@ -324,7 +332,10 @@ class App(tk.Tk):
         )
         edit_menu.add_separator()
         edit_menu.add_checkbutton(
-            label="Vertical correction only", variable=self.vertical
+            label="Allow horizontal corrections", variable=self.horizontal
+        )
+        edit_menu.add_checkbutton(
+            label="Allow vertical corrections", variable=self.vertical
         )
         menu.add_cascade(label="Edit", menu=edit_menu)
 
@@ -350,16 +361,24 @@ class App(tk.Tk):
             label="Velocity filter: none", variable=self.velocity_threshold, value=-1.0
         )
         view_menu.add_radiobutton(
-            label="Velocity filter: 20 px/ms", variable=self.velocity_threshold, value=20.0
+            label="Velocity filter: 20 px/ms",
+            variable=self.velocity_threshold,
+            value=20.0,
         )
         view_menu.add_radiobutton(
-            label="Velocity filter: 10 px/ms", variable=self.velocity_threshold, value=10.0
+            label="Velocity filter: 10 px/ms",
+            variable=self.velocity_threshold,
+            value=10.0,
         )
         view_menu.add_radiobutton(
-            label="Velocity filter: 5 px/ms", variable=self.velocity_threshold, value=5.0
+            label="Velocity filter: 5 px/ms",
+            variable=self.velocity_threshold,
+            value=5.0,
         )
         view_menu.add_radiobutton(
-            label="Velocity filter: 2 px/ms", variable=self.velocity_threshold, value=2.0
+            label="Velocity filter: 2 px/ms",
+            variable=self.velocity_threshold,
+            value=2.0,
         )
         view_menu.add_separator()
         view_menu.add_radiobutton(
@@ -404,6 +423,16 @@ class App(tk.Tk):
 
         self.mainloop()
 
+    def get_settings(self):
+        return {
+            "scale": self.scale.get(),
+            "simplification": self.simplification.get(),
+            "velocity_threshold": self.velocity_threshold.get(),
+            "line_width": self.line_width.get(),
+            "horizontal": self.horizontal.get(),
+            "vertical": self.vertical.get(),
+        }
+
     def _gaze_to_window_coords(self, x, y):
         scale = self.scale.get()
         return x * scale + self.margin, y * scale + self.margin
@@ -439,7 +468,9 @@ class App(tk.Tk):
         velocity_threshold = self.velocity_threshold.get()  # px/ms
         if velocity_threshold > 0:
             # TODO: Use actual sample rate instead of assuming 1000 Hz
-            velocity_threshold = velocity_threshold * n  # Convert to pixels per n samples
+            velocity_threshold = (
+                velocity_threshold * n
+            )  # Convert to pixels per n samples
             gaze["next_pixel_x"] = gaze["pixel_x"].shift(-1)
             gaze["next_pixel_y"] = gaze["pixel_y"].shift(-1)
             gaze["velocity"] = np.sqrt(
@@ -447,7 +478,9 @@ class App(tk.Tk):
                 + (gaze["next_pixel_y"] - gaze["pixel_y"]) ** 2
             )
             # Filter out points with velocity above the threshold
-            gaze.loc[gaze["velocity"] > velocity_threshold, ["pixel_x", "pixel_y"]] = np.nan
+            gaze.loc[gaze["velocity"] > velocity_threshold, ["pixel_x", "pixel_y"]] = (
+                np.nan
+            )
 
         self.simplified_gaze = gaze[["time", "pixel_x", "pixel_y"]]
         if draw:
@@ -517,8 +550,10 @@ class App(tk.Tk):
         if self.dragging_point_index is not None:
             self.hover_point_index = None
             x, y = self._window_to_gaze_coords(event.x, event.y)
-            if self.vertical.get():
+            if not self.horizontal.get():
                 x = self.dst_points[self.dragging_point_index][0]
+            if not self.vertical.get():
+                y = self.dst_points[self.dragging_point_index][1]
             self.dst_points[self.dragging_point_index] = [x, y]
             self._draw()
 
@@ -579,18 +614,24 @@ class App(tk.Tk):
         remove = self.remove.get()
         for _, row in transformed_gaze.iterrows():
             x, y = self._gaze_to_window_coords(row["pixel_x"], row["pixel_y"])
-            next_x, next_y = self._gaze_to_window_coords(row["next_pixel_x"], row["next_pixel_y"])
+            next_x, next_y = self._gaze_to_window_coords(
+                row["next_pixel_x"], row["next_pixel_y"]
+            )
             self.canvas.create_line(
-                x, y,
-                next_x, next_y,
+                x,
+                y,
+                next_x,
+                next_y,
                 fill="black" if not remove else "red",
                 width=self.line_width.get(),
             )
             # Draw scattered dots
             dot_x = random.randint(0, 10)
             self.canvas.create_line(
-                dot_x, y,
-                dot_x + 1, y,
+                dot_x,
+                y,
+                dot_x + 1,
+                y,
                 fill="black" if not remove else "red",
                 width=1,
             )
