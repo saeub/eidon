@@ -290,6 +290,7 @@ class App(tk.Tk):
 
         self.hover_point_index = None
         self.dragging_point_index = None
+        self.shift_point = None
         self.action = None
 
         self.resizable(False, False)
@@ -392,6 +393,7 @@ class App(tk.Tk):
         )
         menu.add_cascade(label="View", menu=view_menu)
 
+        self.canvas.bind("<Shift-Button-1>", self._on_shift_left_mouse_down)
         self.canvas.bind("<Button-1>", self._on_left_mouse_down)
         self.canvas.bind("<Button-3>", self._on_right_mouse_down)
         self.canvas.bind("<ButtonRelease-1>", self._on_left_mouse_up)
@@ -507,6 +509,9 @@ class App(tk.Tk):
         if draw:
             self._draw()
 
+    def _on_shift_left_mouse_down(self, event):
+        self.shift_point = self._window_to_gaze_coords(event.x, event.y)
+
     def _on_left_mouse_down(self, event):
         if self.hover_point_index is not None:
             self.dragging_point_index = self.hover_point_index
@@ -528,6 +533,10 @@ class App(tk.Tk):
         if self.dragging_point_index is not None:
             self.hover_point_index = self.dragging_point_index
             self.dragging_point_index = None
+            self._store_history()
+            self._draw()
+        if self.shift_point is not None:
+            self.shift_point = None
             self._store_history()
             self._draw()
 
@@ -555,6 +564,21 @@ class App(tk.Tk):
             if not self.vertical.get():
                 y = self.dst_points[self.dragging_point_index][1]
             self.dst_points[self.dragging_point_index] = [x, y]
+            self._draw()
+        elif self.shift_point is not None:
+            x, y = self._window_to_gaze_coords(event.x, event.y)
+            dx = x - self.shift_point[0]
+            dy = y - self.shift_point[1]
+            if not self.horizontal.get():
+                dx = 0
+            if not self.vertical.get():
+                dy = 0
+            for i in range(len(self.dst_points)):
+                self.dst_points[i] = [
+                    self.dst_points[i][0] + dx,
+                    self.dst_points[i][1] + dy,
+                ]
+            self.shift_point = (x, y)
             self._draw()
 
     def _undo(self):

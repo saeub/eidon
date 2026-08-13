@@ -46,7 +46,7 @@ This will open a window where you can flip through every screen of your experime
 | <kbd>Ctrl</kbd>+<kbd>Z</kbd>   | Undo                         |
 | <kbd>ESCAPE</kbd>              | Save and exit                |
 
-You can click and drag the blue dots to move and warp the gaze data on this screen. This applies a [thin-plate spline transformation](https://scikit-image.org/docs/stable/auto_examples/transform/plot_tps_deformation.html) to the gaze coordinates. If the data on a screen is not rescuable, you can exclude it using the <kbd>X</kbd> key -- this will set the gaze coordinates for these samples to `null`.
+You can click and drag the blue dots to move and warp the gaze data on this screen. This applies a [thin-plate spline transformation](https://scikit-image.org/docs/stable/auto_examples/transform/plot_tps_deformation.html) to the gaze coordinates. To drag all points at once, hold <kbd>Shift</kbd> while doing so. If the data on a screen is not rescuable, you can exclude it using the <kbd>X</kbd> key -- this will set the gaze coordinates for these samples to `null`.
 
 > **NOTE:** For reading experiments, it is recommended to only apply vertical drift correction, as judging horizontal drift visually is not feasible. You can restrict your edits to the vertical axis by checking `Edit > Vertical correction only` in the menu.
 
