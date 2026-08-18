@@ -120,7 +120,7 @@ class RecordingConverter:
     def get_calibration_data(self, gaze: pm.Gaze) -> pl.DataFrame:
         trials = gaze.messages.filter(pl.col("content").str.contains("TRIALID")).select(
             pl.col("time"),
-            pl.col("content").str.extract(r"TRIALID (?P<stage>.+)").alias("stage"),
+            pl.col("content").str.extract(r"TRIALID (.+)").alias("stage"),
         )
 
         # Map stage names to calibrations
@@ -162,7 +162,7 @@ class RecordingConverter:
             on="stage",
         )
 
-        # Remove validations that occurred after the last calibration
+        # Remove validations that occurred before the calibration
         validation_columns = [
             "validation_time",
             "validation_num_points",

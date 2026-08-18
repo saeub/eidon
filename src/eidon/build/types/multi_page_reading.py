@@ -42,7 +42,7 @@ class MultiPageReading(ExperimentType):
           ├─ 📄 02.txt
           ├─ 📄 03.txt
           ├─ 📄 ...
-          ├─ 📄 practice.txt (optional)
+          └─ 📄 practice.txt (optional)
     ```
 
     - `instructions.txt` contains the text for the instructions shown at the beginning of the experiment.

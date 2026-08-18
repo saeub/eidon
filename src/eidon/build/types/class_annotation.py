@@ -36,8 +36,8 @@ class ClassAnnotation(ExperimentType):
           ├─ 📄 03.txt
           ├─ 📄 ...
           ├─ 📄 practice.01.txt (optional)
-          └─ 📄 practice.02.txt (optional)
-          ├─ 📄 ...
+          ├─ 📄 practice.02.txt (optional)
+          └─ 📄 ...
     ```
 
     - `instructions.txt` contains the text for the instructions shown at the beginning of the experiment.
