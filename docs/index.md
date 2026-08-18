@@ -14,7 +14,11 @@ You can use it to ...
 
 _eidon_ is designed to be both **easy to use** and **easy to customize**, depending on your needs and level of expertise. It prioritizes **interoperability**, so you can combine it with the tools you already use and love.
 
-> While _eidon_ is usable and has been used successfully in [research projects](projects), it is still under development. This means that some features may be missing, and other features may improve in the future. You can help us out by [creating feature requests or bug reports](https://github.com/saeub/eidon/issues), or by [contributing code](https://github.com/saeub/eidon/pulls)!
+<p align="center">
+    <a href="getting-started" style="font-size: 1.5rem; font-weight: 500">🚀 Get started here</a>
+</p>
+
+> _eidon_ is still under development. Some features may be missing or buggy. You can help us out by [creating feature requests or bug reports](https://github.com/saeub/eidon/issues), or by [contributing code](https://github.com/saeub/eidon/pulls)!
 
 ## Who is _eidon_ for?
 

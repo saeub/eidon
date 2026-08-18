@@ -1,1 +1,5 @@
 $purple-000: #ac50b8;
+
+pre:has(> code.language-mermaid) {
+    text-align: center;
+}
