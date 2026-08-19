@@ -118,7 +118,7 @@ class RecordingCleaner:
                 stimulus_index = 0
             elif app.action == "last":
                 stimulus_index = len(stimuli) - 1
-            elif app.action.startswith("goto:"):
+            elif app.action is not None and app.action.startswith("goto:"):
                 stimulus_index = int(app.action.split(":")[1])
             else:
                 break
@@ -344,6 +344,7 @@ class App(tk.Tk):
         view_menu.add_radiobutton(label="Scale: 100%", variable=self.scale, value=1.0)
         view_menu.add_radiobutton(label="Scale: 75%", variable=self.scale, value=0.75)
         view_menu.add_radiobutton(label="Scale: 50%", variable=self.scale, value=0.5)
+        view_menu.add_radiobutton(label="Scale: 25%", variable=self.scale, value=0.25)
         view_menu.add_separator()
         view_menu.add_radiobutton(
             label="Gaze resolution: 100% (slow!)", variable=self.simplification, value=1
@@ -641,14 +642,20 @@ class App(tk.Tk):
             next_x, next_y = self._gaze_to_window_coords(
                 row["next_pixel_x"], row["next_pixel_y"]
             )
-            self.canvas.create_line(
-                x,
-                y,
-                next_x,
-                next_y,
-                fill="black" if not remove else "red",
-                width=self.line_width.get(),
-            )
+            if (
+                not pd.isna(x)
+                and not pd.isna(y)
+                and not pd.isna(next_x)
+                and not pd.isna(next_y)
+            ):
+                self.canvas.create_line(
+                    x,
+                    y,
+                    next_x,
+                    next_y,
+                    fill="black" if not remove else "red",
+                    width=self.line_width.get(),
+                )
             # Draw scattered dots
             dot_x = random.randint(0, 10)
             self.canvas.create_line(
