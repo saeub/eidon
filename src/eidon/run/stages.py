@@ -8,8 +8,8 @@ from typing import TYPE_CHECKING, Any
 
 import pyglet
 
-from eidon.run.events import Event
 from eidon.run import graphics
+from eidon.run.events import Event
 
 if TYPE_CHECKING:
     from eidon.run.runner import ExperimentRunner
