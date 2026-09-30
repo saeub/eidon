@@ -3,7 +3,9 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any
+
+from eidon.build.materials import load_materials_file
 
 
 @dataclass(kw_only=True)
@@ -11,6 +13,7 @@ class ExperimentType(ABC):
     """
     Base class for experiment types.
 
+    :param experiment_path: Path to the experiment directory.
     :param background_color: Color for window and stimulus backgrounds.
         (red, green, blue) with values from 0 to 255.
     :param stimulus_area_size: Size of the rectangular stimulus area in pixels (width, height).
@@ -19,6 +22,7 @@ class ExperimentType(ABC):
         The area cannot be larger than the resolution of your monitor.
     """
 
+    experiment_path: Path
     # TODO: Use more user-friendly formats for color and size, and avoid list->tuple conversion for PIL
     stimulus_area_size: tuple[int, int]
     background_color: tuple[int, int, int] = (204, 204, 204)
@@ -32,7 +36,29 @@ class ExperimentType(ABC):
             subclasses.update(subclass.get_subclasses())
         return subclasses
 
+    def __post_init__(self):
+        # Collect material file paths
+        self._material_paths = {}
+        for material_path in self.experiment_path.glob("materials/**/*"):
+            if material_path.is_file():
+                filestem = (
+                    material_path.relative_to(self.experiment_path / "materials")
+                    .with_suffix("")
+                    .as_posix()
+                )
+                if filestem in self._material_paths:
+                    raise ValueError(
+                        f"Two material files with the same name: "
+                        f"{self._material_paths[filestem]}, {material_path})"
+                    )
+                self._material_paths[filestem] = material_path
+
+        # Load materials
+        self.materials = {}
+        for material_name, material_path in self._material_paths.items():
+            self.materials[material_name] = load_materials_file(material_path)
+
     @abstractmethod
-    def build(self, experiment_path: Path) -> dict[str, dict[str, Any]]:
+    def build(self) -> dict[str, dict[str, Any]]:
         """Generate stimuli and return session definitions."""
         pass

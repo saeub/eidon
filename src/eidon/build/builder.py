@@ -32,7 +32,7 @@ class ExperimentBuilder:
                 f"Unknown experiment type: {experiment_type_name}"
                 + f"\nAvailable types: {list(experiment_type_classes.keys())}"
             )
-        experiment_type = experiment_type_classes[experiment_type_name](**config)
+        experiment_type = experiment_type_classes[experiment_type_name](**config, experiment_path=self.experiment_path)
 
         if (self.experiment_path / "recordings").exists() and any(
             (self.experiment_path / "recordings").iterdir()
@@ -52,7 +52,7 @@ class ExperimentBuilder:
         (self.experiment_path / "recordings").mkdir(exist_ok=True)
         (self.experiment_path / "setups").mkdir(exist_ok=True)
 
-        sessions = experiment_type.build(self.experiment_path)
+        sessions = experiment_type.build()
         for name, session in sessions.items():
             with open(self.experiment_path / "sessions" / f"{name}.json", "w") as f:
                 json.dump(session, f, indent=4)
