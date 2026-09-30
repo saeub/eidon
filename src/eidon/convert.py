@@ -14,15 +14,6 @@ class RecordingConverter:
         self.experiment_definition = json.loads(
             (self.experiment_path / "experiment.json").read_text()
         )
-        self.columns = [
-            "time",
-            "stage",
-            "page",
-            "imgpath",
-            "pixel_x",
-            "pixel_y",
-            "pupil",
-        ]
 
     def convert(self, recording_names: list[str] | None = None):
         all_recording_names = [
@@ -43,7 +34,9 @@ class RecordingConverter:
             ]
         else:
             selected_recording_names = find_recordings(
-                self.experiment_path, self.experiment_definition["name"], recording_names
+                self.experiment_path,
+                self.experiment_definition["name"],
+                recording_names,
             )
             asc_paths = [
                 self.experiment_path / "recordings" / name / f"{name}.asc"
@@ -66,6 +59,7 @@ class RecordingConverter:
     ) -> tuple[pl.DataFrame, dict[str, Any]]:
         session = json.loads(session_path.read_text())
         stage_stimuli = {}
+        stages_with_audio_recording = set()
         for stage_data in session["stages"]:
             if "$name" not in stage_data:
                 continue
@@ -75,6 +69,8 @@ class RecordingConverter:
             if "imgpaths" in stage_data:
                 for page, imgpath in enumerate(stage_data["imgpaths"]):
                     stage_stimuli[(stage_data["$name"], str(page))] = imgpath
+            if stage_data.get("$record_audio") is True:
+                stages_with_audio_recording.add(stage_data["$name"])
 
         gaze = pm.gaze.from_asc(
             asc_path,
@@ -105,7 +101,52 @@ class RecordingConverter:
                 return_dtype=pl.Utf8,
             )
         )
-        samples = samples.select(pl.col(self.columns))
+
+        # For stages with audio recording, trim gaze samples to audio recording time range
+        audio_recording_start_messages = gaze.messages.filter(
+            pl.col("content").str.contains("AUDIO_REC_START")
+        )
+        audio_recording_end_messages = gaze.messages.filter(
+            pl.col("content").str.contains("AUDIO_REC_END")
+        )
+        for stage in stages_with_audio_recording:
+            stage_samples = samples.filter(pl.col("stage") == stage)
+            if stage_samples.is_empty():
+                # No gaze recorded for this stage, skip trimming
+                continue
+            stage_start_time = (stage_samples.select(pl.col("time")).min()).item()
+            stage_end_time = (stage_samples.select(pl.col("time")).max()).item()
+            audio_start_time = audio_recording_start_messages.filter(
+                (pl.col("time") >= stage_start_time)
+                & (pl.col("time") <= stage_end_time)
+            )
+            assert (
+                audio_start_time.height == 1
+            ), f"Expected one AUDIO_REC_START message in stage {stage}, found {audio_start_time.height}"
+            audio_end_time = audio_recording_end_messages.filter(
+                (pl.col("time") >= stage_start_time)
+                & (pl.col("time") <= stage_end_time)
+            )
+            assert (
+                audio_end_time.height == 1
+            ), f"Expected one AUDIO_REC_END message in stage {stage}, found {audio_end_time.height}"
+            samples = samples.filter(
+                (pl.col("time") >= audio_start_time.select(pl.col("time")).item())
+                & (pl.col("time") <= audio_end_time.select(pl.col("time")).item())
+                | (pl.col("stage") != stage)
+            )
+
+        samples = samples.select(
+            [
+                pl.col("time").dt.total_milliseconds(fractional=True).alias("time"),
+                "stage",
+                "page",
+                "imgpath",
+                "pixel_x",
+                "pixel_y",
+                "pupil",
+            ]
+        )
 
         calibration_data = self.get_calibration_data(gaze)
         metadata = {
@@ -179,4 +220,17 @@ class RecordingConverter:
                 for column in validation_columns
             ]
         )
+
+        # Convert time columns to milliseconds
+        calibration_data = calibration_data.with_columns(
+            [
+                pl.col("calibration_time")
+                .dt.total_milliseconds(fractional=True)
+                .alias("calibration_time"),
+                pl.col("validation_time")
+                .dt.total_milliseconds(fractional=True)
+                .alias("validation_time"),
+            ]
+        )
+
         return calibration_data
