@@ -1,12 +1,6 @@
 import argparse
 from pathlib import Path
 
-from eidon.build import ExperimentBuilder
-from eidon.clean import RecordingCleaner
-from eidon.convert import RecordingConverter
-from eidon.run import ExperimentRunner
-from eidon.setup import HardwareSetup
-
 
 def get_argument_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Command-line interface for eidon.")
@@ -175,10 +169,14 @@ def main():
         exit(1)
 
     if args.command == "build":
+        from eidon.build import ExperimentBuilder
+
         builder = ExperimentBuilder(experiment_path=args.experiment)
         builder.build(generate_area_images=args.area_images)
 
     elif args.command == "setup":
+        from eidon.setup import HardwareSetup
+
         setup = HardwareSetup(
             experiment_path=args.experiment,
             screen=args.screen,
@@ -186,6 +184,8 @@ def main():
         setup.setup()
 
     elif args.command == "run":
+        from eidon.run import ExperimentRunner
+
         runner = ExperimentRunner(
             experiment_path=args.experiment,
             session_name=args.session,
@@ -196,10 +196,14 @@ def main():
         runner.run(start_from_stage=args.start_from_stage)
 
     elif args.command == "convert":
+        from eidon.convert import RecordingConverter
+
         converter = RecordingConverter(experiment_path=args.experiment)
         converter.convert(args.recording_names)
 
     elif args.command == "clean":
+        from eidon.clean import RecordingCleaner
+
         cleaner = RecordingCleaner(experiment_path=args.experiment)
         if args.apply:
             cleaner.apply(recording_names=args.recording_names)
