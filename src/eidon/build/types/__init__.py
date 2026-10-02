@@ -2,8 +2,9 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from fnmatch import fnmatch
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 
 from eidon.build.materials import load_materials_file
 
@@ -27,6 +28,9 @@ class ExperimentType(ABC):
     stimulus_area_size: tuple[int, int]
     background_color: tuple[int, int, int] = (204, 204, 204)
 
+    _required_materials: ClassVar[list[str]] = []
+    _optional_materials: ClassVar[list[str] | None] = None
+
     @classmethod
     def get_subclasses(cls) -> dict[str, type[ExperimentType]]:
         """Recursively collect all subclasses (and subsubclasses etc.) of this class."""
@@ -37,26 +41,36 @@ class ExperimentType(ABC):
         return subclasses
 
     def __post_init__(self):
-        # Collect material file paths
-        self.material_paths = {}
+        # Load material files
+        self.materials = {}
         for material_path in self.experiment_path.glob("materials/**/*"):
             if material_path.is_file():
-                filestem = (
-                    material_path.relative_to(self.experiment_path / "materials")
-                    .with_suffix("")
-                    .as_posix()
+                path = material_path.relative_to(
+                    self.experiment_path / "materials"
+                ).as_posix()
+                self.materials[path] = load_materials_file(material_path)
+        missing_materials = [
+            path for path in self._required_materials if path not in self.materials
+        ]
+        if missing_materials:
+            raise ValueError(
+                f"Missing required materials: {', '.join(missing_materials)}"
+            )
+        if self._optional_materials is not None:
+            expected_materials = set(self._required_materials) | set(
+                self._optional_materials
+            )
+            unexpected_materials = [
+                path
+                for path in self.materials
+                if not any(
+                    fnmatch(path, pattern) for pattern in expected_materials
                 )
-                if filestem in self.material_paths:
-                    raise ValueError(
-                        f"Two material files with the same name: "
-                        f"{self.material_paths[filestem]}, {material_path})"
-                    )
-                self.material_paths[filestem] = material_path
-
-        # Load materials
-        self.materials = {}
-        for material_name, material_path in self.material_paths.items():
-            self.materials[material_name] = load_materials_file(material_path)
+            ]
+            if unexpected_materials:
+                raise ValueError(
+                    f"Unexpected materials: {', '.join(unexpected_materials)}"
+                )
 
     @property
     def config_path(self) -> Path:

@@ -19,7 +19,7 @@ class SinglePageReading(ExperimentType):
 
     Each experimental item consists of a text and optionally one or more multiple-choice questions.
     Each item may appear in multiple conditions, which are assigned to participants according to the
-    specified design (e.g., Latin square). Filler items can also be added.
+    specified design (e.g., Latin square). Practice and filler items can also be added.
 
     ### Required materials
 
@@ -32,12 +32,9 @@ class SinglePageReading(ExperimentType):
        ├─ 📄 break.txt (optional)
        ├─ 📄 end.txt
        └─ 📂 items
-          ├─ 📄 01.txt
-          ├─ 📄 02.txt
-          ├─ 📄 03.txt
-          ├─ 📄 ...
-          ├─ 📄 practice.txt (optional)
-          └─ 📄 fillers.txt (optional)
+          ├─ 📄 experimental.csv
+          ├─ 📄 practice.csv (optional)
+          └─ 📄 filler.csv (optional)
     ```
 
     - `instructions.txt` contains the text for the instructions shown at the beginning of the experiment.
@@ -50,78 +47,29 @@ class SinglePageReading(ExperimentType):
 
     #### Experimental items
 
-    `01.txt`, `02.txt`, etc. each represent one experimental item. The file names (without `.txt`)
-    are used as item IDs. Each file must follow the following format (values in [brackets] are
-    placeholders):
+    Each row in `experimental.csv` represents an item in a single experimental condition.
 
-    ```
-    <<item>>
-    [text]
-    <<question>>
-    [question stem]
-    <<options>>
-    [option 1]
-    **[option 2]
-    [option 3]
-    <<question>>
-    [question stem]
-    <<options>>
-    [option 1]
-    [option 2]
-    ```
+    The following columns are required:
+    - `id`: Unique identifier for the item.
+    - `text`: Stimulus text to be displayed.
+    - `condition`: Name of the experimental condition. Only required if the experiment configuration
+      specifies multiple conditions.
 
-    If the experiment has **multiple conditions**, each item file contains the text and questions
-    for all conditions, and the name of the condition must be specified like this:
-
-    ```
-    <<[condition 1]>>
-    [text for condition 1]
-    <<question>>
-    [question stem]
-    <<options>>
-    [option 1]
-    **[option 2]
-    [option 3]
-    <<question>>
-    [question stem]
-    <<options>>
-    [option 1]
-    [option 2]
-
-    <<[condition 2]>>
-    [text for condition 2]
-    ...
-    ```
-
-    The number of questions can vary across items. Optionally, one answer option per question can be
-    marked with `**` to indicate that it is the correct answer.
+    The following columns are optional:
+    - `question.0.stem`, `question.1.stem`, ...: The stem of the multiple-choice questions to be
+      asked after the stimulus.
+    - `question.0.options.0`, `question.0.options.1`, ...: The answer options for the
+      multiple-choice questions.
+    - `question.0.correct_option_index`, `question.1.correct_option_index`, ...: The index of the
+      correct answer option for each question (0-based). If not specified, no answer is considered
+      correct.
 
     #### Practice and filler items
 
-    `practice.txt` and `fillers.txt` are optional and can contain any number of practice and filler
-    items, which follow a similar format (but without conditions):
-
-    ```
-    <<filler>>
-    [text for filler 1]
-    <<question>>
-    [question stem]
-    <<options>>
-    [option 1]
-    [option 2]
-    [option 3]
-    <<question>>
-    [question stem]
-    <<options>>
-    [option 1]
-    [option 2]
-
-    <<filler>>
-    [text for filler 2]
-    ...
-    ```
-
-    Replace `<<filler>>` with `<<practice>>` for practice items.
+    `practice.csv` and `filler.csv` are optional and can contain any number of practice and filler
+    items, which follow the same format as `experimental.csv` but do not support multiple conditions.
+    Practice items are presented before the experimental items, and filler items are randomly
+    interspersed with the experimental items.
 
     #### Areas of interest
 
@@ -170,6 +118,18 @@ class SinglePageReading(ExperimentType):
     question_layout: str = "horizontal"
     option_keys: list[str] | None = None
     confirm_key: str | None = None
+
+    _required_materials = [
+        "instructions.txt",
+        "end.txt",
+        "items/experimental.csv",
+    ]
+    _optional_materials = [
+        "wait.txt",
+        "break.txt",
+        "items/practice.csv",
+        "items/filler.csv",
+    ]
 
     def build(self) -> dict[str, dict[str, Any]]:
         if self.question_layout == "horizontal":
@@ -289,9 +249,9 @@ class SinglePageReading(ExperimentType):
         }
         """
         # Collect and check experimental items
-        experimental_items_path = self.material_paths.get("items/experimental")
+        experimental_items_path = "items/experimental.csv"
         experimental_items = {}
-        for item in self.materials["items/experimental"]:
+        for item in self.materials[experimental_items_path]:
             item_id = item["id"]
             item_id = f"item.{item_id}"
             item["id"] = item_id
@@ -354,15 +314,13 @@ class SinglePageReading(ExperimentType):
                     )
 
         if len(experimental_items) == 0:
-            warnings.warn(
-                f"No items found in {self.material_paths['items/experimental']}."
-            )
+            warnings.warn(f"No items found in {experimental_items_path}.")
 
         # Collect and check practice items
-        practice_items_path = self.material_paths.get("items/practice")
+        practice_items_path = "items/practice.csv"
         practice_items = {}
-        if practice_items_path:
-            for item in self.materials["items/practice"]:
+        if practice_items_path in self.materials:
+            for item in self.materials[practice_items_path]:
                 item_id = item["id"]
                 item_id = f"practice.{item_id}"
                 item["id"] = item_id
@@ -387,10 +345,10 @@ class SinglePageReading(ExperimentType):
                 )
 
         # Collect and check filler items
-        filler_items_path = self.material_paths.get("items/fillers")
+        filler_items_path = "items/fillers.csv"
         filler_items = {}
-        if filler_items_path:
-            for item in self.materials["items/fillers"]:
+        if filler_items_path in self.materials:
+            for item in self.materials[filler_items_path]:
                 item_id = item["id"]
                 if item_id in filler_items:
                     raise ValueError(
