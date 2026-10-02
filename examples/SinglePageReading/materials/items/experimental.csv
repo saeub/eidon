@@ -1,0 +1,9 @@
+id,condition,text,questions.0.stem,questions.0.options.0,questions.0.options.1,questions.0.options.2,questions.0.correct_option_index
+0,comma,"While the professor lectured, Dario [[target]]fell[[/target]] asleep.",Who fell asleep?,the professor,Dario,unclear,1
+0,no-comma,"While the professor lectured Dario [[target]]fell[[/target]] asleep.",Who fell asleep?,the professor,Dario,unclear,1
+1,comma,"After the cleaner left, Maria [[target]]went[[/target]] to the store.",Who went to the store?,Maria,the cleaner,unclear,0
+1,no-comma,"After the cleaner left Maria [[target]]went[[/target]] to the store.",Who went to the store?,Maria,the cleaner,unclear,0
+2,comma,"Although the driver stopped, Richard [[target]]became[[/target]] angry.",Who became angry?,the driver,Richard,unclear,1
+2,no-comma,"Although the driver stopped Richard [[target]]became[[/target]] angry.",Who became angry?,the driver,Richard,unclear,1
+3,comma,"While the chef cooked, the waiter [[target]]spilled[[/target]] the soup.",Who spilled the soup?,the chef,the waiter,unclear,1
+3,no-comma,"While the chef cooked the waiter [[target]]spilled[[/target]] the soup.",Who spilled the soup?,the chef,the waiter,unclear,1

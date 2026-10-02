@@ -1,0 +1,4 @@
+id,text,questions.0.stem,questions.0.options.0,questions.0.options.1,questions.0.options.2,questions.0.correct_option_index
+0,"Carl saw the janitor enter two minutes ago.",Who entered?,the janitor,Carl,unclear,0
+1,"The nurse woke the patient up because he had an appointment.",Who had an appointment?,the nurse,the patient,unclear,2
+2,"The woman was stopped by the police, who asked her where she was going.",Who asked the question?,the woman,the police,unclear,1

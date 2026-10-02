@@ -38,7 +38,7 @@ class ExperimentType(ABC):
 
     def __post_init__(self):
         # Collect material file paths
-        self._material_paths = {}
+        self.material_paths = {}
         for material_path in self.experiment_path.glob("materials/**/*"):
             if material_path.is_file():
                 filestem = (
@@ -46,17 +46,22 @@ class ExperimentType(ABC):
                     .with_suffix("")
                     .as_posix()
                 )
-                if filestem in self._material_paths:
+                if filestem in self.material_paths:
                     raise ValueError(
                         f"Two material files with the same name: "
-                        f"{self._material_paths[filestem]}, {material_path})"
+                        f"{self.material_paths[filestem]}, {material_path})"
                     )
-                self._material_paths[filestem] = material_path
+                self.material_paths[filestem] = material_path
 
         # Load materials
         self.materials = {}
-        for material_name, material_path in self._material_paths.items():
+        for material_name, material_path in self.material_paths.items():
             self.materials[material_name] = load_materials_file(material_path)
+
+    @property
+    def config_path(self) -> Path:
+        """Path to the config.yaml file."""
+        return self.experiment_path / "config.yaml"
 
     @abstractmethod
     def build(self) -> dict[str, dict[str, Any]]:

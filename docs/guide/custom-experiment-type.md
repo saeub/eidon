@@ -132,7 +132,7 @@ class MyExperimentType(ExperimentType):
     font_size: int = 25
     continue_key: str = "SPACE"
 
-    def build(self, experiment_path: Path) -> dict[str, dict[str, Any]]:
+    def build(self) -> dict[str, dict[str, Any]]:
         ...
         return {
             "P1": {"stages": [...]},

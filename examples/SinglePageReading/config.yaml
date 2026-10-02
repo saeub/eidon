@@ -4,7 +4,7 @@ type: SinglePageReading
 
 # Design
 num_participants: 8
-conditions: [condition_A, condition_B, condition_C, condition_D]
+conditions: [comma, no-comma]
 design: latin_square
 
 # Appearance
