@@ -38,6 +38,7 @@ def generate_experimenttype_page(
     )
     short_description = parsed_docstring.short_description or ""
     long_description = parsed_docstring.long_description or ""
+    materials_schema = cls.MATERIALS_SCHEMA
 
     # Collect param descriptions from the full MRO so inherited fields are documented
     field_descriptions = {}
@@ -51,11 +52,39 @@ def generate_experimenttype_page(
     fields = cls.__dataclass_fields__
 
     markdown = f"# Experiment type: `{name}`\n\n"
+
     markdown += f"{short_description}\n\n"
     if long_description:
         markdown += "## Description\n\n"
         markdown += f"{long_description}\n\n"
+
+    if materials_schema is not None:
+        paths = {}
+        for path in materials_schema.keys():
+            *dirs, filename = path.split("/")
+            current = paths
+            for dir in dirs:
+                current = current.setdefault(dir + "/", {})
+            current[filename] = {}
+        markdown += "## Files \n\n"
+        markdown += "- `my_experiment`\n"
+        markdown += "  - [`config.yaml`](#configuration)\n"
+        markdown += "  - `materials/`\n"
+        def list_paths(current, depth, anchor_prefix="materials"):
+            list_markdown = ""
+            for part, subpaths in current.items():
+                if part.endswith("/"):
+                    list_markdown += "  " * depth + f"- `{part}`\n"
+                    list_markdown += list_paths(subpaths, depth + 1, anchor_prefix=f"{anchor_prefix}-{part}".rstrip("/").replace(".", "-"))
+                else:
+                    anchor = f"{anchor_prefix}-{part}".rstrip("/").replace(".", "-")
+                    list_markdown += "  " * depth + f"- [`{part}`](#{anchor})\n"
+            return list_markdown
+        markdown += list_paths(paths, 2)
+        markdown += "\n\n"
+
     markdown += "## Configuration\n\n"
+    markdown += "The following configuration parameters can be set in the `config.yaml` file:\n\n"
     for field_name, field in fields.items():
         field_type = field.type
         if isinstance(field_type, type):
@@ -72,6 +101,29 @@ def generate_experimenttype_page(
         if field_default is not dataclasses.MISSING:
             markdown += f"  \n  Default: `{field_default}`"
         markdown += "\n"
+
+    if materials_schema is not None:
+        markdown += "\n## Materials\n\n"
+        markdown += "The following files can be included in the `materials/` directory:\n\n"
+        for path, schema in materials_schema.items():
+            anchor = f"materials-{path}".replace("/", "-").replace(".", "-")
+            markdown += f"- <a id=\"{anchor}\" />`{path}`"
+            if schema.get("required"):
+                markdown += " **(required)**"
+            if "description" in schema:
+                markdown += f"  \n  {schema["description"]}"
+            if "columns" in schema:
+                markdown += "  \n  <details><summary>Columns</summary><ul>\n"
+                for column, column_schema in schema["columns"].items():
+                    markdown += f"\n  <li>\n    <code>{column}</code>"
+                    if "description" in column_schema:
+                        description = column_schema["description"]
+                        description = re.sub(r"`([^`]+)`", r"<code>\1</code>", description)
+                        markdown += f"<br/>\n    {description}"
+                    markdown += "\n  </li>\n"
+                markdown += "\n  </ul>\n  </details>"
+            markdown += "\n"
+
     if (examples_path / name).exists():
         markdown += f"\n## [Example]({examples_url.format(name)})\n"
     return markdown

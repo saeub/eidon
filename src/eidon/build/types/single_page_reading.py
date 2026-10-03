@@ -20,60 +20,19 @@ class SinglePageReading(ExperimentType):
     Each item may appear in multiple conditions, which are assigned to participants according to the
     specified design (e.g., Latin square). Practice and filler items can also be added.
 
-    ### Required materials
+    ### Items
 
-    ```
-    📂 my_experiment
-    ├─ config.yaml
-    └─ 📂 materials
-       ├─ 📄 instructions.txt
-       ├─ 📄 wait.txt (optional)
-       ├─ 📄 break.txt (optional)
-       ├─ 📄 end.txt
-       └─ 📂 items
-          ├─ 📄 experimental.csv
-          ├─ 📄 practice.csv (optional)
-          └─ 📄 filler.csv (optional)
-    ```
+    There are three types of items: experimental, practice, and filler. **Experimental items**
+    constitute the main stimuli of the experiment. **Practice items** are presented before the
+    experimental items to familiarize participants with the task. **Filler items** are randomly
+    interspersed with the experimental items to reduce predictability.
 
-    - `instructions.txt` contains the text for the instructions shown at the beginning of the experiment.
-      The text is automatically split into multiple pages if necessary.
-    - `wait.txt` (optional) contains the text shown after the instructions and after the practice trials,
-      where the participant waits for the experimenter to start the experiment. This is an opportunity
-      for the participant to ask questions or for the experimenter to perform calibration if necessary.
-    - `break.txt` (optional) contains the text shown during breaks.
-    - `end.txt` contains the text shown at the end of the experiment.
+    Items are defined in CSV files (see [below](#files)).
 
-    #### Experimental items
-
-    Each row in `experimental.csv` represents an item in a single experimental condition.
-
-    The following columns are required:
-    - `id`: Unique identifier for the item.
-    - `text`: Stimulus text to be displayed.
-    - `condition`: Name of the experimental condition. Only required if the experiment configuration
-      specifies multiple conditions.
-
-    The following columns are optional:
-    - `question.0.stem`, `question.1.stem`, ...: The stem of the multiple-choice questions to be
-      asked after the stimulus.
-    - `question.0.option.0`, `question.0.option.1`, ...: The answer options for the
-      multiple-choice questions.
-    - `question.0.correct_option_index`, `question.1.correct_option_index`, ...: The index of the
-      correct answer option for each question (0-based). If not specified, no answer is considered
-      correct.
-
-    #### Practice and filler items
-
-    `practice.csv` and `filler.csv` are optional and can contain any number of practice and filler
-    items, which follow the same format as `experimental.csv` but do not support multiple conditions.
-    Practice items are presented before the experimental items, and filler items are randomly
-    interspersed with the experimental items.
-
-    #### Areas of interest
+    ### Areas of interest
 
     Areas of interest can be defined in the `text` column by surrounding them with
-    [[area-name]]...[[/area-name]]. For example:
+    `[[area-name]]...[[/area-name]]`. For example:
 
     ```
     [[subject]]The quick brown fox[[/subject]] jumps over [[object]]the lazy dog[[/object]].
@@ -127,13 +86,22 @@ class SinglePageReading(ExperimentType):
             "required": True,
         },
         "question.#.stem": {
-            "description": "Stem of the first multiple-choice question.",
+            "description": (
+                "Stem of the #-th multiple-choice question "
+                "(starting at 0: `question.0.stem`, `question.1.stem`, ...)."
+            ),
         },
         "question.#.option.#": {
-            "description": "First answer option for the first question.",
+            "description": (
+                "#-th answer option for the #-th question "
+                "(starting at 0: `question.0.option.0`, `question.0.option.1`, ...)."
+            ),
         },
         "question.#.correct_option_index": {
-            "description": "Index of the correct answer option for the first question (0-based).",
+            "description": (
+                "Index of the correct answer option for the #-th question "
+                "(starting at 0: `question.0.correct_option_index`, `question.1.correct_option_index`, ...)."
+            ),
         },
     }
 

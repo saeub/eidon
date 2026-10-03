@@ -3,3 +3,10 @@ $purple-000: #ac50b8;
 pre:has(> code.language-mermaid) {
     text-align: center;
 }
+
+h2#files + ul li::before {
+    content: "📄";
+}
+h2#files + ul li:has(> ul)::before {
+    content: "📂";
+}
