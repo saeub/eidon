@@ -1,22 +1,24 @@
 import csv
 import json
+import re
+import warnings
+from fnmatch import fnmatch
 from pathlib import Path
 from typing import Any
-import warnings
 from PIL import Image
 
 
-def load_txt(path: Path) -> str:
+def load_txt(path: Path, schema: dict[str, Any] | None = None) -> str:
     with open(path) as f:
         return f.read().rstrip("\r\n")
 
 
-def load_json(path: Path) -> Any:
+def load_json(path: Path, schema: dict[str, Any] | None = None) -> Any:
     with open(path) as f:
         return json.load(f)
 
 
-def load_csv(path: Path) -> list[dict[str, Any]]:
+def load_csv(path: Path, schema: dict[str, Any] | None = None) -> list[dict[str, Any]]:
     with open(path) as f:
         reader = csv.DictReader(f)
         subcolumn_paths = {
@@ -24,6 +26,7 @@ def load_csv(path: Path) -> list[dict[str, Any]]:
         }
         subcolumn_rows = []
         for row in reader:
+            _check_columns(row, schema["columns"], path)
             subcolumn_row = {}
             # Fill in subcolumn values
             for column, value in row.items():
@@ -104,6 +107,41 @@ def _strip_none_from_end(container):
             _strip_none_from_end(item)
 
 
+def _check_columns(
+    row: dict[str, Any], columns_schema: dict[str, dict[str, Any]], path: Path
+):
+    """Validate a table row against column definitions."""
+    # Convert column names to regular expressions (* for string keys, # for integer indices)
+    column_name_patterns = {
+        name: re.compile(
+            "^" + re.escape(name).replace(r"\*", r"\w+").replace(r"\#", r"\d+") + "$"
+        )
+        for name in columns_schema
+    }
+
+    # Check for missing and unknown columns
+    required_columns = {
+        name for name, schema in columns_schema.items() if schema.get("required")
+    }
+    allowed_columns = set(columns_schema.keys())
+    missing_columns = [
+        name
+        for name in required_columns
+        if not any(column_name_patterns[name].match(col) for col in row)
+    ]
+    if missing_columns:
+        raise ValueError(
+            f"Missing required columns in {path}: {', '.join(missing_columns)}"
+        )
+    unknown_columns = [
+        col
+        for col in row
+        if not any(column_name_patterns[name].match(col) for name in allowed_columns)
+    ]
+    if unknown_columns:
+        warnings.warn(f"Unknown columns in {path}: {', '.join(unknown_columns)}")
+
+
 def load_png(path: Path) -> Image.Image:
     return Image.open(path)
 
@@ -117,7 +155,7 @@ def load_jpeg(path: Path) -> Image.Image:
     return Image.open(path)
 
 
-LOAD_FUNCTIONS = {
+_load_functions = {
     ".txt": load_txt,
     ".json": load_json,
     ".csv": load_csv,
@@ -127,10 +165,54 @@ LOAD_FUNCTIONS = {
 }
 
 
-def load_materials_file(path: Path) -> Any:
+def load_file(path: Path, schema: dict[str, Any] | None = None) -> Any:
     extension = path.suffix
-    if extension in LOAD_FUNCTIONS:
-        return LOAD_FUNCTIONS[extension](path)
+    if extension in _load_functions:
+        return _load_functions[extension](path, schema)
     else:
         # Unknown extension, return the path itself to allow custom loading in ExperimentType
         return path
+
+
+def load_materials(
+    materials_path: Path, materials_schema: dict[str, dict[str, Any]] | None = None
+) -> dict[str, Any]:
+    """Load all files in a materials directory and validate them against a schema."""
+    materials = {}
+    material_paths = list(materials_path.glob("**/*"))
+    for material_path in material_paths:
+        if material_path.is_file():
+            path = material_path.relative_to(materials_path).as_posix()
+            if materials_schema is not None:
+                (schema,) = [
+                    schema
+                    for pattern, schema in materials_schema.items()
+                    if fnmatch(path, pattern)
+                ]
+            else:
+                schema = None
+            materials[path] = load_file(material_path, schema)
+    if materials_schema is not None:
+        _check_materials(materials, materials_schema)
+    return materials
+
+
+def _check_materials(
+    materials: dict[str, Any], materials_schema: dict[str, dict[str, Any]]
+):
+    """Validate loaded materials against a schema."""
+    # Check for missing and unknown materials
+    required_materials = {
+        path for path, schema in materials_schema.items() if schema.get("required")
+    }
+    allowed_materials = set(materials_schema.keys())
+    missing_materials = [path for path in required_materials if path not in materials]
+    if missing_materials:
+        raise ValueError(f"Missing required materials: {', '.join(missing_materials)}")
+    unknown_materials = [
+        path
+        for path in materials
+        if not any(fnmatch(path, pattern) for pattern in allowed_materials)
+    ]
+    if unknown_materials:
+        warnings.warn(f"Unknown materials: {', '.join(unknown_materials)}")

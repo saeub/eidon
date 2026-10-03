@@ -4,7 +4,6 @@ import random
 import re
 import warnings
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Any
 
 from eidon.build import ExperimentType, stimuli
@@ -58,7 +57,7 @@ class SinglePageReading(ExperimentType):
     The following columns are optional:
     - `question.0.stem`, `question.1.stem`, ...: The stem of the multiple-choice questions to be
       asked after the stimulus.
-    - `question.0.options.0`, `question.0.options.1`, ...: The answer options for the
+    - `question.0.option.0`, `question.0.option.1`, ...: The answer options for the
       multiple-choice questions.
     - `question.0.correct_option_index`, `question.1.correct_option_index`, ...: The index of the
       correct answer option for each question (0-based). If not specified, no answer is considered
@@ -73,11 +72,10 @@ class SinglePageReading(ExperimentType):
 
     #### Areas of interest
 
-    Areas of interest can be defined in the text by surrounding them with
+    Areas of interest can be defined in the `text` column by surrounding them with
     [[area-name]]...[[/area-name]]. For example:
 
     ```
-    <<item>>
     [[subject]]The quick brown fox[[/subject]] jumps over [[object]]the lazy dog[[/object]].
     ```
 
@@ -119,17 +117,71 @@ class SinglePageReading(ExperimentType):
     option_keys: list[str] | None = None
     confirm_key: str | None = None
 
-    _required_materials = [
-        "instructions.txt",
-        "end.txt",
-        "items/experimental.csv",
-    ]
-    _optional_materials = [
-        "wait.txt",
-        "break.txt",
-        "items/practice.csv",
-        "items/filler.csv",
-    ]
+    _ITEM_COLUMNS = {
+        "id": {
+            "description": "Unique identifier for the item.",
+            "required": True,
+        },
+        "text": {
+            "description": "Stimulus text to be displayed.",
+            "required": True,
+        },
+        "question.#.stem": {
+            "description": "Stem of the first multiple-choice question.",
+        },
+        "question.#.option.#": {
+            "description": "First answer option for the first question.",
+        },
+        "question.#.correct_option_index": {
+            "description": "Index of the correct answer option for the first question (0-based).",
+        },
+    }
+
+    MATERIALS_SCHEMA = {
+        "instructions.txt": {
+            "description": "Text for the instructions shown at the beginning of the experiment.",
+            "required": True,
+        },
+        "wait.txt": {
+            "description": (
+                "Text shown after the instructions and practice trials, while waiting "
+                "for the experimenter to start the experimental trials."
+            ),
+        },
+        "break.txt": {
+            "description": "Text shown during breaks.",
+        },
+        "end.txt": {
+            "description": "Text shown at the end of the experiment.",
+            "required": True,
+        },
+        "items/experimental.csv": {
+            "description": (
+                "Table of experimental items, one row per item per condition."
+            ),
+            "required": True,
+            "columns": {
+                **_ITEM_COLUMNS,
+                "condition": {
+                    "description": "Name of the experimental condition. Only required if config.yaml specifies multiple conditions.",
+                },
+            },
+        },
+        "items/practice.csv": {
+            "description": (
+                "Table of practice items, one row per item. "
+                "Practice items do not support multiple conditions."
+            ),
+            "columns": _ITEM_COLUMNS,
+        },
+        "items/filler.csv": {
+            "description": (
+                "Table of filler items, one row per item. "
+                "Filler items do not support multiple conditions."
+            ),
+            "columns": _ITEM_COLUMNS,
+        },
+    }
 
     def build(self) -> dict[str, dict[str, Any]]:
         if self.question_layout == "horizontal":
@@ -553,11 +605,11 @@ class SinglePageReading(ExperimentType):
                     },
                 ]
 
-                for i, question in enumerate(subitem["questions"]):
+                for i, question in enumerate(subitem["question"]):
                     if self.question_layout in {"horizontal", "diamond"}:
                         question_image, option_boxes = stimuli.generate_mcq_page(
                             question["stem"],
-                            question["options"],
+                            question["option"],
                             option_layout=self.question_layout,
                             **text_config,
                         )
@@ -583,7 +635,7 @@ class SinglePageReading(ExperimentType):
                         question_image, cursor_locations = (
                             stimuli.generate_cursor_mcq_page(
                                 question["stem"],
-                                question["options"],
+                                question["option"],
                                 **text_config,
                             )
                         )

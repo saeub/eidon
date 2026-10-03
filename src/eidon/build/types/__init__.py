@@ -2,11 +2,10 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from fnmatch import fnmatch
 from pathlib import Path
 from typing import Any, ClassVar
 
-from eidon.build.materials import load_materials_file
+from eidon.build.materials import load_materials
 
 
 @dataclass(kw_only=True)
@@ -28,8 +27,7 @@ class ExperimentType(ABC):
     stimulus_area_size: tuple[int, int]
     background_color: tuple[int, int, int] = (204, 204, 204)
 
-    _required_materials: ClassVar[list[str]] = []
-    _optional_materials: ClassVar[list[str] | None] = None
+    MATERIALS_SCHEMA: ClassVar[dict[str, dict[str, Any]]] | None = None
 
     @classmethod
     def get_subclasses(cls) -> dict[str, type[ExperimentType]]:
@@ -42,40 +40,19 @@ class ExperimentType(ABC):
 
     def __post_init__(self):
         # Load material files
-        self.materials = {}
-        for material_path in self.experiment_path.glob("materials/**/*"):
-            if material_path.is_file():
-                path = material_path.relative_to(
-                    self.experiment_path / "materials"
-                ).as_posix()
-                self.materials[path] = load_materials_file(material_path)
-        missing_materials = [
-            path for path in self._required_materials if path not in self.materials
-        ]
-        if missing_materials:
-            raise ValueError(
-                f"Missing required materials: {', '.join(missing_materials)}"
-            )
-        if self._optional_materials is not None:
-            expected_materials = set(self._required_materials) | set(
-                self._optional_materials
-            )
-            unexpected_materials = [
-                path
-                for path in self.materials
-                if not any(
-                    fnmatch(path, pattern) for pattern in expected_materials
-                )
-            ]
-            if unexpected_materials:
-                raise ValueError(
-                    f"Unexpected materials: {', '.join(unexpected_materials)}"
-                )
+        self.materials = load_materials(
+            self.experiment_path / "materials", self.MATERIALS_SCHEMA
+        )
 
     @property
     def config_path(self) -> Path:
         """Path to the config.yaml file."""
         return self.experiment_path / "config.yaml"
+
+    @classmethod
+    def get_init_templates(cls) -> dict[str, str] | None:
+        """Return a dictionary of template file paths and contents for eidon init."""
+        return None
 
     @abstractmethod
     def build(self) -> dict[str, dict[str, Any]]:

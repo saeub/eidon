@@ -1,4 +1,4 @@
-id,condition,text,questions.0.stem,questions.0.options.0,questions.0.options.1,questions.0.options.2,questions.0.correct_option_index
+id,condition,text,question.0.stem,question.0.option.0,question.0.option.1,question.0.option.2,question.0.correct_option_index
 0,comma,"While the professor lectured, Dario [[target]]fell[[/target]] asleep.",Who fell asleep?,the professor,Dario,unclear,1
 0,no-comma,"While the professor lectured Dario [[target]]fell[[/target]] asleep.",Who fell asleep?,the professor,Dario,unclear,1
 1,comma,"After the cleaner left, Maria [[target]]went[[/target]] to the store.",Who went to the store?,Maria,the cleaner,unclear,0
