@@ -52,7 +52,6 @@ using multiple tags with the same area name.
       - [`practice.csv`](#materials-items-practice-csv)
       - [`filler.csv`](#materials-items-filler-csv)
 
-
 ## Configuration
 
 The following configuration parameters can be set in the `config.yaml` file:

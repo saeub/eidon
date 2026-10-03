@@ -58,6 +58,10 @@ def generate_experimenttype_page(
         markdown += "## Description\n\n"
         markdown += f"{long_description}\n\n"
 
+    markdown += "## Files \n\n"
+    markdown += "- `my_experiment`\n"
+    markdown += "  - [`config.yaml`](#configuration)\n"
+    markdown += "  - `materials/`\n"
     if materials_schema is not None:
         paths = {}
         for path in materials_schema.keys():
@@ -66,10 +70,6 @@ def generate_experimenttype_page(
             for dir in dirs:
                 current = current.setdefault(dir + "/", {})
             current[filename] = {}
-        markdown += "## Files \n\n"
-        markdown += "- `my_experiment`\n"
-        markdown += "  - [`config.yaml`](#configuration)\n"
-        markdown += "  - `materials/`\n"
         def list_paths(current, depth, anchor_prefix="materials"):
             list_markdown = ""
             for part, subpaths in current.items():
@@ -81,7 +81,7 @@ def generate_experimenttype_page(
                     list_markdown += "  " * depth + f"- [`{part}`](#{anchor})\n"
             return list_markdown
         markdown += list_paths(paths, 2)
-        markdown += "\n\n"
+    markdown += "\n"
 
     markdown += "## Configuration\n\n"
     markdown += "The following configuration parameters can be set in the `config.yaml` file:\n\n"
