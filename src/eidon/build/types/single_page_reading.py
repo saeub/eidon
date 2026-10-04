@@ -102,6 +102,7 @@ class SinglePageReading(ExperimentType):
                 "Index of the correct answer option for the #-th question "
                 "(starting at 0: `question.0.correct_option_index`, `question.1.correct_option_index`, ...)."
             ),
+            "type": int,
         },
     }
 

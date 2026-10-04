@@ -110,7 +110,7 @@ def _strip_none_from_end(container):
 def _check_columns(
     row: dict[str, Any], columns_schema: dict[str, dict[str, Any]], path: Path
 ):
-    """Validate a table row against column definitions."""
+    """Validate a table row against column definitions and convert data types."""
     # Convert column names to regular expressions (* for string keys, # for integer indices)
     column_name_patterns = {
         name: re.compile(
@@ -118,6 +118,8 @@ def _check_columns(
         )
         for name in columns_schema
     }
+
+    # TODO: Refactor to avoid pattern matching multiple times
 
     # Check for missing and unknown columns
     required_columns = {
@@ -140,6 +142,22 @@ def _check_columns(
     ]
     if unknown_columns:
         warnings.warn(f"Unknown columns in {path}: {', '.join(unknown_columns)}")
+
+    # Convert data types
+    for col, value in row.items():
+        schema, = [
+            schema
+            for name, schema in columns_schema.items()
+            if column_name_patterns[name].match(col)
+        ]
+        if "type" in schema:
+            try:
+                row[col] = schema["type"](value)
+            except (ValueError, TypeError) as e:
+                raise ValueError(
+                    f"Error while converting column {col} in {path} "
+                    f"to type {schema['type'].__name__}: {e}"
+                )
 
 
 def load_png(path: Path) -> Image.Image:

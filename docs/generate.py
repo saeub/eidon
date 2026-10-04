@@ -86,6 +86,8 @@ def generate_experimenttype_page(
     markdown += "## Configuration\n\n"
     markdown += "The following configuration parameters can be set in the `config.yaml` file:\n\n"
     for field_name, field in fields.items():
+        if field_name == "experiment_path":
+            continue  # experiment_path is not a user-facing configuration parameter
         field_type = field.type
         if isinstance(field_type, type):
             field_type = field_type.__name__
@@ -116,6 +118,10 @@ def generate_experimenttype_page(
                 markdown += "  \n  <details><summary>Columns</summary><ul>\n"
                 for column, column_schema in schema["columns"].items():
                     markdown += f"\n  <li>\n    <code>{column}</code>"
+                    column_type = column_schema.get("type", str)
+                    markdown += f" ({column_type.__name__})"
+                    if column_schema.get("required"):
+                        markdown += " <strong>(required)</strong>"
                     if "description" in column_schema:
                         description = column_schema["description"]
                         description = re.sub(r"`([^`]+)`", r"<code>\1</code>", description)

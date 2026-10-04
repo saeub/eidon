@@ -56,8 +56,6 @@ using multiple tags with the same area name.
 
 The following configuration parameters can be set in the `config.yaml` file:
 
-- `experiment_path` (Path)  
-  Path to the experiment directory.
 - `stimulus_area_size` (tuple[int, int])  
   Size of the rectangular stimulus area in pixels (width, height). The rectangle will be centered in the screen and all stimuli will be presented inside it. The area needs to be within the trackable range of your eye tracker. The area cannot be larger than the resolution of your monitor.
 - `background_color` (tuple[int, int, int])  
@@ -118,32 +116,32 @@ The following files can be included in the `materials/` directory:
   <details><summary>Columns</summary><ul>
 
   <li>
-    <code>id</code><br/>
+    <code>id</code> (str) <strong>(required)</strong><br/>
     Unique identifier for the item.
   </li>
 
   <li>
-    <code>text</code><br/>
+    <code>text</code> (str) <strong>(required)</strong><br/>
     Stimulus text to be displayed.
   </li>
 
   <li>
-    <code>question.#.stem</code><br/>
+    <code>question.#.stem</code> (str)<br/>
     Stem of the #-th multiple-choice question (starting at 0: <code>question.0.stem</code>, <code>question.1.stem</code>, ...).
   </li>
 
   <li>
-    <code>question.#.option.#</code><br/>
+    <code>question.#.option.#</code> (str)<br/>
     #-th answer option for the #-th question (starting at 0: <code>question.0.option.0</code>, <code>question.0.option.1</code>, ...).
   </li>
 
   <li>
-    <code>question.#.correct_option_index</code><br/>
+    <code>question.#.correct_option_index</code> (int)<br/>
     Index of the correct answer option for the #-th question (starting at 0: <code>question.0.correct_option_index</code>, <code>question.1.correct_option_index</code>, ...).
   </li>
 
   <li>
-    <code>condition</code><br/>
+    <code>condition</code> (str)<br/>
     Name of the experimental condition. Only required if config.yaml specifies multiple conditions.
   </li>
 
@@ -154,27 +152,27 @@ The following files can be included in the `materials/` directory:
   <details><summary>Columns</summary><ul>
 
   <li>
-    <code>id</code><br/>
+    <code>id</code> (str) <strong>(required)</strong><br/>
     Unique identifier for the item.
   </li>
 
   <li>
-    <code>text</code><br/>
+    <code>text</code> (str) <strong>(required)</strong><br/>
     Stimulus text to be displayed.
   </li>
 
   <li>
-    <code>question.#.stem</code><br/>
+    <code>question.#.stem</code> (str)<br/>
     Stem of the #-th multiple-choice question (starting at 0: <code>question.0.stem</code>, <code>question.1.stem</code>, ...).
   </li>
 
   <li>
-    <code>question.#.option.#</code><br/>
+    <code>question.#.option.#</code> (str)<br/>
     #-th answer option for the #-th question (starting at 0: <code>question.0.option.0</code>, <code>question.0.option.1</code>, ...).
   </li>
 
   <li>
-    <code>question.#.correct_option_index</code><br/>
+    <code>question.#.correct_option_index</code> (int)<br/>
     Index of the correct answer option for the #-th question (starting at 0: <code>question.0.correct_option_index</code>, <code>question.1.correct_option_index</code>, ...).
   </li>
 
@@ -185,27 +183,27 @@ The following files can be included in the `materials/` directory:
   <details><summary>Columns</summary><ul>
 
   <li>
-    <code>id</code><br/>
+    <code>id</code> (str) <strong>(required)</strong><br/>
     Unique identifier for the item.
   </li>
 
   <li>
-    <code>text</code><br/>
+    <code>text</code> (str) <strong>(required)</strong><br/>
     Stimulus text to be displayed.
   </li>
 
   <li>
-    <code>question.#.stem</code><br/>
+    <code>question.#.stem</code> (str)<br/>
     Stem of the #-th multiple-choice question (starting at 0: <code>question.0.stem</code>, <code>question.1.stem</code>, ...).
   </li>
 
   <li>
-    <code>question.#.option.#</code><br/>
+    <code>question.#.option.#</code> (str)<br/>
     #-th answer option for the #-th question (starting at 0: <code>question.0.option.0</code>, <code>question.0.option.1</code>, ...).
   </li>
 
   <li>
-    <code>question.#.correct_option_index</code><br/>
+    <code>question.#.correct_option_index</code> (int)<br/>
     Index of the correct answer option for the #-th question (starting at 0: <code>question.0.correct_option_index</code>, <code>question.1.correct_option_index</code>, ...).
   </li>
 
