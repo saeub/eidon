@@ -19,7 +19,7 @@ class MultiPageReading(ExperimentType):
 
     Each experimental item consists of a text and optionally one or more multiple-choice questions.
     Each item may appear in multiple conditions, which are assigned to participants according to the
-    specified design (e.g., Latin square).
+    specified design (e.g., Latin square). Practice items can also be added.
 
     The main differences to `SinglePageReading` are:
     - The text for each item can span multiple pages. The text is automatically split into pages
@@ -27,114 +27,25 @@ class MultiPageReading(ExperimentType):
     - The texts are vertically aligned to the top of the page (instead of centered).
     - Filler items are not supported.
 
-    ### Required materials
+    ### Items
+
+    There are two types of items: experimental and practice. **Experimental items** constitute the
+    main stimuli of the experiment. **Practice items** are presented before the experimental items
+    to familiarize participants with the task.
+
+    Items are defined in CSV files (see [below](#files)).
+
+    ### Page breaks
+
+    Page breaks are added automatically when the text exceeds the size of the stimulus area.
+    Manual page breaks can be added by inserting `<<pagebreak>>` in the text (on a separate line).
+
+    ### Areas of interest
+
+    Areas of interest can be defined in the `text` column by surrounding them with
+    `[[area-name]]...[[/area-name]]`. For example:
 
     ```
-    📂 my_experiment
-    ├─ config.yaml
-    └─ 📂 materials
-       ├─ 📄 instructions.txt
-       ├─ 📄 wait.txt (optional)
-       ├─ 📄 break.txt (optional)
-       ├─ 📄 end.txt
-       └─ 📂 items
-          ├─ 📄 01.txt
-          ├─ 📄 02.txt
-          ├─ 📄 03.txt
-          ├─ 📄 ...
-          └─ 📄 practice.txt (optional)
-    ```
-
-    - `instructions.txt` contains the text for the instructions shown at the beginning of the experiment.
-      The text is automatically split into multiple pages if necessary.
-    - `wait.txt` (optional) contains the text shown after the instructions and after the practice trials,
-      where the participant waits for the experimenter to start the experiment. This is an opportunity
-      for the participant to ask questions or for the experimenter to perform calibration if necessary.
-    - `break.txt` (optional) contains the text shown during breaks.
-    - `end.txt` contains the text shown at the end of the experiment.
-
-    #### Experimental items
-
-    `01.txt`, `02.txt`, etc. each represent one experimental item. The file names (without `.txt`)
-    are used as item IDs. Each file must follow the following format (values in [brackets] are
-    placeholders):
-
-    ```
-    <<item>>
-    [text]
-    <<question>>
-    [question stem]
-    <<options>>
-    [option 1]
-    **[option 2]
-    [option 3]
-    <<question>>
-    [question stem]
-    <<options>>
-    [option 1]
-    [option 2]
-    ```
-
-    If the experiment has **multiple conditions**, each item file contains the text and questions
-    for all conditions, and the name of the condition must be specified like this:
-
-    ```
-    <<[condition 1]>>
-    [text for condition 1]
-    <<question>>
-    [question stem]
-    <<options>>
-    [option 1]
-    **[option 2]
-    [option 3]
-    <<question>>
-    [question stem]
-    <<options>>
-    [option 1]
-    [option 2]
-
-    <<[condition 2]>>
-    [text for condition 2]
-    ...
-    ```
-
-    Page breaks can be added by inserting `<<pagebreak>>` in the text (on a separate line).
-
-    The number of questions can vary across items. Optionally, one answer option per question can be
-    marked with `**` to indicate that it is the correct answer.
-
-    `practice.txt` are optional and can contain any number of practice items, which follow a similar
-    format (but without conditions):
-
-    #### Practice items
-
-    ```
-    <<practice>>
-    [text for practice item 1]
-    <<question>>
-    [question stem]
-    <<options>>
-    [option 1]
-    [option 2]
-    [option 3]
-    <<question>>
-    [question stem]
-    <<options>>
-    [option 1]
-    [option 2]
-
-    <<practice>>
-    [text for practice item 2]
-    ...
-    ```
-
-    #### Areas of interest
-
-    Areas of interest can be defined in the text by surrounding them with
-    [[area-name]]...[[/area-name]]. For example:
-
-    ```
-    <<item>>
     [[subject]]The quick brown fox[[/subject]] jumps over [[object]]the lazy dog[[/object]].
     ```
 
@@ -176,7 +87,76 @@ class MultiPageReading(ExperimentType):
     option_keys: list[str] | None = None
     confirm_key: str | None = None
 
-    def build(self, experiment_path: Path) -> dict[str, dict[str, Any]]:
+    _ITEM_COLUMNS = {
+        "id": {
+            "description": "Unique identifier for the item.",
+            "required": True,
+        },
+        "text": {
+            "description": "Stimulus text to be displayed.",
+            "required": True,
+        },
+        "question.#.stem": {
+            "description": (
+                "Stem of the #-th multiple-choice question "
+                "(starting at 0: `question.0.stem`, `question.1.stem`, ...)."
+            ),
+        },
+        "question.#.option.#": {
+            "description": (
+                "#-th answer option for the #-th question "
+                "(starting at 0: `question.0.option.0`, `question.0.option.1`, ...)."
+            ),
+        },
+        "question.#.correct_option_index": {
+            "description": (
+                "Index of the correct answer option for the #-th question "
+                "(starting at 0: `question.0.correct_option_index`, `question.1.correct_option_index`, ...)."
+            ),
+            "type": int,
+        },
+    }
+
+    MATERIALS_SCHEMA = {
+        "instructions.txt": {
+            "description": "Text for the instructions shown at the beginning of the experiment.",
+            "required": True,
+        },
+        "wait.txt": {
+            "description": (
+                "Text shown after the instructions and practice trials, while waiting "
+                "for the experimenter to start the experimental trials."
+            ),
+        },
+        "break.txt": {
+            "description": "Text shown during breaks.",
+        },
+        "end.txt": {
+            "description": "Text shown at the end of the experiment.",
+            "required": True,
+        },
+        "items/experimental.csv": {
+            "description": (
+                "Table of experimental items, one row per item per condition."
+            ),
+            "required": True,
+            "columns": {
+                **_ITEM_COLUMNS,
+                "condition": {
+                    "description": "Name of the experimental condition. Only required if config.yaml specifies multiple conditions.",
+                },
+            },
+        },
+        "items/practice.csv": {
+            "description": (
+                "Table of practice items, one row per item. "
+                "Practice items do not support multiple conditions."
+            ),
+            "columns": _ITEM_COLUMNS,
+        },
+    }
+
+    def build(self) -> dict[str, dict[str, Any]]:
         if self.question_layout == "horizontal":
             if self.option_keys is None:
                 raise ValueError(
@@ -218,24 +198,23 @@ class MultiPageReading(ExperimentType):
         }
 
         instructions_stage = self._generate_instructions_stage(
-            experiment_path, text_config
+            text_config
         )
-        end_stage = self._generate_end_stage(experiment_path, text_config)
-        wait_stage = self._generate_wait_stage(experiment_path, text_config)
+        end_stage = self._generate_end_stage(text_config)
+        wait_stage = self._generate_wait_stage(text_config)
         if self.breaks_after is not None:
-            break_stage = self._generate_break_stage(experiment_path, text_config)
+            break_stage = self._generate_break_stage(text_config)
 
-        experimental_items, practice_items = self._parse_items(experiment_path)
+        experimental_items, practice_items = self._process_items()
         stimulus_stages = self._generate_stimulus_stages(
             experimental_items,
             practice_items,
-            experiment_path,
             text_config,
         )
 
         assignments = self._build_item_assignments(experimental_items)
         # Save assignment table for convenience
-        with open(experiment_path / "sessions" / "assignments.csv", "w") as f:
+        with open(self.experiment_path / "sessions" / "assignments.csv", "w") as f:
             csv_writer = csv.writer(f)
             for participant_id in assignments:
                 csv_writer.writerow([participant_id] + assignments[participant_id])
@@ -273,46 +252,87 @@ class MultiPageReading(ExperimentType):
 
         return sessions
 
-    def _parse_items(
-        self, experiment_path: Path
-    ) -> tuple[dict[str, dict[str, Any]], dict[str, dict[str, Any]]]:
+    _ConditionedItem = dict[str, dict[str, Any]]  # {condition: {item}}
+
+    def _process_items(
+        self,
+    ) -> tuple[
+        dict[str, _ConditionedItem],
+        dict[str, _ConditionedItem],
+    ]:
+        """Turn the raw item data into a structured format and validate it.
+
+        Returns experimental, practice, and filler items as dicts
+        mapping item IDs to dicts of conditions to items:
+        {
+            "item.1": {
+                "condition1": {"pages": [...], "question": [...]},
+                "condition2": {"pages": [...], "question": [...]},
+                ...
+            },
+            ...
+        }
+        """
+        # Collect and check experimental items
+        experimental_items_path = "items/experimental.csv"
         experimental_items = {}
-        practice_items = {}
-        for item_path in (experiment_path / "materials" / "items").glob("*.txt"):
-            file_content = item_path.read_text(encoding="utf8")
-            if item_path.name == "practice.txt":
-                item_strings = [
-                    f"<<practice>>\n" + s
-                    for s in file_content.split(f"<<practice>>")
-                    if s.strip()
-                ]
-                for i, item_string in enumerate(item_strings):
-                    item = self._parse_item(item_string, item_path.name)
-                    if set(item.keys()) != {"practice"}:
-                        raise ValueError(
-                            f"Each practice item in {item_path.name} "
-                            f"must be preceded by a <<practice>> tag."
-                        )
-                    practice_items[f"practice.{i+1}"] = item
+        for item in self.materials[experimental_items_path]:
+            item_id = item["id"]
+            item_id = f"item.{item_id}"
+            item["id"] = item_id
+            item_condition = item.get("condition")
+
+            item_text = item["text"]
+            if not item_text:
+                raise ValueError(
+                    f"Item {item_id} in {experimental_items_path} has empty text."
+                )
+            item["pages"] = []
+            item_page_texts = [page.strip("\r\n") for page in item_text.split("\n<<pagebreak>>\n")]
+            for text in item_page_texts:
+                text, custom_area_spans = self._parse_area_spans(text)
+                page = {"text": text, "custom_area_spans": custom_area_spans}
+                item["pages"].append(page)
+
+            # Items with conditions
+            if self.conditions:
+                item_condition = item.get("condition")
+                if not item_condition:
+                    raise ValueError(
+                        f"Item {item_id} in {experimental_items_path} "
+                        f"has missing or empty condition, should have one of {self.conditions}."
+                    )
+                if item_condition not in self.conditions:
+                    raise ValueError(
+                        f"Item {item_id} in {experimental_items_path} "
+                        f"has condition {item_condition}, but expected one of {self.conditions}."
+                    )
+                # Nest conditions within item
+                if item_id not in experimental_items:
+                    experimental_items[item_id] = {}
+                elif item_condition in experimental_items[item_id]:
+                    raise ValueError(
+                        f"Item {item_id} in {experimental_items_path} "
+                        f"has duplicate condition {item_condition}."
+                    )
+                experimental_items[item_id][item_condition] = item
+
+            # Items without conditions
             else:
-                item = self._parse_item(file_content, item_path.name)
-                if self.conditions is None and set(item.keys()) != {"item"}:
+                if item_id in experimental_items:
                     raise ValueError(
-                        f"When no conditions are defined, the experimental item in {item_path.name} "
-                        "must be preceded by a <<item>> tag."
+                        f"Duplicate item ID {item_id} in {experimental_items_path}."
                     )
-                elif self.conditions is not None and set(item.keys()) != set(
-                    self.conditions
-                ):
+                if item_condition:
                     raise ValueError(
-                        f"Item {item_path.name} has conditions {set(item.keys())}, "
-                        f"expected {set(self.conditions)}."
+                        f"Item {item_id} in {experimental_items_path} "
+                        f"has condition {item_condition}, "
+                        f"but no conditions were specified in {self.config_path}."
                     )
-                experimental_items[f"item.{item_path.stem}"] = item
-        if len(experimental_items) == 0:
-            warnings.warn(
-                f"No experimental items found in {experiment_path / 'materials' / 'items'}."
-            )
+                # No conditions, use None as dummy condition key
+                experimental_items[item_id] = {None: item}
+
+        # Check that all items have all expected conditions
         if self.conditions is not None:
             for item_id, item in experimental_items.items():
                 item_conditions = set(item.keys())
@@ -320,150 +340,42 @@ class MultiPageReading(ExperimentType):
                     raise ValueError(
                         f"Item {item_id} has conditions {item_conditions}, expected {self.conditions}."
                     )
+
+        if len(experimental_items) == 0:
+            warnings.warn(f"No items found in {experimental_items_path}.")
+
+        # Collect and check practice items
+        practice_items_path = "items/practice.csv"
+        practice_items = {}
+        if practice_items_path in self.materials:
+            for item in self.materials[practice_items_path]:
+                item_id = item["id"]
+                item_id = f"practice.{item_id}"
+                item["id"] = item_id
+                if item_id in practice_items:
+                    raise ValueError(
+                        f"Duplicate item ID {item_id} in {practice_items_path}."
+                    )
+                item_text = item["text"]
+                if not item_text:
+                    raise ValueError(
+                        f"Item {item_id} in {practice_items_path} has empty text."
+                    )
+                item["pages"] = []
+                item_page_texts = [page.strip("\r\n") for page in item_text.split("\n<<pagebreak>>\n")]
+                for text in item_page_texts:
+                    text, custom_area_spans = self._parse_area_spans(text)
+                    page = {"text": text, "custom_area_spans": custom_area_spans}
+                    item["pages"].append(page)
+                # No conditions for practice items, use None as dummy condition key
+                practice_items[item_id] = {None: item}
+
+            if practice_items is not None and len(practice_items) == 0:
+                warnings.warn(
+                    f"No practice items found in {self.material_paths['items/practice']}."
+                )
+
         return experimental_items, practice_items
-
-    def _parse_item(self, item_string: str, filename: str) -> dict[str, Any]:
-        """
-        Parse a stimulus string into a dict containing the text and questions for each condition.
-
-        Item string format (values in brackets are placeholders):
-        '''
-        <<[condition 1]>>
-        [text for condition 1]
-        <<question>>
-        [question stem]
-        <<options>>
-        [option 1]
-        **[option 2]
-        [option 3]
-        <<question>>
-        [question stem]
-        <<options>>
-        [option 1]
-        [option 2]
-
-        <<[condition 2]>>
-        ...
-        '''
-
-        Each condition can contain multiple questions. Correct answer options can be marked with **.
-
-        Returns a dict with this structure:
-        {
-            "[condition_1]": {
-                "pages": [
-                    {"text": "[text for condition A]", "custom_area_spans": {}},
-                    {"text": "[more text for condition A]", "custom_area_spans": {}}
-                ],
-                "questions": {
-                    "stem": "[question stem]"
-                    "options": ["[option 1]", "[option 2]", "[option 3]"]
-                    "correct_option_index": 1
-                },
-            },
-            "[condition_2]": {
-                ...
-            }
-        }
-        """
-        # Generic regex that captures any tag and the text on the following lines
-        tag_pattern = re.compile(r"<<(.+)>>\n([\S\s]+?)(?=<<|\Z)", re.MULTILINE)
-        matches = []
-        match_start = 0
-        while match_start < len(item_string):
-            match = tag_pattern.match(item_string, match_start)
-            if not match:
-                raise ValueError(
-                    f"Expected a <<tag>> followed by text in {filename} at "
-                    f"'{item_string[match_start:match_start+20]}...'"
-                )
-            matches.append(match)
-            match_start = match.end()
-        if not matches:
-            raise ValueError(f"No tags found in {filename}.")
-
-        item = {}
-        current_condition = None
-        current_subitem = None  # Holds text/questions for the current condition
-        for match in matches:
-            tag = match.group(1).strip()
-            if re.search(r"\s", tag):
-                raise ValueError(
-                    f"Invalid tag <<{tag}>> in {filename}: tags cannot contain whitespace."
-                )
-            text = match.group(2).strip()
-
-            # Page break
-            if tag == "pagebreak":
-                if current_subitem is None:
-                    raise ValueError(
-                        f"'<<pagebreak>>' tag found before any item/condition tag in {filename}."
-                    )
-                text, custom_area_spans = self._parse_area_spans(text)
-                current_subitem["pages"].append(
-                    {"text": text, "custom_area_spans": custom_area_spans}
-                )
-            # Question stem
-            elif tag == "question":
-                if current_subitem is None:
-                    raise ValueError(
-                        f"'<<question>>' tag found before any item/condition tag in {filename}."
-                    )
-                current_subitem["questions"].append(
-                    {"stem": text, "options": None, "correct_option_index": None}
-                )
-            # Question options
-            elif tag == "options":
-                if current_subitem is None or not current_subitem["questions"]:
-                    raise ValueError(
-                        f"'<<options>>' tag found without a preceding '<<question>>' in {filename}."
-                    )
-                if current_subitem["questions"][-1]["options"] is not None:
-                    raise ValueError(
-                        f"Multiple '<<options>>' tags found for question {current_subitem['questions'][-1]['stem']} in {filename}."
-                    )
-                options = []
-                correct_option_index = None
-                for line in text.splitlines():
-                    line = line.strip()
-                    if not line:
-                        continue
-                    if line.startswith("**"):
-                        option_text = line[2:].strip()
-                        if correct_option_index is not None:
-                            raise ValueError(
-                                f"Multiple options marked as correct in {filename}."
-                            )
-                        correct_option_index = len(options)
-                    else:
-                        option_text = line
-                    options.append(option_text)
-                current_subitem["questions"][-1]["options"] = options
-                current_subitem["questions"][-1][
-                    "correct_option_index"
-                ] = correct_option_index
-            else:
-                # New condition
-                if current_condition is not None:
-                    item[current_condition] = current_subitem
-                current_condition = tag
-                text, custom_area_spans = self._parse_area_spans(text)
-                current_subitem = {
-                    "pages": [{"text": text, "custom_area_spans": custom_area_spans}],
-                    "questions": [],
-                }
-        # Final condition
-        if current_condition is not None:
-            item[current_condition] = current_subitem
-
-        for subitem in item.values():
-            for question in subitem["questions"]:
-                if not question["options"]:
-                    raise ValueError(
-                        f"Question '{question['stem']}' in {filename} has no options."
-                    )
-
-        return item
 
     def _parse_area_spans(
         self, text: str
@@ -486,17 +398,17 @@ class MultiPageReading(ExperimentType):
         return clean_text, dict(area_spans)
 
     def _generate_instructions_stage(
-        self, experiment_path: Path, text_config: dict[str, Any]
+        self, text_config: dict[str, Any]
     ) -> dict[str, Any]:
         text = (
-            (experiment_path / "materials" / "instructions.txt")
+            (self.experiment_path / "materials" / "instructions.txt")
             .read_text(encoding="utf8")
             .strip()
         )
         # TODO: Allow manual page breaks
         images = stimuli.generate_text_pages(text, **text_config)
         for i, image in enumerate(images):
-            image.save(experiment_path, f"instructions.{i}")
+            image.save(self.experiment_path, f"instructions.{i}")
         return {
             "$type": "StimulusMultiPage",
             "$name": "instructions",
@@ -506,18 +418,14 @@ class MultiPageReading(ExperimentType):
         }
 
     def _generate_end_stage(
-        self, experiment_path: Path, text_config: dict[str, Any]
+        self, text_config: dict[str, Any]
     ) -> dict[str, Any]:
-        text = (
-            (experiment_path / "materials" / "end.txt")
-            .read_text(encoding="utf8")
-            .strip()
-        )
+        text = self.materials["end.txt"]
         (image,) = stimuli.generate_text_pages(
             text,
             **text_config,
         )
-        image.save(experiment_path, "end")
+        image.save(self.experiment_path, "end")
         return {
             "$type": "StimulusPage",
             "$name": "end",
@@ -527,13 +435,14 @@ class MultiPageReading(ExperimentType):
 
     def _generate_wait_stage(
         self,
-        experiment_path: Path,
         text_config: dict[str, Any],
     ) -> dict[str, Any]:
         participant_text = ""
-        if (experiment_path / "materials" / "wait.txt").exists():
+        if "wait.txt" in self.materials:
+            participant_text = self.materials["wait.txt"]
+        if (self.experiment_path / "materials" / "wait.txt").exists():
             participant_text = (
-                (experiment_path / "materials" / "wait.txt")
+                (self.experiment_path / "materials" / "wait.txt")
                 .read_text(encoding="utf8")
                 .strip()
             )
@@ -541,12 +450,12 @@ class MultiPageReading(ExperimentType):
             participant_text,
             **text_config,
         )
-        participant_image.save(experiment_path, "wait.participant")
+        participant_image.save(self.experiment_path, "wait.participant")
         (host_image,) = stimuli.generate_text_pages(
             "[SPACE] Setup\n[ESC] Continue",
             **text_config,
         )
-        host_image.save(experiment_path, "wait.host")
+        host_image.save(self.experiment_path, "wait.host")
         return {
             "$name": "wait",
             "$type": "HostControlled",
@@ -562,19 +471,14 @@ class MultiPageReading(ExperimentType):
 
     def _generate_break_stage(
         self,
-        experiment_path: Path,
         text_config: dict[str, Any],
     ) -> dict[str, Any]:
-        text = (
-            (experiment_path / "materials" / "break.txt")
-            .read_text(encoding="utf8")
-            .strip()
-        )
+        text = self.materials["break.txt"]
         (image,) = stimuli.generate_text_pages(
             text,
             **text_config,
         )
-        image.save(experiment_path, "break")
+        image.save(self.experiment_path, "break")
         return {
             "$type": "HostControlled",
             "continue_key": "ESCAPE",
@@ -591,7 +495,6 @@ class MultiPageReading(ExperimentType):
         self,
         experimental_items: dict[str, dict[str, Any]],
         practice_items: dict[str, dict[str, Any]],
-        experiment_path: Path,
         text_config: dict[str, Any],
     ) -> dict[str, list[dict[str, Any]]]:
         stimulus_stages = {}
@@ -620,7 +523,7 @@ class MultiPageReading(ExperimentType):
                             warnings.warn(
                                 f"Area '{area_type}' in item {name} (page {i}) crosses line boundaries."
                             )
-                    image.save(experiment_path, f"{name}.text.{i}")
+                    image.save(self.experiment_path, f"{name}.text.{i}")
                 text_start_location = (
                     int(self.margin - self.font_size),
                     int(self.margin + self.font_size * self.line_spacing / 2),
@@ -640,7 +543,7 @@ class MultiPageReading(ExperimentType):
                         "imgpath": image.imgpath,
                         "continue_key": "SPACE",
                         "$after": {
-                            "$type": "FixationCross",
+                            "$type": "FixationTarget",
                             "location": text_start_location,
                         },
                     }
@@ -648,15 +551,15 @@ class MultiPageReading(ExperimentType):
                 ]
                 stages[-1].pop("$after")  # Remove fixation cross after last page
 
-                for i, question in enumerate(subitem["questions"]):
+                for i, question in enumerate(subitem["question"]):
                     if self.question_layout in {"horizontal", "diamond"}:
                         question_image, option_boxes = stimuli.generate_mcq_page(
                             question["stem"],
-                            question["options"],
+                            question["option"],
                             option_layout=self.question_layout,
                             **text_config,
                         )
-                        question_image.save(experiment_path, f"{name}.question.{i+1}")
+                        question_image.save(self.experiment_path, f"{name}.question.{i+1}")
                         stages.append(
                             {
                                 "$name": f"{name}.question.{i+1}",
@@ -676,11 +579,11 @@ class MultiPageReading(ExperimentType):
                         question_image, cursor_locations = (
                             stimuli.generate_cursor_mcq_page(
                                 question["stem"],
-                                question["options"],
+                                question["option"],
                                 **text_config,
                             )
                         )
-                        question_image.save(experiment_path, f"{name}.question.{i+1}")
+                        question_image.save(self.experiment_path, f"{name}.question.{i+1}")
                         stages.append(
                             {
                                 "$name": f"{name}.question.{i+1}",

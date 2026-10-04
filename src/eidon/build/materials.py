@@ -9,17 +9,17 @@ from PIL import Image
 
 
 def load_txt(path: Path, schema: dict[str, Any] | None = None) -> str:
-    with open(path) as f:
+    with open(path, encoding="utf8") as f:
         return f.read().rstrip("\r\n")
 
 
 def load_json(path: Path, schema: dict[str, Any] | None = None) -> Any:
-    with open(path) as f:
+    with open(path, encoding="utf8") as f:
         return json.load(f)
 
 
 def load_csv(path: Path, schema: dict[str, Any] | None = None) -> list[dict[str, Any]]:
-    with open(path) as f:
+    with open(path, encoding="utf8") as f:
         reader = csv.DictReader(f)
         subcolumn_paths = {
             column: _get_subcolumn_path(column) for column in reader.fieldnames
@@ -202,11 +202,21 @@ def load_materials(
         if material_path.is_file():
             path = material_path.relative_to(materials_path).as_posix()
             if materials_schema is not None:
-                (schema,) = [
+                matching_schemas = [
                     schema
                     for pattern, schema in materials_schema.items()
                     if fnmatch(path, pattern)
                 ]
+                if len(matching_schemas) == 0:
+                    raise ValueError(
+                        f"No matching schema for materials file {path}."
+                    )
+                elif len(matching_schemas) > 1:
+                    raise ValueError(
+                        f"Multiple matching schemas for materials file {path}: "
+                        f"{', '.join(matching_schemas)}"
+                    )
+                schema = matching_schemas[0]
             else:
                 schema = None
             materials[path] = load_file(material_path, schema)

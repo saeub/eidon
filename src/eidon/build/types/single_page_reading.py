@@ -420,11 +420,7 @@ class SinglePageReading(ExperimentType):
     def _generate_instructions_stage(
         self, text_config: dict[str, Any]
     ) -> dict[str, Any]:
-        text = (
-            (self.experiment_path / "materials" / "instructions.txt")
-            .read_text(encoding="utf8")
-            .strip()
-        )
+        text = self.materials["instructions.txt"]
         # TODO: Allow manual page breaks
         images = stimuli.generate_text_pages(text, **text_config)
         for i, image in enumerate(images):
@@ -438,11 +434,7 @@ class SinglePageReading(ExperimentType):
         }
 
     def _generate_end_stage(self, text_config: dict[str, Any]) -> dict[str, Any]:
-        text = (
-            (self.experiment_path / "materials" / "end.txt")
-            .read_text(encoding="utf8")
-            .strip()
-        )
+        text = self.materials["end.txt"]
         (image,) = stimuli.generate_text_pages(
             text,
             **text_config,
@@ -460,12 +452,8 @@ class SinglePageReading(ExperimentType):
         text_config: dict[str, Any],
     ) -> dict[str, Any]:
         participant_text = ""
-        if (self.experiment_path / "materials" / "wait.txt").exists():
-            participant_text = (
-                (self.experiment_path / "materials" / "wait.txt")
-                .read_text(encoding="utf8")
-                .strip()
-            )
+        if "wait.txt" in self.materials:
+            participant_text = self.materials["wait.txt"]
         (participant_image,) = stimuli.generate_text_pages(
             participant_text,
             **text_config,
@@ -493,11 +481,7 @@ class SinglePageReading(ExperimentType):
         self,
         text_config: dict[str, Any],
     ) -> dict[str, Any]:
-        text = (
-            (self.experiment_path / "materials" / "break.txt")
-            .read_text(encoding="utf8")
-            .strip()
-        )
+        text = self.materials["break.txt"]
         (image,) = stimuli.generate_text_pages(
             text,
             **text_config,
