@@ -372,7 +372,7 @@ class MultiPageReading(ExperimentType):
 
             if practice_items is not None and len(practice_items) == 0:
                 warnings.warn(
-                    f"No practice items found in {self.material_paths['items/practice']}."
+                    f"No practice items found in {practice_items_path}."
                 )
 
         return experimental_items, practice_items

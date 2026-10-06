@@ -7,16 +7,16 @@ num_participants: 8
 
 # Appearance
 stimulus_area_size: [1100, 900]
-font_monospaced: true
+font_monospaced: false
 background_color: [204, 204, 204]
 margin: 50
 font_size: 25
 line_spacing: 2.5
 
 # Labels
-labels: [positive, negative, no_impact, mixed]
-label_texts: ["[A] positive", "[S] negative", "[D] neither", "[F] mixed"]
-label_option_keys: [A, S, D, F]
+labels: [positive, neutral, negative]
+label_texts: ["[<] positive", "[v] neutral", "[>] negative"]
+label_option_keys: [LEFT, DOWN, RIGHT]
 label_confirm_key: SPACE
 
 # Questions
@@ -26,4 +26,4 @@ questions:
 question_confirm_key: SPACE
 
 # Breaks between items
-breaks_after: 4
+breaks_after: 3

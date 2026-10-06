@@ -17,48 +17,18 @@ Each annotation item consists of a text and optionally one or more multiple-choi
 (e.g., confidence ratings). Every annotator annotates the same set of items, and the order of
 items is randomized for each participant.
 
-### Required materials
+### Items
 
-```
-📂 my_experiment
-├─ config.yaml
-└─ 📂 materials
-   ├─ 📄 instructions.txt
-   ├─ 📄 wait.txt (optional)
-   ├─ 📄 break.txt (optional)
-   ├─ 📄 end.txt
-   └─ 📂 items
-      ├─ 📄 01.txt
-      ├─ 📄 02.txt
-      ├─ 📄 03.txt
-      ├─ 📄 ...
-      ├─ 📄 practice.01.txt (optional)
-      └─ 📄 practice.02.txt (optional)
-      ├─ 📄 ...
-```
+There are two types of items: experimental and practice. **Experimental items** constitute the
+main stimuli of the experiment. **Practice items** are presented before the experimental items
+to familiarize participants with the task.
 
-- `instructions.txt` contains the text for the instructions shown at the beginning of the experiment.
-  The text is automatically split into multiple pages if necessary.
-- `wait.txt` (optional) contains the text shown after the instructions and after the practice trials,
-  where the participant waits for the experimenter to start the experiment. This is an opportunity
-  for the participant to ask questions or for the experimenter to perform calibration if necessary.
-- `break.txt` (optional) contains the text shown during breaks.
-- `end.txt` contains the text shown at the end of the experiment.
+Items are defined in CSV files (see [below](#files)).
 
-#### Annotation items
+### Areas of interest
 
-`01.txt`, `02.txt`, etc. each represent one item to be annotated. The file names (without `.txt`)
-are used as item IDs. Each file contains the text to be annotated.
-
-#### Practice items
-
-Practice items are optional and follow the same format as regular items. File names of practice
-items must start with `practice.` (e.g., `practice.01.txt`).
-
-#### Areas of interest
-
-Areas of interest can be defined in the text by surrounding them with
-[[area-name]]...[[/area-name]]. For example:
+Areas of interest can be defined in the `text` column by surrounding them with
+`[[area-name]]...[[/area-name]]`. For example:
 
 ```
 [[subject]]The quick brown fox[[/subject]] jumps over [[object]]the lazy dog[[/object]].
@@ -67,7 +37,7 @@ Areas of interest can be defined in the text by surrounding them with
 An item can contain any number of areas of interest. Discontinuous areas can be defined by
 using multiple tags with the same area name.
 
-#### Questions
+### Questions
 
 Multiple-choice questions are optional and can be defined in `config.yaml`. The questions
 are presented after a label has been selected. The questions are the same for every item.
@@ -85,13 +55,30 @@ questions:
     - ...
 ```
 
+## Files 
+
+- `my_experiment`
+  - [`config.yaml`](#configuration)
+  - `materials/`
+    - [`instructions.txt`](#materials-instructions-txt)
+    - [`wait.txt`](#materials-wait-txt)
+    - [`break.txt`](#materials-break-txt)
+    - [`end.txt`](#materials-end-txt)
+    - `items/`
+      - [`experimental.csv`](#materials-items-experimental-csv)
+      - [`practice.csv`](#materials-items-practice-csv)
+
 ## Configuration
+
+The following configuration parameters can be set in the `config.yaml` file:
 
 - `stimulus_area_size` (tuple[int, int])  
   Size of the rectangular stimulus area in pixels (width, height). The rectangle will be centered in the screen and all stimuli will be presented inside it. The area needs to be within the trackable range of your eye tracker. The area cannot be larger than the resolution of your monitor.
 - `background_color` (tuple[int, int, int])  
   Color for window and stimulus backgrounds. (red, green, blue) with values from 0 to 255.  
   Default: `(204, 204, 204)`
+- `MATERIALS_SCHEMA` (ClassVar[dict[str, dict[str, Any]]] | None)  
+  Default: `None`
 - `num_participants` (int)  
   Number of participants in the experiment. Should be a multiple of the number of conditions.
 - `breaks_after` (int | None)  
@@ -134,5 +121,50 @@ questions:
   Key to use for confirming the selection of an option. If not specified, options are selected immediately when the corresponding option key is pressed.  
   Available key names are listed [here](../keyboard).  
   Default: `SPACE`
+
+## Materials
+
+The following files can be included in the `materials/` directory:
+
+- <a id="materials-instructions-txt" />`instructions.txt` **(required)**  
+  Text for the instructions shown at the beginning of the experiment.
+- <a id="materials-wait-txt" />`wait.txt`  
+  Text shown after the instructions and practice trials, while waiting for the experimenter to start the experimental trials.
+- <a id="materials-break-txt" />`break.txt`  
+  Text shown during breaks.
+- <a id="materials-end-txt" />`end.txt` **(required)**  
+  Text shown at the end of the experiment.
+- <a id="materials-items-experimental-csv" />`items/experimental.csv` **(required)**  
+  Table of experimental items, one row per item.  
+  <details><summary>Columns</summary><ul>
+
+  <li>
+    <code>id</code> (str) <strong>(required)</strong><br/>
+    Unique identifier for the item.
+  </li>
+
+  <li>
+    <code>text</code> (str) <strong>(required)</strong><br/>
+    Stimulus text to be displayed.
+  </li>
+
+  </ul>
+  </details>
+- <a id="materials-items-practice-csv" />`items/practice.csv`  
+  Table of practice items, one row per item.   
+  <details><summary>Columns</summary><ul>
+
+  <li>
+    <code>id</code> (str) <strong>(required)</strong><br/>
+    Unique identifier for the item.
+  </li>
+
+  <li>
+    <code>text</code> (str) <strong>(required)</strong><br/>
+    Stimulus text to be displayed.
+  </li>
+
+  </ul>
+  </details>
 
 ## [Example](https://github.com/saeub/eidon/tree/main/examples/ClassAnnotation)

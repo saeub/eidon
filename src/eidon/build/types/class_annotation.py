@@ -20,48 +20,18 @@ class ClassAnnotation(ExperimentType):
     (e.g., confidence ratings). Every annotator annotates the same set of items, and the order of
     items is randomized for each participant.
 
-    ### Required materials
+    ### Items
 
-    ```
-    📂 my_experiment
-    ├─ config.yaml
-    └─ 📂 materials
-       ├─ 📄 instructions.txt
-       ├─ 📄 wait.txt (optional)
-       ├─ 📄 break.txt (optional)
-       ├─ 📄 end.txt
-       └─ 📂 items
-          ├─ 📄 01.txt
-          ├─ 📄 02.txt
-          ├─ 📄 03.txt
-          ├─ 📄 ...
-          ├─ 📄 practice.01.txt (optional)
-          ├─ 📄 practice.02.txt (optional)
-          └─ 📄 ...
-    ```
+    There are two types of items: experimental and practice. **Experimental items** constitute the
+    main stimuli of the experiment. **Practice items** are presented before the experimental items
+    to familiarize participants with the task.
 
-    - `instructions.txt` contains the text for the instructions shown at the beginning of the experiment.
-      The text is automatically split into multiple pages if necessary.
-    - `wait.txt` (optional) contains the text shown after the instructions and after the practice trials,
-      where the participant waits for the experimenter to start the experiment. This is an opportunity
-      for the participant to ask questions or for the experimenter to perform calibration if necessary.
-    - `break.txt` (optional) contains the text shown during breaks.
-    - `end.txt` contains the text shown at the end of the experiment.
+    Items are defined in CSV files (see [below](#files)).
 
-    #### Annotation items
+    ### Areas of interest
 
-    `01.txt`, `02.txt`, etc. each represent one item to be annotated. The file names (without `.txt`)
-    are used as item IDs. Each file contains the text to be annotated.
-
-    #### Practice items
-
-    Practice items are optional and follow the same format as regular items. File names of practice
-    items must start with `practice.` (e.g., `practice.01.txt`).
-
-    #### Areas of interest
-
-    Areas of interest can be defined in the text by surrounding them with
-    [[area-name]]...[[/area-name]]. For example:
+    Areas of interest can be defined in the `text` column by surrounding them with
+    `[[area-name]]...[[/area-name]]`. For example:
 
     ```
     [[subject]]The quick brown fox[[/subject]] jumps over [[object]]the lazy dog[[/object]].
@@ -70,7 +40,7 @@ class ClassAnnotation(ExperimentType):
     An item can contain any number of areas of interest. Discontinuous areas can be defined by
     using multiple tags with the same area name.
 
-    #### Questions
+    ### Questions
 
     Multiple-choice questions are optional and can be defined in `config.yaml`. The questions
     are presented after a label has been selected. The questions are the same for every item.
@@ -131,7 +101,47 @@ class ClassAnnotation(ExperimentType):
     question_option_keys: list[str] | None = None
     question_confirm_key: str | None = "SPACE"
 
-    def build(self, experiment_path: Path) -> dict[str, dict[str, Any]]:
+    _ITEM_COLUMNS = {
+        "id": {
+            "description": "Unique identifier for the item.",
+            "required": True,
+        },
+        "text": {
+            "description": "Stimulus text to be displayed.",
+            "required": True,
+        },
+    }
+
+    MATERIALS_SCHEMA = {
+        "instructions.txt": {
+            "description": "Text for the instructions shown at the beginning of the experiment.",
+            "required": True,
+        },
+        "wait.txt": {
+            "description": (
+                "Text shown after the instructions and practice trials, while waiting "
+                "for the experimenter to start the experimental trials."
+            ),
+        },
+        "break.txt": {
+            "description": "Text shown during breaks.",
+        },
+        "end.txt": {
+            "description": "Text shown at the end of the experiment.",
+            "required": True,
+        },
+        "items/experimental.csv": {
+            "description": ("Table of experimental items, one row per item."),
+            "required": True,
+            "columns": _ITEM_COLUMNS,
+        },
+        "items/practice.csv": {
+            "description": ("Table of practice items, one row per item. "),
+            "columns": _ITEM_COLUMNS,
+        },
+    }
+
+    def build(self) -> dict[str, dict[str, Any]]:
         if self.questions is None:
             self.questions = []
 
@@ -176,29 +186,27 @@ class ClassAnnotation(ExperimentType):
         }
 
         instructions_stage = self._generate_instructions_stage(
-            experiment_path, text_config
+            text_config
         )
-        end_stage = self._generate_end_stage(experiment_path, text_config)
-        wait_stage = self._generate_wait_stage(experiment_path, text_config)
+        end_stage = self._generate_end_stage(text_config)
+        wait_stage = self._generate_wait_stage(text_config)
         if self.breaks_after is not None:
-            break_stage = self._generate_break_stage(experiment_path, text_config)
+            break_stage = self._generate_break_stage(text_config)
 
-        experimental_items, practice_items = self._parse_items(experiment_path)
+        experimental_items, practice_items = self._process_items()
         annotation_stages = self._generate_annotation_stages(
             experimental_items,
             practice_items,
-            experiment_path,
             text_config,
         )
 
         question_stages = self._generate_question_stages(
-            experiment_path,
             text_config,
         )
 
         assignments = self._build_item_assignments(experimental_items)
         # Save assignment table for convenience
-        with open(experiment_path / "sessions" / "assignments.csv", "w") as f:
+        with open(self.experiment_path / "sessions" / "assignments.csv", "w") as f:
             csv_writer = csv.writer(f)
             for participant_id in assignments:
                 csv_writer.writerow([participant_id] + assignments[participant_id])
@@ -245,23 +253,71 @@ class ClassAnnotation(ExperimentType):
 
         return sessions
 
-    def _parse_items(
-        self, experiment_path: Path
+    def _process_items(
+        self,
     ) -> tuple[dict[str, dict[str, Any]], dict[str, dict[str, Any]]]:
+        """Turn the raw item data into a structured format and validate it.
+
+        Returns experimental and practice items as dicts mapping item IDs to items:
+        {
+            "item.1": {item_data},
+            ...
+        }
+        """
+        # Collect and check experimental items
+        experimental_items_path = "items/experimental.csv"
         experimental_items = {}
+        if experimental_items_path in self.materials:
+            for item in self.materials[experimental_items_path]:
+                item_id = item["id"]
+                item_id = f"item.{item_id}"
+                item["id"] = item_id
+                if item_id in experimental_items:
+                    raise ValueError(
+                        f"Duplicate item ID {item_id} in {experimental_items_path}."
+                    )
+                item_text = item["text"]
+                if not item_text:
+                    raise ValueError(
+                        f"Item {item_id} in {experimental_items_path} has empty text."
+                    )
+                item_text, custom_area_spans = self._parse_area_spans(item_text)
+                item["text"] = item_text
+                item["custom_area_spans"] = custom_area_spans
+                experimental_items[item_id] = item
+
+            if experimental_items is not None and len(experimental_items) == 0:
+                warnings.warn(
+                    f"No experimental items found in {experimental_items_path}."
+                )
+
+        # Collect and check practice items
+        practice_items_path = "items/practice.csv"
         practice_items = {}
-        for item_path in (experiment_path / "materials" / "items").glob("*.txt"):
-            item_text = item_path.read_text(encoding="utf8")
-            item_text, custom_area_spans = self._parse_area_spans(item_text)
-            item = {"text": item_text, "custom_area_spans": custom_area_spans}
-            if item_path.name.startswith("practice."):
-                practice_items[item_path.stem] = item
-            else:
-                experimental_items[f"item.{item_path.stem}"] = item
-        if len(experimental_items) == 0:
-            warnings.warn(
-                f"No experimental items found in {experiment_path / 'materials' / 'items'}."
-            )
+        if practice_items_path in self.materials:
+            for item in self.materials[practice_items_path]:
+                item_id = item["id"]
+                item_id = f"practice.{item_id}"
+                item["id"] = item_id
+                if item_id in practice_items:
+                    raise ValueError(
+                        f"Duplicate item ID {item_id} in {practice_items_path}."
+                    )
+                item_text = item["text"]
+                if not item_text:
+                    raise ValueError(
+                        f"Item {item_id} in {practice_items_path} has empty text."
+                    )
+                item_text, custom_area_spans = self._parse_area_spans(item_text)
+                item["text"] = item_text
+                item["custom_area_spans"] = custom_area_spans
+                practice_items[item_id] = item
+
+            if practice_items is not None and len(practice_items) == 0:
+                warnings.warn(
+                    f"No practice items found in {practice_items_path}."
+                )
+
         return experimental_items, practice_items
 
     def _parse_area_spans(
@@ -285,17 +341,17 @@ class ClassAnnotation(ExperimentType):
         return clean_text, dict(area_spans)
 
     def _generate_instructions_stage(
-        self, experiment_path: Path, text_config: dict[str, Any]
+        self, text_config: dict[str, Any]
     ) -> dict[str, Any]:
         text = (
-            (experiment_path / "materials" / "instructions.txt")
+            (self.experiment_path / "materials" / "instructions.txt")
             .read_text(encoding="utf8")
             .strip()
         )
         # TODO: Allow manual page breaks
         images = stimuli.generate_text_pages(text, **text_config)
         for i, image in enumerate(images):
-            image.save(experiment_path, f"instructions.{i}")
+            image.save(self.experiment_path, f"instructions.{i}")
         return {
             "$type": "StimulusMultiPage",
             "$name": "instructions",
@@ -304,11 +360,9 @@ class ClassAnnotation(ExperimentType):
             "next_page_key": "SPACE",
         }
 
-    def _generate_end_stage(
-        self, experiment_path: Path, text_config: dict[str, Any]
-    ) -> dict[str, Any]:
+    def _generate_end_stage(self, text_config: dict[str, Any]) -> dict[str, Any]:
         text = (
-            (experiment_path / "materials" / "end.txt")
+            (self.experiment_path / "materials" / "end.txt")
             .read_text(encoding="utf8")
             .strip()
         )
@@ -316,7 +370,7 @@ class ClassAnnotation(ExperimentType):
             text,
             **text_config,
         )
-        image.save(experiment_path, "end")
+        image.save(self.experiment_path, "end")
         return {
             "$type": "StimulusPage",
             "$name": "end",
@@ -326,13 +380,12 @@ class ClassAnnotation(ExperimentType):
 
     def _generate_wait_stage(
         self,
-        experiment_path: Path,
         text_config: dict[str, Any],
     ) -> dict[str, Any]:
         participant_text = ""
-        if (experiment_path / "materials" / "wait.txt").exists():
+        if (self.experiment_path / "materials" / "wait.txt").exists():
             participant_text = (
-                (experiment_path / "materials" / "wait.txt")
+                (self.experiment_path / "materials" / "wait.txt")
                 .read_text(encoding="utf8")
                 .strip()
             )
@@ -340,12 +393,12 @@ class ClassAnnotation(ExperimentType):
             participant_text,
             **text_config,
         )
-        participant_image.save(experiment_path, "wait.participant")
+        participant_image.save(self.experiment_path, "wait.participant")
         (host_image,) = stimuli.generate_text_pages(
             "[SPACE] Setup\n[ESC] Continue",
             **text_config,
         )
-        host_image.save(experiment_path, "wait.host")
+        host_image.save(self.experiment_path, "wait.host")
         return {
             "$name": "wait",
             "$type": "HostControlled",
@@ -361,11 +414,10 @@ class ClassAnnotation(ExperimentType):
 
     def _generate_break_stage(
         self,
-        experiment_path: Path,
         text_config: dict[str, Any],
     ) -> dict[str, Any]:
         text = (
-            (experiment_path / "materials" / "break.txt")
+            (self.experiment_path / "materials" / "break.txt")
             .read_text(encoding="utf8")
             .strip()
         )
@@ -373,7 +425,7 @@ class ClassAnnotation(ExperimentType):
             text,
             **text_config,
         )
-        image.save(experiment_path, "break")
+        image.save(self.experiment_path, "break")
         return {
             "$type": "HostControlled",
             "continue_key": "ESCAPE",
@@ -390,7 +442,6 @@ class ClassAnnotation(ExperimentType):
         self,
         experimental_items: dict[str, dict[str, Any]],
         practice_items: dict[str, dict[str, Any]],
-        experiment_path: Path,
         text_config: dict[str, Any],
     ) -> dict[str, list[dict[str, Any]]]:
         stimulus_stages = {}
@@ -409,7 +460,7 @@ class ClassAnnotation(ExperimentType):
                     warnings.warn(
                         f"Area '{area_type}' in item {item_id} crosses line boundaries."
                     )
-            anno_image.save(experiment_path, f"{item_id}.anno")
+            anno_image.save(self.experiment_path, f"{item_id}.anno")
             text_start_location = (
                 int(anno_image.areas["section"][0].left - self.font_size),
                 int(
@@ -448,7 +499,6 @@ class ClassAnnotation(ExperimentType):
 
     def _generate_question_stages(
         self,
-        experiment_path: Path,
         text_config: dict[str, Any],
     ) -> list[dict[str, Any]]:
         question_stages = []
@@ -460,7 +510,7 @@ class ClassAnnotation(ExperimentType):
                     option_layout=self.question_layout,
                     **text_config,
                 )
-                question_image.save(experiment_path, f"question.{i+1}")
+                question_image.save(self.experiment_path, f"question.{i+1}")
                 question_stages.append(
                     {
                         "$name": f"question.{i+1}",
@@ -479,7 +529,7 @@ class ClassAnnotation(ExperimentType):
                     question["options"],
                     **text_config,
                 )
-                question_image.save(experiment_path, f"question.{i+1}")
+                question_image.save(self.experiment_path, f"question.{i+1}")
                 question_stages.append(
                     {
                         "$name": f"question.{i+1}",
@@ -500,7 +550,7 @@ class ClassAnnotation(ExperimentType):
         self,
         experimental_items: dict[str, dict[str, Any]],
     ) -> dict[str, list[str]]:
-        """Returns a dict mapping each participant ID to a list of item IDs (with conditions)."""
+        """Returns a dict mapping each participant ID to a list of item IDs."""
         # Build design for experimental items
         participant_ids = [f"P{i}" for i in range(1, self.num_participants + 1)]
         item_ids = sorted(experimental_items.keys())

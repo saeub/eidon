@@ -28,7 +28,7 @@ Shows an image stimulus and allows selecting a response option by moving a curso
 - `confirm_key` (str)  
   The key that confirms the current selection.  
   Available key names are listed [here](../keyboard).
-- `option_values` (list[str] | None)  
+- `option_values` (list[str | int | float | bool | None] | None)  
   The values for each answer option that will be returned and logged. By default, the option indices are used as values.
 - `correct_option_index` (int | None)  
   The index of the correct answer option. This does not affect the presentation, but is logged for convenience.
