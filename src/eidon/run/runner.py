@@ -140,6 +140,18 @@ class ExperimentRunner:
                 origin_x=(self.window.width - self.stimulus_area_width) // 2,
                 origin_y=(self.window.height - self.stimulus_area_height) // 2,
             )
+            self.dummy_indicator = pyglet.text.Label(
+                "DUMMY MODE\nCtrl+Shift+Esc to abort",
+                font_name="Arial",
+                font_size=24,
+                color=(255, 0, 0, 255),
+                multiline=True,
+                x=0,
+                y=self.stimulus_area_height,
+                width=self.stimulus_area_width,
+                anchor_x="left",
+                anchor_y="top",
+            )
         else:
             edf_path = self.recording_path / f"{self.recording_name}.edf"
             eyelink_settings = experiment_definition.get("eyelink_settings")
@@ -283,3 +295,12 @@ class ExperimentRunner:
 
             if (result := stage.update()) is not None:
                 return result
+
+            if self.dummy:
+                # Overlay dummy indicator
+                draw_buffer = pyglet.gl.GLint()
+                pyglet.gl.glGetIntegerv(pyglet.gl.GL_DRAW_BUFFER, draw_buffer)
+                pyglet.gl.glDrawBuffer(pyglet.gl.GL_FRONT)
+                self.dummy_indicator.draw()
+                pyglet.gl.glFlush()
+                pyglet.gl.glDrawBuffer(draw_buffer.value)
