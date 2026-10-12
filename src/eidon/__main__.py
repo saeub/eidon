@@ -1,10 +1,33 @@
 import argparse
 from pathlib import Path
 
+from eidon.build.types import ExperimentType
+
 
 def get_argument_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Command-line interface for eidon.")
     subparsers = parser.add_subparsers(dest="command", required=True)
+
+    init_parser = subparsers.add_parser(
+        "init",
+        help="Create a new experiment.",
+        description=(
+            "Set up a new experiment directory with a minimal configuration file and materials folder."
+        ),
+    )
+    init_parser.add_argument(
+        "--experiment",
+        "-e",
+        type=Path,
+        default=Path.cwd(),
+        help="Path to the new experiment directory.",
+    )
+    init_parser.add_argument(
+        "experiment_type",
+        type=str,
+        choices=ExperimentType.get_subclasses().keys(),
+        help="Type of the experiment to create.",
+    )
 
     build_parser = subparsers.add_parser(
         "build",
@@ -163,6 +186,16 @@ def get_argument_parser() -> argparse.ArgumentParser:
 def main():
     parser = get_argument_parser()
     args = parser.parse_args()
+
+    if args.command == "init":
+        from eidon.init import ExperimentInitializer
+
+        initializer = ExperimentInitializer(
+            experiment_path=args.experiment,
+            experiment_type=args.experiment_type,
+        )
+        initializer.initialize()
+        return
 
     if not args.experiment.exists():
         print(f"Experiment folder '{args.experiment}' does not exist.")

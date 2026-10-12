@@ -24,7 +24,7 @@ class ExperimentType(ABC):
 
     experiment_path: Path
     # TODO: Use more user-friendly formats for color and size, and avoid list->tuple conversion for PIL
-    stimulus_area_size: tuple[int, int]
+    stimulus_area_size: tuple[int, int] = (1100, 900)
     background_color: tuple[int, int, int] = (204, 204, 204)
 
     MATERIALS_SCHEMA: ClassVar[dict[str, dict[str, Any]]] | None = None
@@ -48,11 +48,6 @@ class ExperimentType(ABC):
     def config_path(self) -> Path:
         """Path to the config.yaml file."""
         return self.experiment_path / "config.yaml"
-
-    @classmethod
-    def get_init_templates(cls) -> dict[str, str] | None:
-        """Return a dictionary of template file paths and contents for eidon init."""
-        return None
 
     @abstractmethod
     def build(self) -> dict[str, dict[str, Any]]:

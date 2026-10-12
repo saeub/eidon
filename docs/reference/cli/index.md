@@ -9,6 +9,7 @@ layout: default
 
 | Command | Description |
 | --- | --- |
+| [`init`](init) | Create a new experiment. |
 | [`build`](build) | Build an experiment. |
 | [`run`](run) | Run an experiment session. |
 | [`setup`](setup) | Specify the hardware setup before running a session. |
