@@ -1,3 +1,4 @@
+import csv
 import dataclasses
 from pathlib import Path
 from typing import Union
@@ -62,7 +63,6 @@ class ExperimentInitializer:
                 file_path = self.experiment_path / "materials" / file_path
                 file_path.parent.mkdir(parents=True, exist_ok=True)
                 file_description = file_schema.get("description", "")
-                file_required = file_schema.get("required", False)
                 if file_path.suffix == ".csv":
                     columns = []
                     for column_name in file_schema.get("columns", {}):
@@ -72,11 +72,8 @@ class ExperimentInitializer:
                             )
                         )
                     with open(file_path, "w", encoding="utf-8") as f:
-                        f.write(
-                            ",".join(columns)
-                            + "\n\n"
-                            + f"Documentation: {docs_url}#materials\n"
-                        )
+                        writer = csv.writer(f)
+                        writer.writerow(columns)
                 else:
                     with open(file_path, "w", encoding="utf-8") as f:
                         f.write(

@@ -44,88 +44,72 @@ eidon run P1 --dummy
 
 To implement your own experiment, you first need to find the [experiment type](reference/experiment-types) that matches your use case. For this tutorial, we'll use the [`SinglePageReading`](reference/experiment-types/SinglePageReading) experiment type.
 
-### 1. Create an experiment folder and a configuration file
+### 1. Initialize the experiment folder
 
-First, create a folder and a `config.yaml` file for your experiment:
+To get you started quickly, the `eidon init` command can create the required experiment folder structure for you:
 
-```
-📂 my_experiment
-└─ config.yaml
-```
-
-```yaml
-# config.yaml
-name: "my-experiment"
-type: SinglePageReading
-
-stimulus_area_size: [1100, 900]
-num_participants: 8
-option_keys: [Y, N]
+```bash
+eidon init SinglePageReading -e my-experiment
 ```
 
-The experiment's `name` will appear, among others, in recordings and metadata files.
-
-`stimulus_area_size` defines the width and height (in pixels) of the area where your stimuli will be presented. It is important that this is within your eye tracker's **trackable area** on the screen you're going to use for the experiment. You can use `eidon setup` to test this -- see [below](#2-record-the-hardware-setup).
-
-`option_keys` are the keys on the keyboard that participants are going to use to respond to multiple-choice questions (in this case, we are going to use yes/no questions).
-
-This example is a very bare-bones configuration file. Check the [documentation page for `SinglePageReading`](reference/experiment-types/SinglePageReading) for more configuration options.
-
-### 2. Create stimuli
-
-The [documentation page for `SinglePageReading`](reference/experiment-types/SinglePageReading) tells you the structure and format you need to use for your stimuli:
+This initializes a new experiment in a folder named `my-experiment`. It includes a basic configuration file and some empty materials files:
 
 ```
-📂 my_experiment
-├─ config.yaml
+📂 my-experiment
+├─ 📄 config.yaml
 └─ 📂 materials
    ├─ 📄 instructions.txt
    ├─ 📄 break.txt
+   ├─ 📄 wait.txt
    ├─ 📄 end.txt
    └─ 📂 items
-      ├─ 📄 01.txt
-      ├─ 📄 02.txt
-      ├─ 📄 03.txt
-      ├─ 📄 ...
-      └─ 📄 fillers.txt (optional)
+      ├─ 📄 experimental.csv
+      ├─ 📄 filler.csv
+      └─ 📄 practice.csv
 ```
 
-`instructions.txt`, `break.txt`, and `end.txt` simply contain the text you want to display before/after the experiment and during breaks. The item files `01.txt`, `02.txt`, etc. contain one item each (in different conditions) and need to be structured as follows:
+### 2. Configure settings
 
-```
-<<active>>
-My neighbor's friend stole a candy bar.
-<<question>>
-Did the neighbor steal the candy bar?
-<<options>>
-yes
-**no
+The `config.yaml` file lets you configure how the experiment should look and behave. For example, you can change the size of the area on screen where your stimuli will appear (`stimulus_area_size`), define experimental conditions for your experiment design (`conditions`), or specify what keys participants should use to select options for multiple-choice questions (`option_keys`). Check the [documentation for your experiment type](reference/experiment-types) for more information.
 
-<<passive>>
-A candy bar was stolen by my neighbor's friend.
-<<question>>
-Did the neighbor steal the candy bar?
-<<options>>
-yes
-**no
+For now, let's just set the number of participants to 8, define two experimental conditions (`active` and `passive`) and use the arrow keys <kbd>←</kbd> and <kbd>→</kbd> to select answer options and <kbd>SPACE</kbd> to confirm:
+
+```yaml
+# ...
+
+num_participants: 8
+num_conditions: [active, passive]
+
+# ...
+
+option_keys: [LEFT, RIGHT]
+confirm_key: SPACE
 ```
 
-Here, we have an item in two conditions (`active` and `passive`) with one comprehension question each. The asterisks `**` indicate the correct answer.
+### 3. Create stimuli
 
-Check the [example experiment](https://github.com/saeub/eidon/tree/main/examples/SinglePageReading/materials/items) for more examples of item files.
+The `materials` folder contains all the study materials required for your experiment (including stimulus texts or images, instructions, etc.). For example, `materials/items/experimental.csv` holds the reading passages and questions of each experimental items. Some files (like `practice.csv` or `fillers.csv`) are optional and can be deleted. Refer to the [documentation for your experiment type](reference/experiment-types) for more information, and check out the [example experiments](https://github.com/saeub/eidon/tree/main/examples).
+
+Let's add an experimental item with two conditions to `materials/items/experimental.csv:
+
+```csv
+id,condition,text,question.0.stem,question.0.option.0,question.0.option.1,question.0.correct_option_index
+01,active,"My neighbor's friend stole a candy bar.","Did the neighbor steal the candy bar?",yes,no,1
+01,passive,"A candy bar was stolen by my neighbor's friend.","Did the neighbor steal the candy bar?",yes,no,1
+```
 
 ### 3. Build the experiment
 
-To build your experiment, navigate into the `my_experiment` folder and run:
+To build your experiment, navigate into the `my-experiment` folder and run:
 
 ```bash
 eidon build
 ```
 
-where `my_experiment` is the path to your experiment folder. This will generate the stimulus images, AOI files, and session files:
+This will generate the stimulus images, AOI files, and session files:
 
 ```
-📂 my_experiment
+📂 my-experiment
 ├─ config.yaml
 ├─ experiment.json
 ├─ 📁 materials
@@ -133,12 +117,12 @@ where `my_experiment` is the path to your experiment folder. This will generate 
 │  ├─ 🖼️ instructions.0.png
 │  ├─ 📄 instructions.0.char.csv
 │  ├─ 📄 instructions.0.word.csv
-│  ├─ 🖼️ item.01.active.png
-│  ├─ 📄 item.01.active.char.csv
-│  ├─ 📄 item.01.active.word.csv
-│  ├─ 🖼️ item.01.passive.png
-│  ├─ 📄 item.01.passive.char.csv
-│  ├─ 📄 item.01.passive.word.csv
+│  ├─ 🖼️ item.01.active.text.png
+│  ├─ 📄 item.01.active.text.char.csv
+│  ├─ 📄 item.01.active.text.word.csv
+│  ├─ 🖼️ item.01.active.question.png
+│  ├─ 📄 item.01.active.question.char.csv
+│  ├─ 📄 item.01.active.question.word.csv
 │  └─ 🖼️ ...
 └─ 📂 sessions
    ├─ 📄 P1.json
@@ -158,10 +142,10 @@ where `P1` is the name of a session file (without `.json`).
 
 > **NOTE:** You can abort the experiment using <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Escape</kbd>.
 
-This will create a recording directory under `my_experiment/recordings` containing the log file (this is where the question responses are) and eye-tracking data (except when in dummy mode):
+This will create a recording directory under `my-experiment/recordings` containing the log file with the question responses (and also the eye-tracking data, if not run in dummy mode):
 
 ```
-📂 my_experiment
+📂 my-experiment
 ├─ config.yaml
 ├─ experiment.json
 ├─ 📁 materials
@@ -195,7 +179,7 @@ Before each subsequent session, you will be asked to confirm if the previous set
 The setup configurations are stored in the `setups` directory of your experiment:
 
 ```
-📂 my_experiment
+📂 my-experiment
 ├─ config.yaml
 ├─ experiment.json
 ├─ 📁 materials
@@ -215,7 +199,7 @@ eidon run P1
 
 ### 4. Convert the recordings
 
-After completing a session, the EDF file will automatically be transferred to a directory under `my_experiment/recordings`. To convert the EDF file to a more interoperable format, use the ["EDF Converter" tool by SR Research](https://www.sr-research.com/support/thread-7674.html). After converting the `.edf` to a `.asc` file, run the following command from the root directory of your experiment:
+After completing a session, the EDF file will automatically be transferred to a directory under `my-experiment/recordings`. To convert the EDF file to a more interoperable format, use the ["EDF Converter" tool by SR Research](https://www.sr-research.com/support/thread-7674.html). After converting the `.edf` to a `.asc` file, run the following command from the root directory of your experiment:
 
 ```bash
 eidon convert
@@ -224,7 +208,7 @@ eidon convert
 This will convert all `.asc` files to `.csv` files, which can be opened by all major data analysis software packages. It will also generate a `.json` file containing metadata like calibration errors.
 
 ```
-📂 my_experiment
+📂 my-experiment
 ├─ config.yaml
 ├─ experiment.json
 ├─ 📁 materials
