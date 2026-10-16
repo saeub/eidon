@@ -1,10 +1,8 @@
 You will see sentences on screen. Please read them silently. When you are done, press [SPACE] on the keyboard.
-After each sentence, you will have to answer a yes/no question about the sentence. Press [F] to answer yes, or [J] to answer no.
+After each sentence, you will have to answer a multiple-choice question about the sentence. Press the [LEFT], [DOWN], or [RIGHT] arrow keys to choose the first, second, or third option, and press [SPACE] to confirm.
 
 If you have any questions, please ask the experimenter now.
-Otherwise, press [SPACE] to continue.
 
 
-Please place your left index finger on the [F] key and your right index finger on the [J] key. Keep our hands on the keyboard during the entire experiment, so that you won't need to look down to press the correct keys.
 
-Press [SPACE] to proceed.
+Please place your hand on [SPACE] key and your right index finger on the arrow keys. Keep our hands on the keyboard during the entire experiment, so that you won't need to look down to press the correct keys.

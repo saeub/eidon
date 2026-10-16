@@ -15,9 +15,14 @@ margin: 50
 font_size: 25
 line_spacing: 2.5
 
+# Instructions
+instructions_continue_key: SPACE
+instructions_continue_template: "Press [{key}] to continue."
+
 # Questions
 question_layout: horizontal
-option_keys: [F, J]
+option_keys: [LEFT, DOWN, RIGHT]
+confirm_key: SPACE
 
 # Breaks between items
 breaks_after: 4

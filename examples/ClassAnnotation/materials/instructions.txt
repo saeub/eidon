@@ -2,10 +2,8 @@ You will annotate sentences with sentiment class labels (positive, neutral, nega
 After each text, you be asked how confident you are in your label choice. Use the arrow keys to select an answer and confirm with [SPACE].
 
 If you have any questions, please ask the experimenter now.
-Otherwise, press [SPACE] to continue.
+
 
 Please place your left thumb on [SPACE], and your right hand on the arrow keys. Keep our hands on the keyboard during the entire experiment, so that you won't need to look down to press the correct keys.
 
 We will start with two practice items to familiarize you with the interface.
-
-Press [SPACE] to proceed.

@@ -12,6 +12,10 @@ margin: 50
 font_size: 25
 line_spacing: 2.5
 
+# Instructions
+instructions_continue_key: SPACE
+instructions_continue_template: "Press [{key}] to continue."
+
 # Questions
 question_layout: diamond
 confirm_key: SPACE

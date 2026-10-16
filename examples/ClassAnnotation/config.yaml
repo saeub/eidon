@@ -19,6 +19,10 @@ label_texts: ["[<] positive", "[v] neutral", "[>] negative"]
 label_option_keys: [LEFT, DOWN, RIGHT]
 label_confirm_key: SPACE
 
+# Instructions
+instructions_continue_key: SPACE
+instructions_continue_template: "Press [{key}] to continue."
+
 # Questions
 questions:
 - stem: "How confident are you in your label choice?"

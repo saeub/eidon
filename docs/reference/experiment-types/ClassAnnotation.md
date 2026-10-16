@@ -114,6 +114,13 @@ The following configuration parameters can be set in the `config.yaml` file:
 - `question_layout` (str)  
   Layout for multiple-choice questions. `horizontal` arranges options in a horizontal row, `diamond` arranges them in a diamond shape (requires exactly 4 options that are selected with the UP, LEFT, RIGHT, and DOWN keys), and `cursor` arranges them vertically with a visual selector that can be controlled with the UP and DOWN keys (requires `question_confirm_key`).  
   Default: `cursor`
+- `instructions_continue_key` (str)  
+  Key to continue to the next page of the instructions.  
+  Available key names are listed [here](../keyboard).  
+  Default: `SPACE`
+- `instructions_continue_template` (str)  
+  Template for the instructions continue prompt. This is shown at the bottom of each instructions page. It can contain a `{key}` placeholder that will be replaced with the `instructions_continue_key`.  
+  Default: `[{key}] ->`
 - `question_option_keys` (list[str] | None)  
   List of keys to use for selecting multiple-choice options, in order. For example, `[Y, N]` to use the Y key for the first option and the N key for the second option. Only required when question layout is `horizontal`.  
   Available key names are listed [here](../keyboard).  

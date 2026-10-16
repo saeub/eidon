@@ -435,6 +435,7 @@ def generate_text_pages(
     line_spacing: float = 1.0,
     background_color: tuple[int, int, int] = (255, 255, 255),
     text_color: tuple[int, int, int] = (0, 0, 0),
+    footer: str | None = None,
     extend_word_areas: bool = True,
     custom_area_spans: dict[str, list[tuple[int, int]]] | None = None,
 ) -> list[TextImage]:
@@ -452,6 +453,7 @@ def generate_text_pages(
         line_spacing: Line spacing as a factor of line height.
         background_color: Background color as an RGB tuple.
         text_color: Text color as an RGB tuple.
+        footer: Text to display on the last line of each page.
         extend_word_areas: Extend word areas to cover whitespace between words.
         custom_area_spans: Dictionary of lists of (start, end) character index tuples for custom areas.
             Keys are custom area types.
@@ -467,6 +469,8 @@ def generate_text_pages(
     font_ascent, font_descent = font.getmetrics()
     line_height = (font_ascent + font_descent) * line_spacing
     num_lines_per_page = int(text_height / line_height)
+    if footer is not None:
+        num_lines_per_page -= 1  # Reserve last line for footer
     wrapped = list(wrap_text(text, font, text_width, return_start_indices=True))
     line_start_indices = [index for _, index in wrapped]
     page_start_indices = [
@@ -479,6 +483,11 @@ def generate_text_pages(
         text[start:end].strip()
         for start, end in zip(page_start_indices, page_start_indices[1:] + [len(text)])
     ]
+    if footer is not None:
+        # Add footer to the last line of each page
+        page_texts = [
+            page_text + "\n" + footer for page_text in page_texts
+        ]
 
     images = []
     char_index_start = 0

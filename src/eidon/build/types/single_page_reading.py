@@ -56,6 +56,10 @@ class SinglePageReading(ExperimentType):
         shape (requires exactly 4 options that are selected with the UP, LEFT, RIGHT, and DOWN
         keys), and `cursor` arranges them vertically with a visual selector that can be controlled
         with the UP and DOWN keys (requires `confirm_key`).
+    :param instructions_continue_key: Key to continue to the next page of the instructions.
+    :param instructions_continue_template: Template for the instructions continue prompt.
+        This is shown at the bottom of each instructions page. It can contain a `{key}` placeholder
+        that will be replaced with the `instructions_continue_key`.
     :param option_keys: List of keys to use for selecting multiple-choice options, in order.
         For example, `[Y, N]` to use the Y key for the first option and the N key for the second
         option. Only required when question layout is `horizontal`.
@@ -73,6 +77,8 @@ class SinglePageReading(ExperimentType):
     font_size: int = 25
     line_spacing: int = 2.0
     question_layout: str = "horizontal"
+    instructions_continue_key: str = "SPACE"
+    instructions_continue_template: str = "[{key}] ->"
     option_keys: list[str] | None = None
     confirm_key: str | None = None
 
@@ -361,9 +367,7 @@ class SinglePageReading(ExperimentType):
                 practice_items[item_id] = {None: item}
 
             if practice_items is not None and len(practice_items) == 0:
-                warnings.warn(
-                    f"No practice items found in {practice_items_path}."
-                )
+                warnings.warn(f"No practice items found in {practice_items_path}.")
 
         # Collect and check filler items
         filler_items_path = "items/fillers.csv"
@@ -422,7 +426,13 @@ class SinglePageReading(ExperimentType):
     ) -> dict[str, Any]:
         text = self.materials["instructions.txt"]
         # TODO: Allow manual page breaks
-        images = stimuli.generate_text_pages(text, **text_config)
+        images = stimuli.generate_text_pages(
+            text,
+            **text_config,
+            footer=self.instructions_continue_template.format(
+                key=self.instructions_continue_key
+            ),
+        )
         for i, image in enumerate(images):
             image.save(self.experiment_path, f"instructions.{i}")
         return {
@@ -430,7 +440,7 @@ class SinglePageReading(ExperimentType):
             "$name": "instructions",
             "$record_eyes": True,
             "imgpaths": [image.imgpath for image in images],
-            "next_page_key": "SPACE",
+            "next_page_key": self.instructions_continue_key,
         }
 
     def _generate_end_stage(self, text_config: dict[str, Any]) -> dict[str, Any]:
@@ -438,13 +448,16 @@ class SinglePageReading(ExperimentType):
         (image,) = stimuli.generate_text_pages(
             text,
             **text_config,
+            footer=self.instructions_continue_template.format(
+                key=self.instructions_continue_key
+            ),
         )
         image.save(self.experiment_path, "end")
         return {
             "$type": "StimulusPage",
             "$name": "end",
             "imgpath": image.imgpath,
-            "continue_key": "SPACE",
+            "continue_key": self.instructions_continue_key,
         }
 
     def _generate_wait_stage(
