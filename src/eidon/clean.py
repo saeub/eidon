@@ -658,6 +658,7 @@ class App(tk.Tk):
                 )
             # Draw scattered dots
             dot_x = random.randint(0, 10)
+            # TODO: Replace with rectangle, disable by default
             self.canvas.create_line(
                 dot_x,
                 y,
