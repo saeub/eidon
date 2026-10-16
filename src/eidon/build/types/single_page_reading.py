@@ -370,7 +370,7 @@ class SinglePageReading(ExperimentType):
                 warnings.warn(f"No practice items found in {practice_items_path}.")
 
         # Collect and check filler items
-        filler_items_path = "items/fillers.csv"
+        filler_items_path = "items/filler.csv"
         filler_items = {}
         if filler_items_path in self.materials:
             for item in self.materials[filler_items_path]:
