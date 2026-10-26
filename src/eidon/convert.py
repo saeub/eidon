@@ -138,7 +138,7 @@ class RecordingConverter:
 
         samples = samples.select(
             [
-                pl.col("time").dt.total_milliseconds(fractional=True).alias("time"),
+                "time",
                 "stage",
                 "page",
                 "imgpath",
@@ -218,18 +218,6 @@ class RecordingConverter:
                 .otherwise(None)
                 .alias(column)
                 for column in validation_columns
-            ]
-        )
-
-        # Convert time columns to milliseconds
-        calibration_data = calibration_data.with_columns(
-            [
-                pl.col("calibration_time")
-                .dt.total_milliseconds(fractional=True)
-                .alias("calibration_time"),
-                pl.col("validation_time")
-                .dt.total_milliseconds(fractional=True)
-                .alias("validation_time"),
             ]
         )
 
