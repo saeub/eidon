@@ -14,7 +14,8 @@ from eidon.fonts import FONTS
 @dataclass(kw_only=True)
 class SinglePageReading(ExperimentType):
     """
-    Reading experiment with short, single-page text stimuli.
+    Reading experiment with short, single-page text stimuli, optionally with multiple-choice
+    questions shown after the text.
 
     Each experimental item consists of a text and optionally one or more multiple-choice questions.
     Each item may appear in multiple conditions, which are assigned to participants according to the
