@@ -9,7 +9,7 @@ layout: default
 
 # Experiment type: `SinglePageReading`
 
-Reading experiment with short, single-page text stimuli.
+Reading experiment with short, single-page text stimuli, optionally with multiple-choice questions shown after the text.
 
 ## Description
 

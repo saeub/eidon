@@ -9,7 +9,7 @@ layout: default
 
 # Experiment type: `ClassAnnotation`
 
-Annotation experiment for text classification.
+Annotation experiment for text classification, where participants select a label for each text, optionally with multiple-choice questions shown after.
 
 ## Description
 

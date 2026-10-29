@@ -9,7 +9,7 @@ layout: default
 
 # Experiment type: `MultiPageReading`
 
-Reading experiment with longer, multi-page text stimuli.
+Reading experiment with longer, multi-page text stimuli, optionally with multiple-choice questions shown after the text.
 
 ## Description
 

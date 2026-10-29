@@ -14,8 +14,7 @@ from eidon.fonts import FONTS
 @dataclass(kw_only=True)
 class ClassAnnotation(ExperimentType):
     """
-    Annotation experiment for text classification, where participants select a label for each text,
-    optionally with multiple-choice questions shown after.
+    Annotation experiment for text classification, where participants select a label for each text, optionally with multiple-choice questions shown after.
 
     Each annotation item consists of a text and optionally one or more multiple-choice questions
     (e.g., confidence ratings). Every annotator annotates the same set of items, and the order of
