@@ -266,7 +266,7 @@ class MultiPageReading(ExperimentType):
     ]:
         """Turn the raw item data into a structured format and validate it.
 
-        Returns experimental, practice, and filler items as dicts
+        Returns experimental and practice items as dicts
         mapping item IDs to dicts of conditions to items:
         {
             "item.1": {

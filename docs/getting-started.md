@@ -22,9 +22,7 @@ pip install eidon
 
 ## Building and running an example experiment
 
-Download one of the [example experiments](https://github.com/saeub/eidon/tree/main/examples) and place the folder in your working directory. You can use this link to download a ZIP archive of the `SinglePageReading` example:
-
-https://download-directory.github.io/?url=https://github.com/saeub/eidon/tree/main/examples/SinglePageReading
+Download one of the [example experiments](https://github.com/saeub/eidon/tree/main/examples) and place the folder in your working directory. You can use [this link](https://download-directory.github.io/?url=https://github.com/saeub/eidon/tree/main/examples) to download a ZIP archive of all example experiments.
 
 In your terminal, navigate into the experiment directory (where `config.yaml` is located). Then build the experiment using this command:
 

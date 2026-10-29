@@ -375,6 +375,8 @@ class SinglePageReading(ExperimentType):
         if filler_items_path in self.materials:
             for item in self.materials[filler_items_path]:
                 item_id = item["id"]
+                item_id = f"filler.{item_id}"
+                item["id"] = item_id
                 if item_id in filler_items:
                     raise ValueError(
                         f"Duplicate item ID {item_id} in {filler_items_path}."
