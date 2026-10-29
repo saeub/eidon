@@ -2,10 +2,18 @@ import argparse
 from pathlib import Path
 
 from eidon.build.types import ExperimentType
+from eidon.utils import get_package_version
 
 
 def get_argument_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Command-line interface for eidon.")
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=get_package_version(),
+        help="Show the installed version of eidon.",
+    )
+
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     init_parser = subparsers.add_parser(
