@@ -1,7 +1,7 @@
 import csv
 import dataclasses
 from pathlib import Path
-from typing import Union
+from typing import Union, get_origin
 
 import yaml
 
@@ -95,11 +95,10 @@ class ExperimentInitializer:
             return []
         elif field_type == dict:
             return {}
-        elif isinstance(field_type, Union):
-            return self._get_example_value(field_type.__args__[0])
-        elif hasattr(field_type, "__origin__"):
-            origin = field_type.__origin__
-            if origin == list:
+        elif (origin := get_origin(field_type)) is not None:
+            if origin == Union:
+                return self._get_example_value(field_type.__args__[0])
+            elif origin == list:
                 (inner_type,) = field_type.__args__
                 return [self._get_example_value(inner_type)]
             elif origin == dict:
